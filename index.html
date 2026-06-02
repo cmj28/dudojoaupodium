@@ -283,6 +283,7 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
           <div class="fg"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Prénom"></div>
           <div class="fg"><label>Nom</label><input type="text" id="reg-nom" placeholder="Nom"></div>
         </div>
+        <div class="fg"><label>Date de naissance</label><input type="date" id="reg-dob" onchange="checkDOBParental()" max=""></div>
         <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="ton@email.com"></div>
         <div class="fg"><label>Mot de passe</label><input type="password" id="reg-password" placeholder="Min. 6 caractères"></div>
         <div class="fg"><label>Confirmer le mot de passe</label><input type="password" id="reg-password2" placeholder="Répète ton mot de passe"></div>
@@ -384,6 +385,18 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
           </div>
         </div>
 
+        <div style="margin-bottom:12px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem;color:var(--tx);font-weight:400">
+            <input type="checkbox" id="reg-cgu" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--navy)">
+            <span>J'ai lu et j'accepte les <button type="button" onclick="showCGUPage()" style="background:none;border:none;color:var(--navy);font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.82rem;padding:0">Conditions Générales d'Utilisation et la Politique de Confidentialité</button>.</span>
+          </label>
+        </div>
+        <div style="margin-bottom:12px" id="reg-parental-block">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem;color:var(--tx);font-weight:400">
+            <input type="checkbox" id="reg-parental" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--navy)">
+            <span>Je suis le représentant légal de cet utilisateur mineur (moins de 15 ans) et j'autorise expressément la création de son compte et le traitement de ses données personnelles.</span>
+          </label>
+        </div>
         <button class="bP" style="margin-top:12px" onclick="doRegister()">Créer mon compte</button>
         <div id="reg-error" style="color:var(--rd);font-size:0.78rem;margin-top:10px;text-align:center"></div>
       </div>
@@ -802,6 +815,17 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 
 <div id="partenaires-banner" style="display:none"></div>
 
+<!-- PAGE CGU (accessible sans auth) -->
+<div id="cgu-page" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:999;overflow-y:auto;padding:20px 14px 40px">
+  <div style="max-width:700px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:1">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">CGU & Politique de Confidentialité</div>
+      <button class="bS" onclick="hideCGUPage()">✕ Fermer</button>
+    </div>
+    <div id="cgu-content" style="background:var(--sf);border-radius:14px;padding:20px;font-size:0.85rem;line-height:1.7;color:var(--tx)"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="mo" id="m-note-prof">
@@ -918,6 +942,16 @@ function askConfirm(msg,okLabel,cb){document.getElementById('mconf-msg').textCon
 // AUTH
 // ============================================================
 let regRole='judoka';
+function checkDOBParental(){
+  const dob=document.getElementById('reg-dob')?.value;
+  const block=document.getElementById('reg-parental-block');
+  if(!block)return;
+  if(!dob){block.style.display='none';return;}
+  const age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
+  block.style.display=age<15?'block':'none';
+  if(age>=15)document.getElementById('reg-parental').checked=false;
+}
+
 function switchAuthTab(tab){document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('form-login').style.display=tab==='login'?'':'none';document.getElementById('form-register').style.display=tab==='register'?'':'none';}
 // ============================================================
 // INSCRIPTION — MULTI RÔLES
@@ -927,10 +961,16 @@ function setRegRole(r){} // legacy no-op
 async function doRegister(){
   const prenom=document.getElementById('reg-prenom').value.trim();
   const nom=document.getElementById('reg-nom').value.trim();
+  const dob=document.getElementById('reg-dob')?.value||'';
   const email=document.getElementById('reg-email').value.trim();
   const password=document.getElementById('reg-password').value;
   const err=document.getElementById('reg-error');
   if(!prenom||!nom||!email||!password){err.textContent='Remplis tous les champs.';return;}
+  if(!dob){err.textContent='La date de naissance est obligatoire.';return;}
+  if(!document.getElementById('reg-cgu')?.checked){err.textContent='Vous devez accepter les CGU pour continuer.';return;}
+  // Vérification age et autorisation parentale
+  const age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
+  if(age<15&&!document.getElementById('reg-parental')?.checked){err.textContent='L\'autorisation du représentant légal est obligatoire pour les moins de 15 ans.';return;}
   if(password.length<6){err.textContent='Mot de passe trop court (6 min).';return;}
   const password2=document.getElementById('reg-password2')?.value;
   if(password2&&password!==password2){err.textContent='Les mots de passe ne correspondent pas.';return;}
@@ -964,6 +1004,8 @@ async function doRegister(){
 
   const profileData={
     id:data.user.id,prenom,nom,email,
+    date_naissance:dob,
+    autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
     is_licencie:checked.includes('licencie')||isComp||isBureau,
     is_competiteur:isComp,is_judoka:isComp,
     is_section:checked.includes('section'),
@@ -1487,8 +1529,62 @@ async function renderPerfWeek(){
 }
 
 // ============================================================
-// NOTES PROFS
+// PAGE CGU
 // ============================================================
+function showCGUPage(){
+  const el=document.getElementById('cgu-page');
+  const content=document.getElementById('cgu-content');
+  if(!el||!content)return;
+  content.innerHTML=`
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:var(--navy);text-align:center;margin-bottom:4px">DU DOJO AU PODIUM — CMJ28</div>
+    <div style="text-align:center;font-size:0.72rem;color:var(--mu);margin-bottom:20px;letter-spacing:0.1em;text-transform:uppercase">CGU & Politique de Confidentialité — Version du 2 juin 2026</div>
+    <h3 style="font-family:'Barlow Condensed',sans-serif;color:var(--navy);font-size:1.1rem;margin:16px 0 6px;text-transform:uppercase">Partie I — CGU</h3>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 1 — Présentation</h4>
+    <p style="margin-bottom:8px">L'application « Du Dojo au Podium » est éditée par l'association CMJ28, loi 1901, siège à Chartres (28). Elle centralise la gestion du club : performances, entraînements, compétitions, communication interne.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 2 — Acceptation</h4>
+    <p style="margin-bottom:8px">L'accès est subordonné à l'acceptation des présentes CGU. Pour les mineurs de moins de 15 ans, le représentant légal doit donner son consentement explicite.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 3 — Rôles et accès</h4>
+    <p style="margin-bottom:8px">Réservé aux licenciés CMJ28 et représentants légaux. Rôles : Licencié, Compétiteur, Section, Professeur, Coach, Bureau, Parent — chacun conditionné à un code délivré par l'Association.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 4 — Mineurs et autorisation parentale</h4>
+    <p style="margin-bottom:8px">Conformément au RGPD (art. 8), le traitement de données de mineurs de moins de 15 ans requiert le consentement du représentant légal. Le rôle Parent permet de gérer les profils enfants.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 5 — Obligations de l'utilisateur</h4>
+    <p style="margin-bottom:8px">Informations exactes, confidentialité des identifiants, respect des droits des tiers, pas d'accès non autorisé aux données d'autrui.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 6 — Propriété intellectuelle</h4>
+    <p style="margin-bottom:8px">Tous les éléments de l'Application (code, design, logos) sont la propriété de CMJ28. Toute reproduction sans accord écrit préalable est interdite.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 7 — Responsabilité</h4>
+    <p style="margin-bottom:8px">CMJ28 ne saurait être tenue responsable des interruptions de service, inexactitudes saisies par les utilisateurs, ou dommages indirects.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 8 — Suppression de compte</h4>
+    <p style="margin-bottom:8px">Demande par écrit au bureau CMJ28. Traitement sous 1 mois (art. 17 RGPD). Les données identifiantes sont effacées sous 30 jours.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 9 — Cookies et stockage local</h4>
+    <p style="margin-bottom:8px">Cookies et localStorage utilisés uniquement pour maintenir la session. Aucun cookie publicitaire. Supprimables via déconnexion ou vidage du navigateur.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Article 10 — Droit applicable</h4>
+    <p style="margin-bottom:8px">Droit français. Juridiction : tribunaux du ressort du siège de CMJ28.</p>
+    <div style="height:1px;background:var(--bd);margin:20px 0"></div>
+    <h3 style="font-family:'Barlow Condensed',sans-serif;color:var(--navy);font-size:1.1rem;margin:16px 0 6px;text-transform:uppercase">Partie II — Politique de Confidentialité</h3>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Responsable du traitement</h4>
+    <p style="margin-bottom:8px">Association Chartres Métropole Judo 28 (CMJ28) — Contact : bureau de l'association.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Données collectées</h4>
+    <p style="margin-bottom:8px">Nom, prénom, email, mot de passe (haché), catégorie, poids, photo (facultative), résultats, performances, messages coach/judoka, notes des professeurs.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Hébergement</h4>
+    <p style="margin-bottom:8px"><strong>Base de données :</strong> Supabase — serveurs AWS eu-west-1 (Irlande, UE). Données restant dans l'UE.<br><strong>Application :</strong> GitHub Pages (Microsoft) — clauses contractuelles types UE.<br><strong>Polices :</strong> Google Fonts — peut collecter l'IP.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Durée de conservation</h4>
+    <p style="margin-bottom:8px">Compte actif : durée de la licence. Après suppression : 30 jours. Données comptables : 10 ans. Logs : 90 jours.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Vos droits (RGPD)</h4>
+    <p style="margin-bottom:8px">Accès, rectification, effacement, portabilité, limitation, opposition. Demande écrite au bureau CMJ28. Réclamation possible auprès de la <strong>CNIL</strong> — www.cnil.fr.</p>
+    <h4 style="color:var(--navy);margin:10px 0 4px">Sécurité</h4>
+    <p style="margin-bottom:8px">Mots de passe hachés, HTTPS/TLS, accès par rôles, datacenter ISO 27001. Note : identifiants de session encodés (non chiffrés) — déconnectez-vous sur les appareils partagés.</p>
+    <div style="margin-top:20px;padding:12px;background:rgba(64,65,104,0.05);border-radius:8px;font-size:0.75rem;color:var(--mu);text-align:center">
+      Document établi le 2 juin 2026 — Chartres Métropole Judo 28
+    </div>`;
+  el.style.display='block';
+  document.body.style.overflow='hidden';
+}
+function hideCGUPage(){
+  const el=document.getElementById('cgu-page');
+  if(el)el.style.display='none';
+  document.body.style.overflow='';
+}
+
 // ============================================================
 // NOTES PROFS
 // ============================================================
