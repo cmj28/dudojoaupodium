@@ -1884,10 +1884,10 @@ async function openBilanModal(id){
   const profsJourHTML=JOURS_SECTION.map((j,i)=>{
     const key=JOURS_KEYS[i];
     const selProfs=profsParJour[key]||[];
-    return `<div style="margin-bottom:10px">
-      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--navy);margin-bottom:4px">${j}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${PROFS_SECTION.map(p=>`<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.78rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tx)">
-        <input type="checkbox" class="bilan-jour-prof" data-jour="${key}" value="${p}" ${selProfs.includes(p)?'checked':''} style="accent-color:var(--pu)"> ${p}
+    return `<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:0.72rem;font-weight:700;color:var(--navy);min-width:60px">${j} :</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${PROFS_SECTION.map(p=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:0.78rem;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 7px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tx)">
+        <input type="checkbox" data-jour="${key}" value="${p}" ${selProfs.includes(p)?'checked':''} style="accent-color:var(--pu)"> ${p}
       </label>`).join('')}</div>
     </div>`;
   }).join('');
@@ -1906,16 +1906,20 @@ async function openBilanModal(id){
     ${champsHTML}
     <div class="fg">
       <label>Déplacements</label>
-      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;font-size:0.82rem;color:var(--tx)">
-        <input type="checkbox" id="bilan-dep-orleans" ${bilan.deplacement_orleans?'checked':''} style="margin-top:2px;accent-color:var(--pu)">
-        <span>Déplacement Pôle Orléans</span>
-      </label>
-      <input type="text" id="bilan-dep-orleans-sel" placeholder="Sélection judokas (ex: Prénom Nom, ...)" value="${bilan.deplacement_orleans_sel||''}" style="margin-top:4px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:0.82rem">
-      <label style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;font-size:0.82rem;color:var(--tx)">
-        <input type="checkbox" id="bilan-dep-bretigny" ${bilan.deplacement_bretigny?'checked':''} style="margin-top:2px;accent-color:var(--pu)">
-        <span>Déplacement Pôle Brétigny</span>
-      </label>
-      <input type="text" id="bilan-dep-bretigny-sel" placeholder="Sélection judokas (ex: Prénom Nom, ...)" value="${bilan.deplacement_bretigny_sel||''}" style="margin-top:4px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:0.82rem">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
+            <input type="checkbox" id="bilan-dep-orleans" ${bilan.deplacement_orleans?'checked':''} style="accent-color:var(--pu)"> 🚌 Pôle Orléans
+          </label>
+          <input type="text" id="bilan-dep-orleans-sel" placeholder="Judokas sélectionnés..." value="${bilan.deplacement_orleans_sel||''}" style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
+        </div>
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
+            <input type="checkbox" id="bilan-dep-bretigny" ${bilan.deplacement_bretigny?'checked':''} style="accent-color:var(--pu)"> 🚌 Pôle Brétigny
+          </label>
+          <input type="text" id="bilan-dep-bretigny-sel" placeholder="Judokas sélectionnés..." value="${bilan.deplacement_bretigny_sel||''}" style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
+        </div>
+      </div>
     </div>
     <input type="hidden" id="bilan-id" value="${id||''}">
     <div style="display:flex;gap:7px;margin-top:8px"><button class="bP" style="flex:1" onclick="saveBilan()">💾 Publier</button><button class="bS" onclick="cm('m-bilan')">Annuler</button></div>
@@ -1929,7 +1933,7 @@ async function saveBilan(){
   const date_fin=document.getElementById('bilan-date-fin').value;
   // Profs par jour
   const profs_par_jour={};
-  document.querySelectorAll('.bilan-jour-prof:checked').forEach(cb=>{
+  document.querySelectorAll('[data-jour]:checked').forEach(cb=>{
     const jour=cb.dataset.jour;
     if(!profs_par_jour[jour])profs_par_jour[jour]=[];
     profs_par_jour[jour].push(cb.value);
@@ -2095,7 +2099,8 @@ function toggleFold(id){
 async function loadPrepPhysCoach(){
   const el=document.getElementById('coach-prep-phys-view');if(!el)return;
   const{data}=await sb.from('seances_prep').select('*').order('created_at',{ascending:false});
-  renderPrepPhysCoach(el,data||[]);
+  _seancesCache=data||[];
+  renderPrepPhysCoach(el,_seancesCache);
 }
 function renderPrepPhysCoach(el,seances){
   const CATS_PP=['Musculation (salle)','PP dojo maison','Course','Vélo'];
@@ -2121,7 +2126,7 @@ function renderPrepPhysCoach(el,seances){
             ${s.description?`<div style="font-size:0.78rem;color:var(--tx);margin-top:5px;line-height:1.4;white-space:pre-line">${s.description}</div>`:''}
           </div>
           <div style="display:flex;gap:4px;flex-shrink:0;margin-left:8px">
-            <button class="bE" style="padding:3px 7px" onclick="openSeanceModal('${s.id}','${(s.nom||'').replace(/'/g,"\'")}','${s.duree||''}','${s.categorie_pp||'PP dojo maison'}','${(s.description||'').replace(/'/g,"\'").replace(/\n/g,'\\n')}')">✏️</button>
+            <button class="bE" style="padding:3px 7px" onclick="openSeanceById('${s.id}')">✏️</button>
             <button class="bR" style="padding:3px 7px" onclick="deleteSeance('${s.id}')">🗑️</button>
           </div>
         </div>`).join('')}
@@ -2129,6 +2134,11 @@ function renderPrepPhysCoach(el,seances){
     </div>`;
   });
   el.innerHTML=html;
+}
+let _seancesCache=[];
+function openSeanceById(id){
+  const s=_seancesCache.find(x=>x.id===id);
+  if(s)openSeanceModal(s.id,s.nom,s.duree,s.categorie_pp,s.description);
 }
 function openSeanceModal(id,nom,duree,cat,desc){
   document.getElementById('mseance-id').value=id||'';
@@ -2842,26 +2852,27 @@ function showSectionSection(sec){
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Section Judo</div>
       <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Collège Hélène Boucher — Chartres</div>
     </div>
-    <!-- ACTUALITÉS & ANNONCES EN HAUT -->
+    <!-- 1. ACTUALITÉS -->
     <div style="background:linear-gradient(135deg,rgba(155,89,182,0.06) 0%,rgba(242,186,29,0.06) 100%);border:1.5px solid rgba(155,89,182,0.2);border-radius:16px;padding:14px;margin-bottom:12px">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">📰 Actualités & Annonces</div>
       <div id="section-actu-view"><div style="text-align:center;padding:16px;color:var(--mu)">Chargement...</div></div>
     </div>
+    <!-- 2. BILANS HEBDOS -->
+    <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:14px;padding:14px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:12px" onclick="showSectionSection('bilans')">
+      <div style="font-size:1.6rem">📊</div>
+      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Bilans Hebdomadaires</div><div style="font-size:0.68rem;color:var(--mu)">Compte-rendus des séances</div></div>
+    </div>
+    <!-- 3. PLANNING HEBDO -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <button class="bS" onclick="changeWeekSection(-1)">← Préc.</button>
       <div id="section-week-label" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:var(--navy);text-align:center;flex:1;margin:0 8px"></div>
       <button class="bS" onclick="changeWeekSection(1)">Suiv. →</button>
     </div>
     <div id="section-week-planning" style="overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch"></div>
+    <!-- 4. ÉQUIPE + CALENDRIER -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showSectionSection('equipe')"><div style="font-size:1.6rem">👨‍🏫</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Équipe</div><div style="font-size:0.68rem;color:var(--mu)">Les intervenants</div></div></div>
       <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showSectionSection('calendrier')"><div style="font-size:1.6rem">📅</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Calendrier</div><div style="font-size:0.68rem;color:var(--mu)">Compétitions & stages</div></div></div>
-      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;grid-column:span 2" onclick="showSectionSection('bilans')"><div style="font-size:1.6rem">📊</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Bilans Hebdomadaires</div><div style="font-size:0.68rem;color:var(--mu)">Compte-rendus des séances</div></div></div>
-    </div>
-    <!-- ACTUALITÉS EN BAS -->
-    <div style="background:linear-gradient(135deg,rgba(155,89,182,0.06) 0%,rgba(242,186,29,0.06) 100%);border:1.5px solid rgba(155,89,182,0.2);border-radius:16px;padding:14px;margin-top:12px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">📰 Actualités & Annonces</div>
-      <div id="section-actu-view"><div style="text-align:center;padding:16px;color:var(--mu)">Chargement...</div></div>
     </div>`;
     loadSectionActualites(true);
     sectionWeekOffset=0;sectionWeekReadOnly=!(CP&&(CP.is_prof_section||CP.is_bureau));renderSectionWeek(sectionWeekReadOnly);
