@@ -829,6 +829,43 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 
 <div class="toast" id="toast"></div>
 
+<div class="mo" id="m-bilan">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <h3 id="m-bilan-title">📊 Nouveau bilan</h3>
+    <div class="tc">
+      <div class="fg" style="margin:0"><label>Du (mardi)</label><input type="date" id="bilan-date-debut"></div>
+      <div class="fg" style="margin:0"><label>Au (vendredi)</label><input type="date" id="bilan-date-fin"></div>
+    </div>
+    <div class="fg" style="margin-top:10px">
+      <label>Intervenants par jour</label>
+      <div id="bilan-profs-par-jour"></div>
+    </div>
+    <div id="bilan-champs"></div>
+    <div class="fg">
+      <label>Déplacements</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
+            <input type="checkbox" id="bilan-dep-orleans"> 🚌 Pôle Orléans
+          </label>
+          <input type="text" id="bilan-dep-orleans-sel" placeholder="Judokas sélectionnés..." style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
+        </div>
+        <div>
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
+            <input type="checkbox" id="bilan-dep-bretigny"> 🚌 Pôle Brétigny
+          </label>
+          <input type="text" id="bilan-dep-bretigny-sel" placeholder="Judokas sélectionnés..." style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="bilan-id">
+    <div style="display:flex;gap:7px;margin-top:8px">
+      <button class="bP" style="flex:1" onclick="saveBilan()">💾 Publier</button>
+      <button class="bS" onclick="cm('m-bilan')">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="m-note-prof">
   <div class="modal">
     <h3 id="mnp-title">📝 Note sur le judoka</h3>
@@ -1881,50 +1918,42 @@ async function openBilanModal(id){
   const profsParJour=bilan.profs_par_jour||{};
   const JOURS_SECTION=['Mardi','Mercredi','Jeudi','Vendredi'];
   const JOURS_KEYS=['mardi','mercredi','jeudi','vendredi'];
-  const profsJourHTML=JOURS_SECTION.map((j,i)=>{
-    const key=JOURS_KEYS[i];
-    const selProfs=profsParJour[key]||[];
-    return `<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="font-size:0.72rem;font-weight:700;color:var(--navy);min-width:60px">${j} :</span>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${PROFS_SECTION.map(p=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:0.78rem;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 7px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tx)">
-        <input type="checkbox" data-jour="${key}" value="${p}" ${selProfs.includes(p)?'checked':''} style="accent-color:var(--pu)"> ${p}
-      </label>`).join('')}</div>
-    </div>`;
-  }).join('');
-  const champsHTML=CHAMPS_BILAN.map(c=>{
-    const key=c.toLowerCase().replace(/[\s\/]+/g,'_');
-    return `<div class="fg"><label>${c}</label><textarea id="bilan-${key}" style="min-height:55px" placeholder="Notes...">${bilan[key]||''}</textarea></div>`;
-  }).join('');
-  const m=document.createElement('div');m.className='mo open';m.id='m-bilan';
-  m.innerHTML=`<div class="modal" style="max-height:85vh;overflow-y:auto">
-    <h3>${id?'✏️ Modifier le bilan':'📊 Nouveau bilan'}</h3>
-    <div class="tc">
-      <div class="fg" style="margin:0"><label>Du (mardi)</label><input type="date" id="bilan-date-debut" value="${bilan.date_debut||''}"></div>
-      <div class="fg" style="margin:0"><label>Au (vendredi)</label><input type="date" id="bilan-date-fin" value="${bilan.date_fin||''}"></div>
-    </div>
-    <div class="fg" style="margin-top:10px"><label>Intervenants par jour</label>${profsJourHTML}</div>
-    ${champsHTML}
-    <div class="fg">
-      <label>Déplacements</label>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-        <div>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
-            <input type="checkbox" id="bilan-dep-orleans" ${bilan.deplacement_orleans?'checked':''} style="accent-color:var(--pu)"> 🚌 Pôle Orléans
-          </label>
-          <input type="text" id="bilan-dep-orleans-sel" placeholder="Judokas sélectionnés..." value="${bilan.deplacement_orleans_sel||''}" style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
-        </div>
-        <div>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
-            <input type="checkbox" id="bilan-dep-bretigny" ${bilan.deplacement_bretigny?'checked':''} style="accent-color:var(--pu)"> 🚌 Pôle Brétigny
-          </label>
-          <input type="text" id="bilan-dep-bretigny-sel" placeholder="Judokas sélectionnés..." value="${bilan.deplacement_bretigny_sel||''}" style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
-        </div>
-      </div>
-    </div>
-    <input type="hidden" id="bilan-id" value="${id||''}">
-    <div style="display:flex;gap:7px;margin-top:8px"><button class="bP" style="flex:1" onclick="saveBilan()">💾 Publier</button><button class="bS" onclick="cm('m-bilan')">Annuler</button></div>
-  </div>`;
-  document.body.appendChild(m);
+  // Titre
+  document.getElementById('m-bilan-title').textContent=id?'✏️ Modifier le bilan':'📊 Nouveau bilan';
+  // Dates
+  document.getElementById('bilan-date-debut').value=bilan.date_debut||'';
+  document.getElementById('bilan-date-fin').value=bilan.date_fin||'';
+  document.getElementById('bilan-id').value=id||'';
+  // Déplacements
+  document.getElementById('bilan-dep-orleans').checked=!!bilan.deplacement_orleans;
+  document.getElementById('bilan-dep-orleans-sel').value=bilan.deplacement_orleans_sel||'';
+  document.getElementById('bilan-dep-bretigny').checked=!!bilan.deplacement_bretigny;
+  document.getElementById('bilan-dep-bretigny-sel').value=bilan.deplacement_bretigny_sel||'';
+  // Profs par jour
+  const ppjEl=document.getElementById('bilan-profs-par-jour');
+  if(ppjEl){
+    ppjEl.innerHTML=JOURS_KEYS.map((key,i)=>{
+      const selProfs=profsParJour[key]||[];
+      return '<div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span style="font-size:0.72rem;font-weight:700;color:var(--navy);min-width:60px">'+JOURS_SECTION[i]+' :</span>'
+        +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+PROFS_SECTION.map(p=>{
+          const chk=selProfs.includes(p)?'checked':'';
+          return '<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;font-size:0.78rem;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 7px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tx)">'
+            +'<input type="checkbox" data-jour="'+key+'" value="'+p+'" '+chk+' style="accent-color:var(--pu)"> '+p
+            +'</label>';
+        }).join('')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  // Champs libres
+  const champsEl=document.getElementById('bilan-champs');
+  if(champsEl){
+    champsEl.innerHTML=CHAMPS_BILAN.map(c=>{
+      const key=c.toLowerCase().replace(/[\s\/]+/g,'_');
+      return '<div class="fg"><label>'+c+'</label><textarea id="bilan-'+key+'" style="min-height:55px" placeholder="Notes...">'+(bilan[key]||'')+'</textarea></div>';
+    }).join('');
+  }
+  document.getElementById('m-bilan').classList.add('open');
 }
 
 async function saveBilan(){
