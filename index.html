@@ -20,6 +20,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--tx);min-he
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(64,65,104,0.07);}
 .fg{margin-bottom:11px;}
 label{display:block;font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;}
+input.bilan-chk{display:inline-block!important;width:16px!important;height:16px!important;margin:0!important;padding:0!important;cursor:pointer;accent-color:var(--pu);flex-shrink:0;vertical-align:middle;}
+.bilan-label{display:inline-flex!important;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none!important;letter-spacing:0!important;font-weight:400;color:var(--tx);padding:4px 8px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;}
 input,select,textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;color:var(--tx);font-family:'Barlow',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
 input:focus,select:focus,textarea:focus{border-color:var(--navy);}
 textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
@@ -845,14 +847,14 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
       <label>Déplacements</label>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
         <div>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
-            <input type="checkbox" id="bilan-dep-orleans"> 🚌 Pôle Orléans
+          <label class="bilan-label">
+            <input type="checkbox" class="bilan-chk" id="bilan-dep-orleans"> 🚌 Pôle Orléans
           </label>
           <input type="text" id="bilan-dep-orleans-sel" placeholder="Judokas sélectionnés..." style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
         </div>
         <div>
-          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:600;color:var(--tx)">
-            <input type="checkbox" id="bilan-dep-bretigny"> 🚌 Pôle Brétigny
+          <label class="bilan-label">
+            <input type="checkbox" class="bilan-chk" id="bilan-dep-bretigny"> 🚌 Pôle Brétigny
           </label>
           <input type="text" id="bilan-dep-bretigny-sel" placeholder="Judokas sélectionnés..." style="display:block;margin-top:3px;width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;padding:6px 10px;font-size:0.8rem">
         </div>
@@ -1938,8 +1940,8 @@ async function openBilanModal(id){
         +'<span style="font-size:0.72rem;font-weight:700;color:var(--navy);min-width:60px">'+JOURS_SECTION[i]+' :</span>'
         +'<div style="display:flex;gap:6px;flex-wrap:wrap">'+PROFS_SECTION.map(p=>{
           const chk=selProfs.includes(p)?'checked':'';
-          return '<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;font-size:0.78rem;background:var(--sf2);border:1px solid var(--bd);border-radius:6px;padding:3px 7px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--tx)">'
-            +'<input type="checkbox" data-jour="'+key+'" value="'+p+'" '+chk+' style="accent-color:var(--pu)"> '+p
+          return '<label class="bilan-label">'
+            +'<input type="checkbox" class="bilan-chk" data-jour="'+key+'" value="'+p+'" '+chk+'> '+p
             +'</label>';
         }).join('')+'</div>'
         +'</div>';
