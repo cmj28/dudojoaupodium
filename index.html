@@ -1863,7 +1863,8 @@ function deleteDocumentClub(id,type){
 // BILANS HEBDOMADAIRES SECTION
 // ============================================================
 const PROFS_SECTION=['Kylian','Julian','Robin','Mathilde','JB'];
-const CHAMPS_BILAN=['Ne Waza','Tachi Waza','Kumikata','Katas','Randoris Opposition','Préparation Physique'];
+const CHAMPS_BILAN=['Ne Waza','Tachi Waza','Kumikata','Katas','Randoris Opposition','Preparation Physique'];
+function bilanKey(c){return c.toLowerCase().replace(/[àáâãäå]/g,'a').replace(/[éèêë]/g,'e').replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/[\s\/]+/g,'_');}
 
 async function loadBilansSection(){
   const el=document.getElementById('bilans-view');if(!el)return;
@@ -1951,7 +1952,7 @@ async function openBilanModal(id){
   const champsEl=document.getElementById('bilan-champs');
   if(champsEl){
     champsEl.innerHTML=CHAMPS_BILAN.map(c=>{
-      const key=c.toLowerCase().replace(/[\s\/]+/g,'_');
+      const key=bilanKey(c);
       return '<div class="fg"><label>'+c+'</label><textarea id="bilan-'+key+'" style="min-height:55px" placeholder="Notes...">'+(bilan[key]||'')+'</textarea></div>';
     }).join('');
   }
@@ -1978,7 +1979,7 @@ async function saveBilan(){
     deplacement_bretigny_sel:document.getElementById('bilan-dep-bretigny-sel')?.value.trim()||'',
   };
   CHAMPS_BILAN.forEach(c=>{
-    const key=c.toLowerCase().replace(/[\s\/]+/g,'_');
+    const key=bilanKey(c);
     data[key]=document.getElementById('bilan-'+key)?.value.trim()||'';
   });
   if(id){await sb.from('bilans_section').update(data).eq('id',id);}
