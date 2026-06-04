@@ -684,6 +684,18 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
       <div class="fg"><label>Catégorie</label><select id="ep-cat"><option>Minimes</option><option>Cadets(tes)</option><option>Juniors</option><option>Seniors</option><option>Vétérans</option></select></div>
       <div class="fg"><label>Poids</label><select id="ep-poids"><option>-34kg</option><option>-38kg</option><option>-42kg</option><option>-46kg</option><option>-50kg</option><option>-55kg</option><option>-60kg</option><option>-66kg</option><option>-73kg</option><option>-81kg</option><option>-90kg</option><option>-100kg</option><option>+100kg</option><option>-44kg</option><option>-48kg</option><option>-52kg</option><option>-57kg</option><option>-63kg</option><option>-70kg</option><option>-78kg</option><option>+78kg</option></select></div>
     </div>
+    <div class="fg"><label>Structure d'entraînement</label>
+      <select id="ep-structure">
+        <option value="">— Sélectionner —</option>
+        <option>Club</option>
+        <option>Section Judo Chartres</option>
+        <option>Pôle Espoirs Orléans</option>
+        <option>Pôle France Orléans</option>
+        <option>Pôle Espoirs Rennes</option>
+        <option>INSEP</option>
+        <option>Autre</option>
+      </select>
+    </div>
     <div style="display:flex;gap:7px;margin-bottom:14px"><button class="bP" style="flex:1" onclick="saveProfile()">Enregistrer</button><button class="bS" onclick="cm('m-edit-profile')">Annuler</button></div>
     <div style="border-top:1px solid var(--bd);padding-top:14px">
       <button style="width:100%;padding:10px;border-radius:9px;border:1.5px solid var(--rd);background:rgba(217,79,79,0.06);color:var(--rd);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em" onclick="doLogout()">🚪 Se déconnecter</button>
@@ -1097,7 +1109,6 @@ async function doRegister(){
   if(!prenom||!nom||!email||!password){err.textContent='Remplis tous les champs.';return;}
   if(!dob){err.textContent='La date de naissance est obligatoire.';return;}
   if(!document.getElementById('reg-cgu')?.checked){err.textContent='Vous devez accepter les CGU pour continuer.';return;}
-  // Vérification age et autorisation parentale
   const age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
   if(age<15&&!document.getElementById('reg-parental')?.checked){err.textContent='L\'autorisation du représentant légal est obligatoire pour les moins de 15 ans.';return;}
   if(password.length<6){err.textContent='Mot de passe trop court (6 min).';return;}
@@ -1108,51 +1119,105 @@ async function doRegister(){
   const clubCode=document.getElementById('reg-club-code').value.trim();
   if(clubCode!==CLUB_CODE){err.textContent='Code club incorrect.';return;}
 
-  // Au moins un rôle
   const roles=['parent','licencie','competiteur','section','prof','prof_section','coach','bureau'];
   const checked=roles.filter(r=>document.getElementById('chk-'+r)?.checked);
   if(!checked.length){err.textContent='Sélectionne au moins un rôle.';return;}
 
-  // Vérifier codes
-  if(checked.includes('competiteur')&&document.getElementById('reg-combat-code')?.value.trim()!==COMBAT_CODE){err.textContent='Code compétiteur incorrect.';return;}
-  if(checked.includes('section')&&document.getElementById('reg-section-code')?.value.trim()!==SECTION_CODE){err.textContent='Code section incorrect.';return;}
+  // Vérification codes rôles
   if(checked.includes('prof')&&document.getElementById('reg-prof-code')?.value.trim()!==PROF_CODE){err.textContent='Code professeur incorrect.';return;}
   if(checked.includes('prof_section')&&document.getElementById('reg-prof-section-code')?.value.trim()!==PROF_SECTION_CODE){err.textContent='Code prof section incorrect.';return;}
   if(checked.includes('coach')&&document.getElementById('reg-coach-code')?.value.trim()!==COACH_CODE){err.textContent='Code coach incorrect.';return;}
   if(checked.includes('bureau')&&document.getElementById('reg-bureau-code')?.value.trim()!==BUREAU_CODE){err.textContent='Code bureau incorrect.';return;}
 
+  // Codes personnels CMJ-XXXX et SEC-XXXX
+  const combatCodeInput=document.getElementById('reg-combat-code')?.value.trim().toUpperCase()||'';
+  const sectionCodeInput=document.getElementById('reg-section-code')?.value.trim().toUpperCase()||'';
+
+  let profilExistant=null; // profil dans profiles (CMJ)
+  let profilSectionExistant=null; // profil dans profils_section (SEC)
+
+  // Vérifie code compétiteur
+  if(checked.includes('competiteur')){
+    if(combatCodeInput.startsWith('CMJ-')){
+      const{data:p}=await sb.from('profiles').select('*').eq('code_invitation',combatCodeInput).single();
+      if(!p){err.textContent='Code compétiteur introuvable. Vérifie le code fourni par ton club.';return;}
+      profilExistant=p;
+    } else if(combatCodeInput!==COMBAT_CODE){
+      err.textContent='Code compétiteur incorrect.';return;
+    }
+  }
+
+  // Vérifie code section
+  if(checked.includes('section')){
+    if(sectionCodeInput.startsWith('SEC-')){
+      const{data:p}=await sb.from('profils_section').select('*').eq('code_invitation',sectionCodeInput).single();
+      if(!p){err.textContent='Code section introuvable. Vérifie le code fourni par ton prof.';return;}
+      profilSectionExistant=p;
+    } else if(sectionCodeInput!==SECTION_CODE){
+      err.textContent='Code section incorrect.';return;
+    }
+  }
+
+  err.textContent='Création du compte...';
   const{data,error}=await sb.auth.signUp({email,password});
   if(error){err.textContent=error.message;return;}
 
-  const isComp=checked.includes('competiteur');
-  const cat=isComp?document.getElementById('reg-cat')?.value||'':'';
-  const poids=isComp?document.getElementById('reg-poids')?.value||'':'';
-
-  // Bureau = accès total
   const isBureau=checked.includes('bureau');
+  const isComp=checked.includes('competiteur');
 
-  const profileData={
-    id:data.user.id,prenom,nom,email,
-    date_naissance:dob,
-    autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
-    is_licencie:checked.includes('licencie')||isComp||isBureau,
-    is_competiteur:isComp,is_judoka:isComp,
-    is_section:checked.includes('section'),
-    is_prof:checked.includes('prof')||isBureau,
-    is_prof_section:checked.includes('prof_section')||isBureau,
-    is_coach:checked.includes('coach')||isBureau,
-    is_bureau:isBureau,
-    is_parent:checked.includes('parent'),
-    cat,poids,
-    created_at:new Date().toISOString()
-  };
+  let profileData;
+  if(profilExistant){
+    // Lie le compte auth au profil existant — on met à jour l'id et l'email
+    profileData={
+      ...profilExistant,
+      id:data.user.id,
+      email,
+      date_naissance:dob,
+      autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
+      is_licencie:true,
+      is_competiteur:true,
+      is_judoka:true,
+      is_section:checked.includes('section')||profilExistant.is_section,
+      is_prof:checked.includes('prof')||isBureau||profilExistant.is_prof,
+      is_prof_section:checked.includes('prof_section')||isBureau||profilExistant.is_prof_section,
+      is_coach:checked.includes('coach')||isBureau||profilExistant.is_coach,
+      is_bureau:isBureau||profilExistant.is_bureau,
+      is_parent:checked.includes('parent'),
+    };
+    // Supprimer l'ancien profil (il avait un id différent)
+    await sb.from('profiles').delete().eq('id',profilExistant.id);
+  } else {
+    const cat=isComp?document.getElementById('reg-cat')?.value||'':'';
+    const poids=isComp?document.getElementById('reg-poids')?.value||'':'';
+    profileData={
+      id:data.user.id,prenom,nom,email,
+      date_naissance:dob,
+      autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
+      is_licencie:checked.includes('licencie')||isComp||isBureau,
+      is_competiteur:isComp,is_judoka:isComp,
+      is_section:checked.includes('section'),
+      is_prof:checked.includes('prof')||isBureau,
+      is_prof_section:checked.includes('prof_section')||isBureau,
+      is_coach:checked.includes('coach')||isBureau,
+      is_bureau:isBureau,
+      is_parent:checked.includes('parent'),
+      cat,poids,
+      created_at:new Date().toISOString()
+    };
+  }
   await sb.from('profiles').upsert(profileData);
+
+  // Lier le profil section si code SEC fourni
+  if(profilSectionExistant){
+    await sb.from('profils_section').update({linked_profile_id:data.user.id}).eq('id',profilSectionExistant.id);
+  }
+
   err.textContent='';
   document.getElementById('form-register').innerHTML=`
     <div style="text-align:center;padding:24px 12px">
       <div style="font-size:3rem;margin-bottom:12px">🎉</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy);margin-bottom:8px">Compte créé avec succès !</div>
-      <div style="font-size:0.85rem;color:var(--mu);margin-bottom:20px;line-height:1.5">Bienvenue ${prenom} ! Tu peux maintenant te connecter avec ton email et ton mot de passe.</div>
+      <div style="font-size:0.85rem;color:var(--mu);margin-bottom:20px;line-height:1.5">Bienvenue ${profilExistant?profilExistant.prenom:prenom} ! Tu peux maintenant te connecter.</div>
       <button class="bP" onclick="switchAuthTab('login')">Se connecter →</button>
     </div>`;
 }
@@ -1280,7 +1345,7 @@ function showMainPage(p,btn){
 
 function loadJudokaView_base(){
   document.getElementById('hname').textContent=jFN(CP);
-  document.getElementById('hmeta').textContent=(CP.cat||'')+' • '+(CP.poids||'');
+  document.getElementById('hmeta').textContent=(CP.cat||'')+' • '+(CP.poids||'')+(CP.structure?' • '+CP.structure:'');
   showStep('step-dash');
   perfWeekOffset=0;
   renderPerfWeek();
@@ -2884,18 +2949,31 @@ async function uploadPhoto(file,pathSuffix){
 
 // Update openEditProfile to show photo upload
 function openEditProfile(){
-  // Use m-ej modal if it exists, otherwise m-edit-profile
   const modal=document.getElementById('m-ej')||document.getElementById('m-edit-profile');
   if(!modal)return;
-  const p=modal.querySelector('#ejp')||modal.querySelector('#ep-p');
-  const n=modal.querySelector('#ejn')||modal.querySelector('#ep-n');
+  const p=modal.querySelector('#ejp')||modal.querySelector('#ep-prenom');
+  const n=modal.querySelector('#ejn')||modal.querySelector('#ep-nom');
   const c=modal.querySelector('#ejc')||modal.querySelector('#ep-cat');
   const po=modal.querySelector('#ejpo')||modal.querySelector('#ep-poids');
+  const st=modal.querySelector('#ep-structure');
   if(p)p.value=CP.prenom||'';
   if(n)n.value=CP.nom||'';
   if(c)c.value=CP.cat||'Seniors';
   if(po)po.value=CP.poids||'-81kg';
+  if(st)st.value=CP.structure||'';
   modal.classList.add('open');
+}
+async function saveProfile(){
+  const prenom=document.getElementById('ep-prenom')?.value.trim()||CP.prenom;
+  const nom=document.getElementById('ep-nom')?.value.trim()||CP.nom;
+  const cat=document.getElementById('ep-cat')?.value||CP.cat;
+  const poids=document.getElementById('ep-poids')?.value||CP.poids;
+  const structure=document.getElementById('ep-structure')?.value||CP.structure||'';
+  CP.prenom=prenom;CP.nom=nom;CP.cat=cat;CP.poids=poids;CP.structure=structure;
+  await sb.from('profiles').update({prenom,nom,cat,poids,structure}).eq('id',CU.id);
+  document.getElementById('hname').textContent=jFN(CP);
+  document.getElementById('hmeta').textContent=CP.cat+' • '+CP.poids;
+  renderNavUser();cm('m-edit-profile');showSync();toast('Profil mis à jour !');
 }
 async function saveEJ(){
   const p=document.getElementById('ejp').value.trim(),n=document.getElementById('ejn').value.trim();
