@@ -834,9 +834,11 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 <div class="mo" id="m-bilan">
   <div class="modal" style="max-height:85vh;overflow-y:auto">
     <h3 id="m-bilan-title">📊 Nouveau bilan</h3>
-    <div class="tc">
-      <div class="fg" style="margin:0"><label>Du (mardi)</label><input type="date" id="bilan-date-debut"></div>
-      <div class="fg" style="margin:0"><label>Au (vendredi)</label><input type="date" id="bilan-date-fin"></div>
+    <div class="fg">
+      <label>Semaine</label>
+      <select id="bilan-semaine" onchange="onBilanSemaineChange()"></select>
+      <input type="hidden" id="bilan-date-debut">
+      <input type="hidden" id="bilan-date-fin">
     </div>
     <div class="fg" style="margin-top:10px">
       <label>Intervenants par jour</label>
@@ -1915,6 +1917,42 @@ async function loadBilansProfSection(){
   el.innerHTML=html;
 }
 
+function genSemainesSaison(){
+  // Génère les semaines mardi→vendredi de sept à juin
+  const semaines=[];
+  // Saisons : 2025-2026 et 2026-2027
+  const saisons=[{start:new Date(2025,8,1),end:new Date(2026,5,30)},{start:new Date(2026,8,1),end:new Date(2027,5,30)}];
+  saisons.forEach(saison=>{
+    let d=new Date(saison.start);
+    // Trouver le premier mardi
+    while(d.getDay()!==2)d.setDate(d.getDate()+1);
+    let n=1;
+    while(d<=saison.end){
+      const mardi=new Date(d);
+      const vendredi=new Date(d);vendredi.setDate(d.getDate()+3);
+      const fmt=dt=>dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+      const annee=mardi.getFullYear();
+      semaines.push({
+        label:`Semaine ${n} — Mar. ${fmt(mardi)} → Ven. ${fmt(vendredi)}`,
+        debut:dstr(mardi),
+        fin:dstr(vendredi),
+        saison:`${annee}-${annee+1}`
+      });
+      d.setDate(d.getDate()+7);
+      n++;
+    }
+  });
+  return semaines;
+}
+function onBilanSemaineChange(){
+  const sel=document.getElementById('bilan-semaine');
+  const semaines=genSemainesSaison();
+  const s=semaines[sel.value];
+  if(s){
+    document.getElementById('bilan-date-debut').value=s.debut;
+    document.getElementById('bilan-date-fin').value=s.fin;
+  }
+}
 async function openBilanModal(id){
   let bilan={};
   if(id){const{data}=await sb.from('bilans_section').select('*').eq('id',id).single();bilan=data||{};}
@@ -1923,10 +1961,25 @@ async function openBilanModal(id){
   const JOURS_KEYS=['mardi','mercredi','jeudi','vendredi'];
   // Titre
   document.getElementById('m-bilan-title').textContent=id?'✏️ Modifier le bilan':'📊 Nouveau bilan';
-  // Dates
-  document.getElementById('bilan-date-debut').value=bilan.date_debut||'';
-  document.getElementById('bilan-date-fin').value=bilan.date_fin||'';
   document.getElementById('bilan-id').value=id||'';
+  // Remplir le select semaines
+  const semaines=genSemainesSaison();
+  const selEl=document.getElementById('bilan-semaine');
+  selEl.innerHTML=semaines.map((s,i)=>`<option value="${i}">${s.label}</option>`).join('');
+  // Sélectionner la semaine correspondante ou la semaine courante
+  let selIdx=0;
+  if(bilan.date_debut){
+    const idx=semaines.findIndex(s=>s.debut===bilan.date_debut);
+    if(idx>=0)selIdx=idx;
+  } else {
+    // Trouver la semaine courante
+    const today=dstr(new Date());
+    const idx=semaines.findIndex(s=>s.debut<=today&&s.fin>=today);
+    if(idx>=0)selIdx=idx;
+  }
+  selEl.value=selIdx;
+  document.getElementById('bilan-date-debut').value=semaines[selIdx]?.debut||'';
+  document.getElementById('bilan-date-fin').value=semaines[selIdx]?.fin||'';
   // Déplacements
   document.getElementById('bilan-dep-orleans').checked=!!bilan.deplacement_orleans;
   document.getElementById('bilan-dep-orleans-sel').value=bilan.deplacement_orleans_sel||'';
