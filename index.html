@@ -2063,6 +2063,130 @@ function deleteCompetSection(id){
   });
 }
 
+async function loadResultatsSectionInline(){
+  const el=document.getElementById('section-resultats-inline');if(!el)return;
+  await loadJudokasCacheSection();
+  const{data:comps}=await sb.from('competitions_section').select('*').order('date',{ascending:false});
+  if(!comps||!comps.length){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.78rem">Aucun résultat publié.</div>';
+    return;
+  }
+  // Construire palmarès par judoka
+  const palmares={};
+  comps.forEach(c=>{
+    (c.resultats||[]).forEach(r=>{
+      if(!palmares[r.judoka_id])palmares[r.judoka_id]={ors:0,args:0,brons:0,autres:0,comps:[]};
+      const p=palmares[r.judoka_id];
+      if(r.medaille==='🥇 Or')p.ors++;
+      else if(r.medaille==='🥈 Argent')p.args++;
+      else if(r.medaille==='🥉 Bronze')p.brons++;
+      else p.autres++;
+      p.comps.push({...r,comp_nom:c.nom,comp_type:c.type,comp_date:c.date});
+    });
+  });
+  const judokaMap={};
+  _judokasSectionCache.forEach(j=>{judokaMap[j.id]=j;});
+  const renderTableCat=(cat,titre)=>{
+    const judokas=_judokasSectionCache
+      .filter(j=>j.cat===cat&&palmares[j.id])
+      .sort((a,b)=>a.nom.localeCompare(b.nom));
+    if(!judokas.length)return '';
+    const rows=judokas.map(j=>{
+      const p=palmares[j.id];
+      return `<tr onclick="showJudokaResultatDetail('${j.id}')" style="cursor:pointer;border-bottom:1px solid var(--bd)" onmouseover="this.style.background='rgba(64,65,104,0.04)'" onmouseout="this.style.background=''">
+        <td style="padding:8px 6px;font-weight:700;font-size:0.82rem;color:var(--navy)">${j.nom}</td>
+        <td style="padding:8px 6px;font-size:0.82rem">${j.prenom}</td>
+        <td style="padding:8px 6px;text-align:center;font-size:0.82rem">${p.ors?`<span style="color:#b8860b;font-weight:700">🥇${p.ors}</span>`:'—'}</td>
+        <td style="padding:8px 6px;text-align:center;font-size:0.82rem">${p.args?`<span style="color:#666;font-weight:700">🥈${p.args}</span>`:'—'}</td>
+        <td style="padding:8px 6px;text-align:center;font-size:0.82rem">${p.brons?`<span style="color:#8B4513;font-weight:700">🥉${p.brons}</span>`:'—'}</td>
+        <td style="padding:8px 6px;text-align:center;font-size:0.75rem;color:var(--mu)">${p.autres||'—'}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82rem;text-transform:uppercase;color:var(--navy);margin-bottom:6px;padding-left:4px">${titre}</div>
+      <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;background:var(--sf2);border-radius:10px;overflow:hidden">
+        <thead><tr style="background:var(--navy)">
+          <th style="padding:7px 6px;text-align:left;font-size:0.68rem;letter-spacing:0.08em;color:#fff;font-weight:700">NOM</th>
+          <th style="padding:7px 6px;text-align:left;font-size:0.68rem;letter-spacing:0.08em;color:#fff;font-weight:700">PRÉNOM</th>
+          <th style="padding:7px 6px;text-align:center;font-size:0.75rem;color:#F2BA1D">🥇</th>
+          <th style="padding:7px 6px;text-align:center;font-size:0.75rem;color:#ccc">🥈</th>
+          <th style="padding:7px 6px;text-align:center;font-size:0.75rem;color:#CD7F32">🥉</th>
+          <th style="padding:7px 6px;text-align:center;font-size:0.68rem;color:rgba(255,255,255,0.6)">Cl.</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  };
+  el.innerHTML=renderTableCat('Minimes','🥋 Minimes')+renderTableCat('Cadets(tes)','🎽 Cadets(tes)');
+}
+
+async function showJudokaResultatDetail(judokaId){
+  await loadJudokasCacheSection();
+  const j=_judokasSectionCache.find(x=>x.id===judokaId);if(!j)return;
+  const{data:comps}=await sb.from('competitions_section').select('*').order('date',{ascending:false});
+  // Filtrer les compétitions où ce judoka a un résultat
+  const sesComps=(comps||[]).filter(c=>(c.resultats||[]).some(r=>r.judoka_id===judokaId));
+  const pg=document.getElementById('page-section');if(!pg)return;
+  const TYPE_LABEL={national:'Tournoi National',regional:'Champ. Régional',france:'Champ. de France',international:'International',autre:'Autre'};
+  const avatar=j.avatar_url?`<img src="${j.avatar_url}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:3px solid var(--navy)">`:`<div style="width:56px;height:56px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:#fff;flex-shrink:0">${(j.prenom?.[0]||'')+(j.nom?.[0]||'')}</div>`;
+  // Stats globales
+  let ors=0,args=0,brons=0,autres=0;
+  sesComps.forEach(c=>{
+    const r=(c.resultats||[]).find(r=>r.judoka_id===judokaId);
+    if(!r)return;
+    if(r.medaille==='🥇 Or')ors++;
+    else if(r.medaille==='🥈 Argent')args++;
+    else if(r.medaille==='🥉 Bronze')brons++;
+    else autres++;
+  });
+  pg.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <button class="bS" onclick="showSectionSection('main')">← Retour</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      ${avatar}
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">${j.prenom} ${j.nom}</div>
+        <div style="font-size:0.72rem;color:var(--mu)">${j.cat||''}${j.poids?' • '+j.poids:''}</div>
+      </div>
+    </div>
+    <!-- Compteurs médailles -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      <div style="background:rgba(242,186,29,0.12);border:1.5px solid rgba(242,186,29,0.4);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">🥇</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#b8860b">${ors}</div>
+      </div>
+      <div style="background:rgba(158,158,158,0.1);border:1.5px solid rgba(158,158,158,0.3);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">🥈</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#666">${args}</div>
+      </div>
+      <div style="background:rgba(205,127,50,0.1);border:1.5px solid rgba(205,127,50,0.3);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">🥉</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#8B4513">${brons}</div>
+      </div>
+      <div style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:12px;padding:10px;text-align:center">
+        <div style="font-size:1.3rem">📋</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:var(--mu)">${sesComps.length}</div>
+      </div>
+    </div>
+    <!-- Liste des compétitions -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.88rem;text-transform:uppercase;color:var(--navy);margin-bottom:8px">Détail des compétitions</div>
+    ${sesComps.length?sesComps.map(c=>{
+      const r=(c.resultats||[]).find(r=>r.judoka_id===judokaId);
+      const d=c.date?new Date(c.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+      const col=MEDAILLE_COL[r?.medaille]||'var(--mu)';
+      return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:1.8rem;flex-shrink:0">${r?.medaille?.match(/🥇|🥈|🥉/)?.[0]||'📋'}</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${c.nom}</div>
+          <div style="font-size:0.68rem;color:var(--mu);margin-top:2px">${TYPE_LABEL[c.type]||c.type}${d?' · '+d:''}${c.lieu?' · '+c.lieu:''}</div>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.9rem;color:${col}">${r?.medaille?.replace(/🥇|🥈|🥉/g,'').trim()||'—'}</div>
+      </div>`;
+    }).join(''):`<div style="text-align:center;padding:24px;color:var(--mu)">Aucune compétition enregistrée.</div>`}`;
+}
+
 async function loadResultatsSectionPublic(){
   const el=document.getElementById('resultats-section-public-view');if(!el)return;
   await loadJudokasCacheSection();
@@ -3304,14 +3428,22 @@ function showSectionSection(sec){
       <button class="bS" onclick="changeWeekSection(1)">Suiv. →</button>
     </div>
     <div id="section-week-planning" style="overflow-x:auto;margin-bottom:16px;-webkit-overflow-scrolling:touch"></div>
-    <!-- 4. ÉQUIPE + CALENDRIER + RÉSULTATS -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <!-- 4. ÉQUIPE + CALENDRIER -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showSectionSection('equipe')"><div style="font-size:1.6rem">👨‍🏫</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Équipe</div><div style="font-size:0.68rem;color:var(--mu)">Les intervenants</div></div></div>
       <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="showSectionSection('calendrier')"><div style="font-size:1.6rem">📅</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Calendrier</div><div style="font-size:0.68rem;color:var(--mu)">Compétitions & stages</div></div></div>
-      <div style="background:var(--sf);border:2px solid rgba(255,193,7,0.4);border-radius:14px;padding:16px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;grid-column:span 2" onclick="showSectionSection('resultats')"><div style="font-size:1.6rem">🏅</div><div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;text-transform:uppercase;color:var(--navy)">Résultats Compétitions</div><div style="font-size:0.68rem;color:var(--mu)">Palmarès de la section</div></div></div>
+    </div>
+    <!-- 5. TABLEAU RÉSULTATS INLINE -->
+    <div style="background:var(--sf);border:1.5px solid rgba(255,193,7,0.4);border-radius:16px;padding:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy)">🏅 Résultats Compétitions</div>
+        <button class="bS" style="font-size:0.68rem;padding:3px 10px" onclick="showSectionSection('resultats')">Voir tout →</button>
+      </div>
+      <div id="section-resultats-inline"><div style="text-align:center;padding:12px;color:var(--mu);font-size:0.78rem">Chargement...</div></div>
     </div>`;
     loadSectionActualites(true);
     sectionWeekOffset=0;sectionWeekReadOnly=!(CP&&(CP.is_prof_section||CP.is_bureau));renderSectionWeek(sectionWeekReadOnly);
+    loadResultatsSectionInline();
   }
   else if(sec==='planning'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📅 Planning Section</div><button class="bS" onclick="showSectionSection('main')">← Retour</button></div><div style="font-size:0.78rem;color:var(--mu);margin-bottom:12px">📍 10 rue de Châteaudun, Chartres</div><div id="section-planning-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadSectionPlanning();}
   else if(sec==='equipe'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">👨‍🏫 Équipe Section</div><button class="bS" onclick="showSectionSection('main')">← Retour</button></div><div id="section-equipe-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadSectionEquipe();}
