@@ -3764,6 +3764,7 @@ async function openAdminEditProfile(id){
       ${['is_licencie','is_competiteur','is_prof','is_coach','is_bureau','is_section','is_prof_section','is_parent','is_admin'].map(r=>`<label style="display:flex;align-items:center;gap:4px;font-size:0.78rem;cursor:pointer"><input type="checkbox" id="aep-${r}" ${p[r]?'checked':''}> ${r.replace('is_','')}</label>`).join('')}
     </div>
     <input type="hidden" id="aep-id" value="${p.id}">
+    <div id="aep-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px;display:none"></div>
     <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveAdminEditProfile()">💾 Enregistrer</button><button class="bS" onclick="document.getElementById('m-admin-edit').remove()">Annuler</button></div>
   </div>`;
   document.body.appendChild(mo);
@@ -3771,20 +3772,35 @@ async function openAdminEditProfile(id){
 
 async function saveAdminEditProfile(){
   const id=document.getElementById('aep-id')?.value;if(!id)return;
-  const roles=['is_licencie','is_competiteur','is_prof','is_coach','is_bureau','is_section','is_prof_section','is_parent','is_admin'];
   const update={
     prenom:document.getElementById('aep-prenom')?.value.trim()||'',
     nom:document.getElementById('aep-nom')?.value.trim()||'',
     cat:document.getElementById('aep-cat')?.value||'',
     poids:document.getElementById('aep-poids')?.value||'',
-    titre:document.getElementById('aep-titre')?.value.trim()||'',
-    diplome:document.getElementById('aep-diplome')?.value.trim()||'',
+    titre:document.getElementById('aep-titre')?.value.trim()||null,
+    diplome:document.getElementById('aep-diplome')?.value.trim()||null,
+    is_licencie:!!document.getElementById('aep-is_licencie')?.checked,
+    is_competiteur:!!document.getElementById('aep-is_competiteur')?.checked,
+    is_prof:!!document.getElementById('aep-is_prof')?.checked,
+    is_coach:!!document.getElementById('aep-is_coach')?.checked,
+    is_bureau:!!document.getElementById('aep-is_bureau')?.checked,
+    is_section:!!document.getElementById('aep-is_section')?.checked,
+    is_prof_section:!!document.getElementById('aep-is_prof_section')?.checked,
+    is_parent:!!document.getElementById('aep-is_parent')?.checked,
   };
-  roles.forEach(r=>{update[r]=!!document.getElementById('aep-'+r)?.checked;});
-  await sb.from('profiles').update(update).eq('id',id);
-  document.getElementById('m-admin-edit')?.remove();
-  showSync();toast('Profil mis à jour ! 👊');
-  loadAdminProfiles();
+  const isAdminEl=document.getElementById('aep-is_admin');
+  try{
+    const{error}=await sb.from('profiles').update(update).eq('id',id);
+    if(error){console.error('Update error:',error);toast('Erreur : '+error.message,1);return;}
+    // is_admin dans un update séparé (colonne ajoutée manuellement)
+    if(isAdminEl){
+      const{error:e2}=await sb.from('profiles').update({is_admin:!!isAdminEl.checked}).eq('id',id);
+      if(e2)console.warn('is_admin non mis à jour:',e2.message);
+    }
+    document.getElementById('m-admin-edit')?.remove();
+    showSync();toast('Profil mis à jour ! 👊');
+    loadAdminProfiles();
+  }catch(e){console.error(e);toast('Erreur inattendue',1);}
 }
 
 async function loadAdminCodes(){
