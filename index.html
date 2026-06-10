@@ -671,6 +671,9 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
   <!-- PAGE BUREAU (dynamically filled) -->
   <div class="page" id="page-bureau"></div>
 
+  <!-- PAGE ADMIN (super admin — Kylian uniquement) -->
+  <div class="page" id="page-admin"></div>
+
   <!-- PAGE PROF SECTION (dynamically filled) -->
   <div class="page" id="page-prof_section"></div>
 </div>
@@ -1407,13 +1410,14 @@ function renderNavTabs(){
   if(CP.is_prof_section)html+=`<button class="ntb" id="ntb-profsec" onclick="showMainPage('prof_section',this)">🏫 Prof Sect.</button>`;
   if(CP.is_coach)html+=`<button class="ntb" id="ntb-coach" onclick="showMainPage('coach',this)">📊 Coach</button>`;
   if(CP.is_bureau)html+=`<button class="ntb" id="ntb-bureau" onclick="showMainPage('bureau',this)">🏛️ Bureau</button>`;
+  if(CP.is_admin)html+=`<button class="ntb" id="ntb-admin" onclick="showMainPage('admin',this)">⚙️ Admin</button>`;
   tabs.innerHTML=html;
 }
 
 function showMainPage(p,btn){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ntb').forEach(x=>x.classList.remove('active'));
-  const idMap={perf:'judoka',judoka:'judoka',club:'club',prof:'prof',coach:'coach',section:'section',bureau:'bureau',prof_section:'prof_section'};
+  const idMap={perf:'judoka',judoka:'judoka',club:'club',prof:'prof',coach:'coach',section:'section',bureau:'bureau',prof_section:'prof_section',admin:'admin'};
   const pgId='page-'+(idMap[p]||p);
   const pg=document.getElementById(pgId);
   if(pg)pg.classList.add('active');
@@ -1423,6 +1427,7 @@ function showMainPage(p,btn){
   if(p==='prof')renderProfPage();
   if(p==='section')renderSectionPage();
   if(p==='bureau')renderBureauPage();
+  if(p==='admin')renderAdminPage();
   if(p==='prof_section')renderProfSectionPage();
 }
 
@@ -3641,13 +3646,156 @@ async function loadSectionEquipe(){
   const{data:profs}=await sb.from('profiles').select('*').eq('is_prof_section',true).order('nom');
   const el=document.getElementById('section-equipe-view');if(!el)return;
   if(!profs||!profs.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">👨‍🏫</div><p style="font-size:0.8rem;margin-top:8px">Aucun intervenant.</p></div>';return;}
-  el.innerHTML=profs.map(p=>{const av=p.avatar_url?`<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`:`<span style="font-size:1.4rem;color:#fff">${((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase()}</span>`;return `<div class="prof-card"><div class="prof-avatar-big" style="background:var(--pu)">${av}</div><div style="flex:1"><div class="prof-name">${jFN(p)}</div><div class="prof-role-tag" style="color:var(--pu)">${p.titre||'Intervenant Section'}</div>${p.diplome?`<div class="prof-diplome">🎖️ ${p.diplome}</div>`:''} ${p.bio?`<div style="font-size:0.78rem;color:var(--tx);margin-top:4px;line-height:1.4">${p.bio}</div>`:''}</div></div>`;}).join('');
+  // Ordre fixe section : Kylian, Mathilde, Julian, Robin, Jean-Baptiste
+  const ORDER_SEC=['wuillot','fayol','corniaux','beaumont','carnis'];
+  function rankSec(p){const n=(p.nom||'').toLowerCase();const i=ORDER_SEC.findIndex(x=>n.includes(x));return i>=0?i:99;}
+  const sorted=[...profs].sort((a,b)=>rankSec(a)-rankSec(b));
+  el.innerHTML=sorted.map(p=>{
+    const av=p.avatar_url?`<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`:`<span style="font-size:1.4rem;color:#fff">${((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase()}</span>`;
+    return `<div class="prof-card"><div class="prof-avatar-big" style="background:var(--pu)">${av}</div><div style="flex:1"><div class="prof-name">${jFN(p)}</div><div class="prof-role-tag" style="color:var(--pu)">${p.titre||'Intervenant Section'}</div>${p.diplome?`<div class="prof-diplome">🎖️ ${p.diplome}</div>`:''} ${p.bio?`<div style="font-size:0.78rem;color:var(--tx);margin-top:4px;line-height:1.4">${p.bio}</div>`:''}</div></div>`;
+  }).join('');
 }
 async function loadSectionAnnonces(){
   const{data:ann}=await sb.from('annonces_section').select('*').order('created_at',{ascending:false});
   const el=document.getElementById('section-annonces-view');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📢</div><p style="font-size:0.8rem;margin-top:8px">Aucune annonce.</p></div>';return;}
   el.innerHTML=ann.map(a=>`<div class="annonce-item" style="border-left-color:var(--pu)"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div><div class="annonce-author" style="color:var(--pu)">${a.auteur||'Section'}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div>`).join('');
+}
+
+// ============================================================
+// ESPACE ADMIN (super admin)
+// ============================================================
+function renderAdminPage(){
+  if(!CP.is_admin)return;
+  const pg=document.getElementById('page-admin');if(!pg)return;
+  pg.innerHTML=`<div style="margin-bottom:16px">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">⚙️ Administration</div>
+    <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Super Admin — CMJ28</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr;gap:12px">
+    <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showAdminSection('profils')">
+      <div style="font-size:2rem;width:48px;text-align:center">👤</div>
+      <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Gestion des profils</div>
+      <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Modifier tous les judokas, profs, bureau</div></div>
+      <div style="font-size:1.2rem;color:var(--bd)">›</div>
+    </div>
+    <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showAdminSection('codes')">
+      <div style="font-size:2rem;width:48px;text-align:center">🔑</div>
+      <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Codes d'invitation</div>
+      <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Visualiser les codes CMJ- et SEC-</div></div>
+      <div style="font-size:1.2rem;color:var(--bd)">›</div>
+    </div>
+  </div>`;
+}
+
+function showAdminSection(sec){
+  const pg=document.getElementById('page-admin');if(!pg)return;
+  if(sec==='profils'){
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ST" style="margin:0">👤 Gestion des profils</div>
+      <button class="bS" onclick="renderAdminPage()">← Retour</button>
+    </div>
+    <div class="fg"><input type="text" id="admin-search" placeholder="Rechercher un profil..." oninput="adminSearchProfiles(this.value)"></div>
+    <div id="admin-profiles-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+    loadAdminProfiles();
+  }
+  else if(sec==='codes'){
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ST" style="margin:0">🔑 Codes d'invitation</div>
+      <button class="bS" onclick="renderAdminPage()">← Retour</button>
+    </div>
+    <div id="admin-codes-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+    loadAdminCodes();
+  }
+}
+
+let _adminAllProfiles=[];
+async function loadAdminProfiles(){
+  const{data:profiles}=await sb.from('profiles').select('*').order('nom');
+  _adminAllProfiles=profiles||[];
+  renderAdminProfilesList(_adminAllProfiles);
+}
+function adminSearchProfiles(q){
+  if(!q){renderAdminProfilesList(_adminAllProfiles);return;}
+  const ql=q.toLowerCase();
+  renderAdminProfilesList(_adminAllProfiles.filter(p=>(p.prenom+' '+p.nom).toLowerCase().includes(ql)||(p.email||'').toLowerCase().includes(ql)));
+}
+function renderAdminProfilesList(profiles){
+  const el=document.getElementById('admin-profiles-list');if(!el)return;
+  if(!profiles.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Aucun profil trouvé.</div>';return;}
+  el.innerHTML=profiles.map(p=>{
+    const roles=[];
+    if(p.is_bureau)roles.push('Bureau');
+    if(p.is_prof)roles.push('Prof');
+    if(p.is_coach)roles.push('Coach');
+    if(p.is_prof_section)roles.push('Prof Section');
+    if(p.is_competiteur)roles.push('Compétiteur');
+    if(p.is_section)roles.push('Section');
+    if(p.is_licencie)roles.push('Licencié');
+    if(p.is_parent)roles.push('Parent');
+    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:0.88rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.prenom||'—'} ${p.nom||''}</div>
+        <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">${p.email||'Sans email'}</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${roles.map(r=>`<span style="font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(64,65,104,0.08);color:var(--navy)">${r}</span>`).join('')}</div>
+      </div>
+      <button class="bE" style="flex-shrink:0" onclick="openAdminEditProfile('${p.id}')">✏️ Modifier</button>
+    </div>`;
+  }).join('');
+}
+
+async function openAdminEditProfile(id){
+  const{data:p}=await sb.from('profiles').select('*').eq('id',id).single();if(!p)return;
+  const existing=document.getElementById('m-admin-edit');if(existing)existing.remove();
+  const catOpts=['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans'].map(c=>`<option value="${c}"${(p.cat||'')=== c?' selected':''}>${c}</option>`).join('');
+  const mo=document.createElement('div');mo.className='mo open';mo.id='m-admin-edit';
+  mo.innerHTML=`<div class="modal">
+    <h3>✏️ Modifier le profil</h3>
+    <div style="font-size:0.72rem;color:var(--mu);margin-bottom:12px">ID: ${p.id.slice(0,8)}...</div>
+    <div class="tc"><div class="fg"><label>Prénom</label><input type="text" id="aep-prenom" value="${p.prenom||''}"></div><div class="fg"><label>Nom</label><input type="text" id="aep-nom" value="${p.nom||''}"></div></div>
+    <div class="tc">
+      <div class="fg"><label>Catégorie</label><select id="aep-cat">${catOpts}</select></div>
+      <div class="fg"><label>Poids</label><input type="text" id="aep-poids" value="${p.poids||''}"></div>
+    </div>
+    <div class="fg"><label>Titre / Poste</label><input type="text" id="aep-titre" value="${p.titre||''}" placeholder="Ex: Directeur Technique"></div>
+    <div class="fg"><label>Diplôme</label><input type="text" id="aep-diplome" value="${p.diplome||''}" placeholder="Ex: DESJEPS"></div>
+    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mu);margin-bottom:8px">Rôles</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      ${['is_licencie','is_competiteur','is_prof','is_coach','is_bureau','is_section','is_prof_section','is_parent','is_admin'].map(r=>`<label style="display:flex;align-items:center;gap:4px;font-size:0.78rem;cursor:pointer"><input type="checkbox" id="aep-${r}" ${p[r]?'checked':''}> ${r.replace('is_','')}</label>`).join('')}
+    </div>
+    <input type="hidden" id="aep-id" value="${p.id}">
+    <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveAdminEditProfile()">💾 Enregistrer</button><button class="bS" onclick="document.getElementById('m-admin-edit').remove()">Annuler</button></div>
+  </div>`;
+  document.body.appendChild(mo);
+}
+
+async function saveAdminEditProfile(){
+  const id=document.getElementById('aep-id')?.value;if(!id)return;
+  const roles=['is_licencie','is_competiteur','is_prof','is_coach','is_bureau','is_section','is_prof_section','is_parent','is_admin'];
+  const update={
+    prenom:document.getElementById('aep-prenom')?.value.trim()||'',
+    nom:document.getElementById('aep-nom')?.value.trim()||'',
+    cat:document.getElementById('aep-cat')?.value||'',
+    poids:document.getElementById('aep-poids')?.value||'',
+    titre:document.getElementById('aep-titre')?.value.trim()||'',
+    diplome:document.getElementById('aep-diplome')?.value.trim()||'',
+  };
+  roles.forEach(r=>{update[r]=!!document.getElementById('aep-'+r)?.checked;});
+  await sb.from('profiles').update(update).eq('id',id);
+  document.getElementById('m-admin-edit')?.remove();
+  showSync();toast('Profil mis à jour ! 👊');
+  loadAdminProfiles();
+}
+
+async function loadAdminCodes(){
+  const el=document.getElementById('admin-codes-list');if(!el)return;
+  const{data:profiles}=await sb.from('profiles').select('id,prenom,nom,code_invitation').not('code_invitation','is',null).order('nom');
+  const{data:section}=await sb.from('profils_section').select('id,prenom,nom,code_invitation,linked_profile_id').not('code_invitation','is',null).order('nom');
+  let html='<div class="ST" style="font-size:0.78rem">Codes CMJ (compétiteurs)</div>';
+  (profiles||[]).forEach(p=>{html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.85rem;font-weight:600">${p.prenom||''} ${p.nom||''}</span><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:var(--navy);letter-spacing:0.1em">${p.code_invitation}</span></div>`;});
+  html+='<div class="ST" style="font-size:0.78rem;margin-top:12px">Codes SEC (section)</div>';
+  (section||[]).forEach(p=>{const linked=p.linked_profile_id?'✅':'⏳';html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:9px 12px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:0.85rem;font-weight:600">${p.prenom||''} ${p.nom||''} <span style="font-size:0.72rem">${linked}</span></span><span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:var(--pu);letter-spacing:0.1em">${p.code_invitation}</span></div>`;});
+  el.innerHTML=html;
 }
 
 // ============================================================
@@ -4259,39 +4407,62 @@ async function handleBureauPhoto(input){
 // ============================================================
 async function loadOrganigramme(){
   const el=document.getElementById('organigramme-view');if(!el)return;
-  const{data:membres}=await sb.from('profiles').select('*').eq('is_bureau',true).order('nom');
-  if(!membres||!membres.length){el.innerHTML='<div style="text-align:center;padding:32px;color:var(--mu)"><div style="font-size:2rem">🏛️</div><p style="margin-top:8px">Aucun membre du bureau renseigné.</p></div>';return;}
-  // Trier par ordre de poste
-  const ordre={president:1,vice_president:2,secretaire:3,vice_secretaire:4,tresorier:5,vice_tresorier:6,membre:7};
-  const sorted=[...membres].sort((a,b)=>(ordre[a.poste_bureau]||7)-(ordre[b.poste_bureau]||7));
-  // Grouper par poste
-  const groupes={};
-  sorted.forEach(m=>{
-    const poste=m.poste_bureau||'membre';
-    if(!groupes[poste])groupes[poste]=[];
-    groupes[poste].push(m);
-  });
-  const postesLabel={president:'Président(e)',vice_president:'Vice-Président(e)',secretaire:'Secrétaire',vice_secretaire:'Vice-Secrétaire',tresorier:'Trésorier(e)',vice_tresorier:'Vice-Trésorier(e)',membre:'Membres du Bureau'};
-  let html='<div style="display:flex;flex-direction:column;gap:16px">';
-  // Président en haut, centré
-  if(groupes.president){
-    html+=`<div style="display:flex;justify-content:center">${groupes.president.map(m=>bureauCard(m,'var(--gold)',true)).join('')}</div>`;
+  // Structure CMJ — organigramme fixe avec données Supabase
+  const{data:membres}=await sb.from('profiles').select('*').order('nom');
+  const byName=(p,n)=>(membres||[]).find(m=>(m.prenom+' '+m.nom).toLowerCase().includes(n.toLowerCase()));
+  function orgCard(prenom,nom,poste,couleur,big,profile){
+    const m=profile||byName(null,nom)||{prenom,nom};
+    const size=big?'80px':'64px';
+    const av=m.avatar_url?`<img src="${m.avatar_url}" alt="" style="width:${size};height:${size};border-radius:50%;object-fit:cover;border:3px solid ${couleur}">`:`<div style="width:${size};height:${size};border-radius:50%;background:${couleur}22;border:3px solid ${couleur};display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:${big?'1.3':'1'}rem;color:${couleur}">${(prenom[0]||'')+(nom[0]||'')}</div>`;
+    return `<div style="text-align:center;width:${big?'130':'105'}px">
+      <div style="display:flex;justify-content:center;margin-bottom:5px">${av}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:${big?'0.9':'0.78'}rem;color:var(--navy);line-height:1.2">${prenom} ${nom}</div>
+      <div style="font-size:0.6rem;color:${couleur};font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;line-height:1.3">${poste}</div>
+    </div>`;
   }
-  // VP sous le président
-  if(groupes.vice_president){
-    html+=`<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">${groupes.vice_president.map(m=>bureauCard(m,'var(--navy)',false)).join('')}</div>`;
-  }
-  // Secrétaire + Trésorier côte à côte
-  const secTres=[...(groupes.secretaire||[]),...(groupes.vice_secretaire||[]),...(groupes.tresorier||[]),...(groupes.vice_tresorier||[])];
-  if(secTres.length){
-    html+=`<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">${secTres.map(m=>bureauCard(m,'var(--pu)',false)).join('')}</div>`;
-  }
-  // Membres du bureau
-  if(groupes.membre){
-    html+=`<div style="margin-top:4px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;text-transform:uppercase;color:var(--mu);text-align:center;margin-bottom:10px;letter-spacing:0.1em">Membres du Bureau</div>`;
-    html+=`<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">${groupes.membre.map(m=>bureauCard(m,'var(--gr)',false)).join('')}</div></div>`;
-  }
-  html+='</div>';
+  function ligne(){return `<div style="width:2px;height:20px;background:var(--bd);margin:0 auto"></div>`;}
+  function connecteur(n){return `<div style="display:flex;justify-content:center;align-items:flex-start;gap:0;position:relative;margin-bottom:0"><div style="position:absolute;top:0;left:10%;right:10%;height:2px;background:var(--bd)"></div></div>`;}
+
+  let html=`<div style="font-size:0.72rem;color:var(--mu);text-align:center;margin-bottom:16px;font-style:italic">Statuts adoptés lors de l'AGE du 30 juin 2026</div>`;
+
+  // Niveau 1 — Président
+  html+=`<div style="display:flex;justify-content:center;margin-bottom:0">${orgCard('Julien','Cottet','Président','var(--gold)',true)}</div>`;
+  html+=ligne();
+
+  // Niveau 2 — Bureau (DG + Tréso + Secrétaire)
+  html+=`<div style="position:relative;display:flex;justify-content:center">
+    <div style="position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--bd)"></div>
+  </div>`;
+  html+=`<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+    ${orgCard('Marie-Julia','Weiss','Directrice Générale','var(--navy)',false)}
+    ${orgCard('Olivier','Pepin','Trésorier','var(--navy)',false)}
+    ${orgCard('Mawu','Bandeira','Trésorier Adjoint','var(--navy)',false)}
+    ${orgCard('Guillaume','Maury','Secrétaire','var(--navy)',false)}
+    ${orgCard('Chloé','Rehouni','Secrétaire Adjointe','var(--navy)',false)}
+  </div>`;
+
+  // Niveau 3 — Chargés de mission
+  html+=`<div style="margin:8px 0 4px;text-align:center"><span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mu);background:var(--sf2);padding:2px 10px;border-radius:10px;border:1px solid var(--bd)">Chargés de mission</span></div>`;
+  html+=`<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+    ${orgCard('Cédric','Bourdy','Animation & Vie du club','var(--orange)',false)}
+    ${orgCard('Claire','Billault','Partenariats privés','var(--orange)',false)}
+    ${orgCard('Justine','Gnaho','Coach Mentale','var(--orange)',false)}
+  </div>`;
+
+  // Séparateur Direction Technique
+  html+=`<div style="border-top:2px dashed var(--bd);margin:10px 0 8px;text-align:center"><span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--navy);background:var(--bg);padding:2px 10px;position:relative;top:-9px;border-radius:10px;border:1px solid rgba(64,65,104,0.2)">Direction Technique</span></div>`;
+
+  // Niveau 4 — DT Kylian
+  html+=`<div style="display:flex;justify-content:center;margin-bottom:0">${orgCard('Kylian','Wuillot','DT — DESJEPS','var(--gold)',true)}</div>`;
+  html+=ligne();
+
+  // Niveau 5 — DT Adjoints
+  html+=`<div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:0">
+    ${orgCard('Sébastien','Chamard','DT Adjoint Culture & Grade · BEES/DEJEPS','var(--pu)',false)}
+    ${orgCard('Mathilde','Fayol','DT Adjointe Performance · DESJEPS','var(--pu)',false)}
+  </div>`;
+
+  html+=`</div>`;
   el.innerHTML=html;
 }
 
