@@ -1074,6 +1074,66 @@ function slotColor(t){return t==='judo'?'var(--navy)':t==='prepa'?'var(--gr)':'v
 function slotTypeLabel(t){return t==='judo'?'🥋':t==='prepa'?'💪':'➕';}
 function slotsFromPlan(p){return JSON.parse(JSON.stringify(p.slots||[]));}
 
+// ============================================================
+// CALCUL CATÉGORIE FFJUDO PAR DATE DE NAISSANCE
+// Mise à jour automatique chaque saison
+// Saison N/N+1 : démarre le 1er septembre de l'année N
+// ============================================================
+function getSaisonAnnee(){
+  // Retourne l'année de début de la saison en cours
+  // Ex: en juin 2026 → saison 2025/2026 → année de début = 2025
+  //     en octobre 2026 → saison 2026/2027 → année de début = 2026
+  const now=new Date();
+  const month=now.getMonth()+1; // 1-12
+  const year=now.getFullYear();
+  return month>=9?year:year-1;
+}
+
+function getCatFFJudo(dateNaissance){
+  if(!dateNaissance)return '';
+  const dob=new Date(dateNaissance+'T12:00:00');
+  if(isNaN(dob.getTime()))return '';
+  const anneeNaissance=dob.getFullYear();
+  const saisonDebut=getSaisonAnnee();
+  // 1er janvier de la saison suivante = référence pour les vétérans (30 ans révolus)
+  const jan1SaisonSuivante=new Date(saisonDebut+1,0,1);
+  const ageAuJanvier=Math.floor((jan1SaisonSuivante-dob)/(365.25*24*3600*1000));
+
+  // Calcul dynamique : on décale les années selon la saison courante
+  // Pour la saison 2025/2026 : Baby=2020/2021, Mini-Poussins=2018/2019, etc.
+  // Le décalage par rapport à 2025 s'applique automatiquement
+  const offset=saisonDebut-2025;
+  if(anneeNaissance>=2020+offset&&anneeNaissance<=2021+offset)return 'Baby Judo';
+  if(anneeNaissance>=2018+offset&&anneeNaissance<=2019+offset)return 'Mini-Poussins';
+  if(anneeNaissance>=2016+offset&&anneeNaissance<=2017+offset)return 'Poussins';
+  if(anneeNaissance>=2014+offset&&anneeNaissance<=2015+offset)return 'Benjamins';
+  if(anneeNaissance>=2012+offset&&anneeNaissance<=2013+offset)return 'Minimes';
+  if(anneeNaissance>=2009+offset&&anneeNaissance<=2011+offset)return 'Cadets(tes)';
+  if(anneeNaissance>=2006+offset&&anneeNaissance<=2008+offset)return 'Juniors';
+  if(anneeNaissance<=2005+offset){
+    // Seniors — et Vétérans si 30 ans révolus au 1er janvier de la saison suivante
+    if(ageAuJanvier>=30)return 'Seniors / Vétérans';
+    return 'Seniors';
+  }
+  return '';
+}
+
+// Met à jour le champ catégorie visible à partir d'une DDN
+function updateCatFromDOB(dobValue,catElementId){
+  const cat=getCatFFJudo(dobValue);
+  const el=document.getElementById(catElementId);
+  if(!el)return;
+  if(cat){
+    // Si c'est un select, on cherche l'option correspondante
+    if(el.tagName==='SELECT'){
+      const match=Array.from(el.options).find(o=>o.value===cat||o.text===cat);
+      if(match)el.value=match.value;
+    } else {
+      el.value=cat;
+    }
+  }
+}
+
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'var(--rd)':'var(--gr)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function showSync(){const s=document.getElementById('sync-ind');s.classList.add('show');setTimeout(()=>s.classList.remove('show'),1500);}
 function cm(id){document.getElementById(id).classList.remove('open');}
@@ -1087,10 +1147,24 @@ function checkDOBParental(){
   const dob=document.getElementById('reg-dob')?.value;
   const block=document.getElementById('reg-parental-block');
   if(!block)return;
-  if(!dob){block.style.display='none';return;}
+  if(!dob){block.style.display='none';
+    const catDisp=document.getElementById('reg-cat-display');if(catDisp)catDisp.style.display='none';
+    return;
+  }
   const age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
   block.style.display=age<15?'block':'none';
   if(age>=15)document.getElementById('reg-parental').checked=false;
+  // Afficher la catégorie calculée automatiquement
+  const cat=getCatFFJudo(dob);
+  let catDisp=document.getElementById('reg-cat-display');
+  if(!catDisp){
+    catDisp=document.createElement('div');catDisp.id='reg-cat-display';
+    catDisp.style.cssText='margin-top:6px;padding:7px 11px;border-radius:8px;background:rgba(64,65,104,0.08);border:1px solid rgba(64,65,104,0.2);font-size:0.8rem;color:var(--navy);font-weight:600;';
+    const dobInput=document.getElementById('reg-dob');
+    if(dobInput&&dobInput.parentNode)dobInput.parentNode.appendChild(catDisp);
+  }
+  if(cat){catDisp.innerHTML='🥋 Catégorie FFJudo : <strong>'+cat+'</strong>';catDisp.style.display='';}
+  else{catDisp.style.display='none';}
 }
 
 function switchAuthTab(tab){document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('form-login').style.display=tab==='login'?'':'none';document.getElementById('form-register').style.display=tab==='register'?'':'none';}
@@ -1187,7 +1261,8 @@ async function doRegister(){
     // Supprimer l'ancien profil (il avait un id différent)
     await sb.from('profiles').delete().eq('id',profilExistant.id);
   } else {
-    const cat=isComp?document.getElementById('reg-cat')?.value||'':'';
+    const catAuto=getCatFFJudo(dob);
+    const cat=catAuto||(isComp?document.getElementById('reg-cat')?.value||'':'');
     const poids=isComp?document.getElementById('reg-poids')?.value||'':'';
     profileData={
       id:data.user.id,prenom,nom,email,
@@ -1307,6 +1382,14 @@ async function initApp(user){
   if(!profile){showAuthPage();return;}
   CP=profile;
   if(CP.is_judoka&&!CP.is_competiteur)CP.is_competiteur=true;
+  // Recalcul auto de la catégorie à chaque connexion (mise à jour de saison)
+  if(CP.date_naissance){
+    const catCalc=getCatFFJudo(CP.date_naissance);
+    if(catCalc&&catCalc!==CP.cat){
+      CP.cat=catCalc;
+      await sb.from('profiles').update({cat:catCalc}).eq('id',user.id);
+    }
+  }
   hideLoader();showApp();renderNavUser();renderNavTabs();
   if(canAccessPerf())loadJudokaView();
   else if(canAccessSection())showMainPage('section',document.getElementById('ntb-section'));
@@ -1387,9 +1470,14 @@ function openEditProfile_legacy(){
 async function saveProfile(){
   const prenom=document.getElementById('ep-prenom')?.value.trim()||'';
   const nom=document.getElementById('ep-nom')?.value.trim()||'';
-  const cat=document.getElementById('ep-cat')?.value||'';
   const poids=document.getElementById('ep-poids')?.value||'';
   if(!prenom){toast('Entre ton prénom !',1);return;}
+  // Calcul auto catégorie depuis DDN si disponible, sinon valeur du select
+  const dobSaved=CP.date_naissance||'';
+  const catAuto=getCatFFJudo(dobSaved);
+  const cat=catAuto||document.getElementById('ep-cat')?.value||'';
+  // Mettre à jour le select visuellement si catégorie auto calculée
+  if(catAuto){const sel=document.getElementById('ep-cat');if(sel){const opt=Array.from(sel.options).find(o=>o.value===catAuto||o.text===catAuto);if(opt)sel.value=opt.value;}}
   CP.prenom=prenom;CP.nom=nom;CP.cat=cat;CP.poids=poids;
   await sb.from('profiles').update({
     prenom,nom,cat,poids,
@@ -2958,7 +3046,19 @@ function openEditProfile(){
   const st=modal.querySelector('#ep-structure');
   if(p)p.value=CP.prenom||'';
   if(n)n.value=CP.nom||'';
-  if(c)c.value=CP.cat||'Seniors';
+  // Calcul auto catégorie depuis DDN
+  const catAuto=getCatFFJudo(CP.date_naissance||'');
+  const catVal=catAuto||CP.cat||'Seniors';
+  if(c){
+    const opt=Array.from(c.options).find(o=>o.value===catVal||o.text===catVal);
+    c.value=opt?opt.value:catVal;
+    // Afficher une info si catégorie calculée automatiquement
+    let catInfo=modal.querySelector('.cat-auto-info');
+    if(catAuto){
+      if(!catInfo){catInfo=document.createElement('div');catInfo.className='cat-auto-info';catInfo.style.cssText='font-size:0.68rem;color:var(--navy);margin-top:3px;font-weight:600;';c.parentNode.appendChild(catInfo);}
+      catInfo.textContent='🥋 Calculée automatiquement depuis ta date de naissance';
+    } else if(catInfo){catInfo.remove();}
+  }
   if(po)po.value=CP.poids||'-81kg';
   if(st)st.value=CP.structure||'';
   modal.classList.add('open');
@@ -2966,9 +3066,14 @@ function openEditProfile(){
 async function saveProfile(){
   const prenom=document.getElementById('ep-prenom')?.value.trim()||CP.prenom;
   const nom=document.getElementById('ep-nom')?.value.trim()||CP.nom;
-  const cat=document.getElementById('ep-cat')?.value||CP.cat;
   const poids=document.getElementById('ep-poids')?.value||CP.poids;
   const structure=document.getElementById('ep-structure')?.value||CP.structure||'';
+  // Calcul auto catégorie depuis DDN si disponible, sinon valeur du select
+  const dobSaved=CP.date_naissance||'';
+  const catAuto=getCatFFJudo(dobSaved);
+  const cat=catAuto||document.getElementById('ep-cat')?.value||CP.cat;
+  // Mettre à jour le select visuellement
+  if(catAuto){const sel=document.getElementById('ep-cat');if(sel){const opt=Array.from(sel.options).find(o=>o.value===catAuto||o.text===catAuto);if(opt)sel.value=opt.value;}}
   CP.prenom=prenom;CP.nom=nom;CP.cat=cat;CP.poids=poids;CP.structure=structure;
   await sb.from('profiles').update({prenom,nom,cat,poids,structure}).eq('id',CU.id);
   document.getElementById('hname').textContent=jFN(CP);
@@ -4492,6 +4597,18 @@ async function toggleEnfantInscription(enfantId,coursId,isInscrit){
 // ============================================================
 // INSCRIPTION — PARENT BLOQUE LES AUTRES + CONFIRMATION MDP + CASES VISUELLES
 // ============================================================
+function refreshRegCatFromDOB(){
+  // Met à jour le select reg-cat avec la catégorie calculée depuis la DDN
+  const dob=document.getElementById('reg-dob')?.value;
+  if(!dob)return;
+  const cat=getCatFFJudo(dob);
+  if(!cat)return;
+  const sel=document.getElementById('reg-cat');
+  if(!sel)return;
+  // Chercher l'option correspondante (valeur exacte ou texte)
+  const opt=Array.from(sel.options).find(o=>o.value===cat||o.text===cat);
+  if(opt)sel.value=opt.value;
+}
 function toggleRoleCheck(role){
   const chk=document.getElementById('chk-'+role);
   const fields=document.getElementById('fields-'+role);
