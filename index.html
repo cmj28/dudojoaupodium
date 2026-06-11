@@ -1751,7 +1751,7 @@ function openDM(dk,d,currentSlots,sessions,planningType){
   loadSlotProfs();
   document.getElementById('m-day').classList.add('open');
 }
-let slotCats=[];let slotProfs=[];
+let slotCats=[];let slotProfs=[];let coursCats=[];let coursProfs=[];
 function tglSlotCat(btn,c){if(slotCats.includes(c)){slotCats=slotCats.filter(x=>x!==c);btn.classList.remove('sel');}else{slotCats.push(c);btn.classList.add('sel');}}
 function tglSlotProf(btn,id){if(slotProfs.includes(id)){slotProfs=slotProfs.filter(x=>x!==id);btn.classList.remove('sel');}else{slotProfs.push(id);btn.classList.add('sel');}}
 async function loadSlotProfs(){
@@ -2035,11 +2035,16 @@ function setActuType(t){
   ['actu','resultat'].forEach(x=>document.getElementById('actu-type-'+x)?.classList.toggle('active',x===t));
   document.getElementById('mactu-type-val').value=t;
 }
+function editActuFromKey(key){
+  const d=window._actuData&&window._actuData[key];
+  if(!d){toast('Données introuvables',1);return;}
+  openActuModal(d.context,d.id,d.titre,d.texte,d.type);
+}
 function openActuModal(context,id,titre,texte,type){
   document.getElementById('mactu-context').value=context;
-  document.getElementById('mactu-id').value=id?decodeURIComponent(id):'';
-  document.getElementById('mactu-titre').value=titre?decodeURIComponent(titre):'';
-  document.getElementById('mactu-texte').value=texte?decodeURIComponent(texte):'';
+  document.getElementById('mactu-id').value=id||'';
+  document.getElementById('mactu-titre').value=titre||'';
+  document.getElementById('mactu-texte').value=texte||'';
   setActuType(type||'actu');
   document.getElementById('mactu-title').textContent=id?'✏️ Modifier':'📰 Nouvelle actualité';
   document.getElementById('m-actu').classList.add('open');
@@ -2083,7 +2088,12 @@ function renderActualites(el,items,context,readOnly=false){
   const resultats=actu.filter(a=>a.type_actu==='resultat');
   const autres=actu.filter(a=>a.type_actu!=='resultat');
   const col=context==='section'?'var(--pu)':'var(--navy)';
-  const itemHTML=(a,table)=>`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)'}">
+  // Stocker les données des annonces en mémoire pour éviter les problèmes d'apostrophes dans onclick
+  if(!window._actuData)window._actuData={};
+  const itemHTML=(a,table)=>{
+    const key='actu_'+a.id.replace(/-/g,'');
+    window._actuData[key]={id:a.id,titre:a.titre||'',texte:a.texte||'',type:a.type_actu||'actu',context};
+    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)'}">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div style="flex:1">
         <div style="font-size:0.62rem;color:var(--mu);margin-bottom:2px">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})} · ${a.auteur||'Club'}</div>
@@ -2091,11 +2101,12 @@ function renderActualites(el,items,context,readOnly=false){
         <div style="font-size:0.82rem;color:var(--tx);line-height:1.5">${a.texte}</div>
       </div>
       ${canManage?`<div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0">
-        <button class="bE" style="padding:3px 7px" onclick="openActuModal('${context}','${encodeURIComponent(a.id)}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'actu'}')">✏️</button>
+        <button class="bE" style="padding:3px 7px" data-actu-key="${key}" onclick="editActuFromKey(this.dataset.actuKey)">✏️</button>
         <button class="bR" style="padding:3px 7px" onclick="deleteActu('${a.id}','${context}')">🗑️</button>
       </div>`:''}
     </div>
   </div>`;
+  };
   let html='';
   if(canManage)html+=`<div style="display:flex;gap:8px;margin-bottom:14px">
     <button class="bP" style="flex:1;font-size:0.78rem" onclick="openActuModal('${context}',null,null,null,'actu')">📰 + Actualité</button>
@@ -3430,24 +3441,62 @@ async function saveAppel(){
   showSync();toast('Appel enregistré ! ✅');
 }
 
+function tglCoursCat(btn,c){if(coursCats.includes(c)){coursCats=coursCats.filter(x=>x!==c);btn.classList.remove('sel');}else{coursCats.push(c);btn.classList.add('sel');}}
+function tglCoursProf(btn,id,nom){if(coursProfs.find(p=>p.id===id)){coursProfs=coursProfs.filter(p=>p.id!==id);btn.classList.remove('sel');}else{coursProfs.push({id,nom});btn.classList.add('sel');}}
+async function loadCoursProfsSelect(containerId,selected=[]){
+  const el=document.getElementById(containerId);if(!el)return;
+  const{data:profs}=await sb.from('profiles').select('id,prenom,nom').eq('is_prof',true).order('nom');
+  if(!profs||!profs.length){el.innerHTML='<span style="color:var(--mu);font-size:0.75rem">Aucun prof</span>';return;}
+  el.innerHTML=profs.map(p=>{
+    const sel=selected.some(s=>s===p.id||s?.id===p.id);
+    return `<button type="button" class="chb ${sel?'sel':''}" onclick="tglCoursProf(this,'${p.id}','${p.prenom} ${p.nom}')" style="font-size:0.75rem">${p.prenom} ${p.nom}</button>`;
+  }).join(' ');
+}
 function openAddCours(){
-  // Build and show inline modal
-  const modal=document.getElementById('m-add-cours');
-  if(modal){modal.classList.add('open');return;}
+  coursCats=[];coursProfs=[];
+  const existing=document.getElementById('m-add-cours');if(existing)existing.remove();
   const m=document.createElement('div');m.className='mo open';m.id='m-add-cours';
-  m.innerHTML=`<div class="modal"><h3>Ajouter un cours</h3>
+  m.innerHTML=`<div class="modal" style="max-height:90vh;overflow-y:auto"><h3>Ajouter un cours</h3>
     <div class="fg"><label>Nom du cours</label><input type="text" id="cours-nom" placeholder="Ex: Judo Poussins, Baby Judo..."></div>
     <div class="tc"><div class="fg"><label>Heure début</label><input type="time" id="cours-start" value="17:30"></div><div class="fg"><label>Heure fin</label><input type="time" id="cours-end" value="18:30"></div></div>
     <div class="fg"><label>Jour</label><select id="cours-jour"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></div>
     <div class="fg"><label>Dojo</label><select id="cours-dojo"><option value="Chartres - La Madeleine">Chartres - La Madeleine</option><option value="Chartres - Dojo Section">Chartres - Dojo Section</option><option value="Chartres - MMA">Chartres - MMA</option><option value="Mainvilliers">Mainvilliers</option><option value="Lucé">Lucé</option><option value="Fontaine">Fontaine-la-Guyon</option></select></div>
-    <div class="fg"><label>Catégorie</label><select id="cours-cat"><option>Baby</option><option>Mini-Poussins</option><option>Poussins</option><option>Benjamins</option><option>Minimes</option><option>Cadets</option><option>Adultes</option><option>Taïso</option><option>Tous niveaux</option></select></div>
-    <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveCours()">Enregistrer</button><button class="bS" onclick="cm('m-add-cours')">Annuler</button></div>
+    <div class="fg"><label>Catégories d'âge</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px" id="cours-cats-sel">
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Baby Judo')">Baby Judo</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Mini-Poussins')">Mini-Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Poussins')">Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Benjamins')">Benjamins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Minimes')">Minimes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Cadets(tes)')">Cadets(tes)</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Juniors')">Juniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Seniors')">Seniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Adultes')">Adultes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Taïso')">Taïso</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Tous niveaux')">Tous niveaux</button>
+      </div>
+    </div>
+    <div class="fg"><label>Professeurs</label><div id="cours-profs-sel" style="font-size:0.78rem;color:var(--mu)">Chargement...</div></div>
+    <div style="display:flex;gap:7px;margin-top:12px"><button class="bP" style="flex:1" onclick="saveCours()">Enregistrer</button><button class="bS" onclick="cm('m-add-cours')">Annuler</button></div>
   </div>`;
   document.body.appendChild(m);
+  loadCoursProfsSelect('cours-profs-sel');
 }
 async function saveCours(){
   const nom=document.getElementById('cours-nom')?.value.trim();if(!nom){toast('Donne un nom !',1);return;}
-  await sb.from('cours').insert({id:crypto.randomUUID(),nom,heure_debut:document.getElementById('cours-start').value,heure_fin:document.getElementById('cours-end').value,jour:parseInt(document.getElementById('cours-jour').value),dojo:document.getElementById('cours-dojo').value,categorie:document.getElementById('cours-cat').value,prof:jFN(CP),prof_id:CU.id,created_at:new Date().toISOString()});
+  const cats=coursCats.length?coursCats:[];
+  const catLegacy=cats[0]||'';
+  const profsIds=coursProfs.map(p=>p.id);
+  const profsNoms=coursProfs.map(p=>p.nom);
+  await sb.from('cours').insert({id:crypto.randomUUID(),nom,
+    heure_debut:document.getElementById('cours-start').value,
+    heure_fin:document.getElementById('cours-end').value,
+    jour:parseInt(document.getElementById('cours-jour').value),
+    dojo:document.getElementById('cours-dojo').value,
+    categorie:catLegacy,categories:cats,
+    profs_ids:profsIds,profs_noms:profsNoms,
+    prof:profsNoms.length?profsNoms.join(', '):jFN(CP),
+    prof_id:CU.id,created_at:new Date().toISOString()});
   cm('m-add-cours');loadProfCours();showSync();toast('Cours ajouté !');
 }
 function deleteCours(id){askConfirm('Supprimer ce cours ?','🗑️ Supprimer',async()=>{await sb.from('cours').delete().eq('id',id);loadProfCours();toast('Cours supprimé.');});}
@@ -3465,7 +3514,10 @@ async function loadMesAnnonces(){
   const el=document.getElementById('mes-annonces');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce publiée.</div>';return;}
   el.innerHTML=ann.map(a=>{
-    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="editAnnonceProf('${a.id}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+    const kp='annp_'+a.id.replace(/-/g,'');
+    if(!window._actuData)window._actuData={};
+    window._actuData[kp]={id:a.id,titre:a.titre||'',texte:a.texte||'',type:a.type_actu||'annonce',context:'club'};
+    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" data-actu-key="${kp}" onclick="editActuFromKey(this.dataset.actuKey)">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
   }).join('');
 }
 function editAnnonceProf(id,titre,texte,type){
@@ -4607,21 +4659,67 @@ function renderClubPlanning(cours,dojoFilter){
 // ============================================================
 async function editCours(id){
   const{data:c}=await sb.from('cours').select('*').eq('id',id).single();if(!c)return;
+  coursCats=[...(c.categories||[c.categorie].filter(Boolean))];
+  coursProfs=(c.profs_ids||[]).map((pid,i)=>{return {id:pid,nom:(c.profs_noms||[])[i]||''};}); 
   const existing=document.getElementById('m-edit-cours');if(existing)existing.remove();
   const m=document.createElement('div');m.className='mo open';m.id='m-edit-cours';
-  const DN=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  m.innerHTML=`<div class="modal"><h3>Modifier le cours</h3>
+  const catsHTML=`          <button type="button" class="chb" onclick="tglCoursCat(this,'Baby Judo')">Baby Judo</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Mini-Poussins')">Mini-Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Poussins')">Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Benjamins')">Benjamins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Minimes')">Minimes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Cadets(tes)')">Cadets(tes)</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Juniors')">Juniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Seniors')">Seniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Adultes')">Adultes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Taïso')">Taïso</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Tous niveaux')">Tous niveaux</button>`.replace(/class="chb"/g,(match,offset,str)=>{
+    // chercher le nom de la cat dans le bouton
+    return 'class="chb"'; // sera mis à jour après appendChild
+  });
+  m.innerHTML=`<div class="modal" style="max-height:90vh;overflow-y:auto"><h3>Modifier le cours</h3>
     <div class="fg"><label>Nom</label><input type="text" id="ec-nom" value="${c.nom||''}"></div>
     <div class="tc"><div class="fg"><label>Début</label><input type="time" id="ec-start" value="${c.heure_debut||''}"></div><div class="fg"><label>Fin</label><input type="time" id="ec-end" value="${c.heure_fin||''}"></div></div>
     <div class="fg"><label>Jour</label><select id="ec-jour">${[0,1,2,3,4,5,6].map(d=>`<option value="${d}"${c.jour===d?' selected':''}>${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d]}</option>`).join('')}</select></div>
     <div class="fg"><label>Dojo</label><select id="ec-dojo"><option value="Chartres - La Madeleine"${c.dojo==='Chartres - La Madeleine'?' selected':''}>Chartres - La Madeleine</option><option value="Chartres - Dojo Section"${c.dojo==='Chartres - Dojo Section'?' selected':''}>Chartres - Dojo Section</option><option value="Chartres - MMA"${c.dojo==='Chartres - MMA'?' selected':''}>Chartres - MMA</option><option value="Mainvilliers"${c.dojo==='Mainvilliers'?' selected':''}>Mainvilliers</option><option value="Lucé"${c.dojo==='Lucé'?' selected':''}>Lucé</option><option value="Fontaine"${c.dojo==='Fontaine'?' selected':''}>Fontaine</option></select></div>
-    <div class="fg"><label>Catégorie</label><select id="ec-cat"><option${c.categorie==='Baby'?' selected':''}>Baby</option><option${c.categorie==='Mini-Poussins'?' selected':''}>Mini-Poussins</option><option${c.categorie==='Poussins'?' selected':''}>Poussins</option><option${c.categorie==='Benjamins'?' selected':''}>Benjamins</option><option${c.categorie==='Minimes'?' selected':''}>Minimes</option><option${c.categorie==='Cadets'?' selected':''}>Cadets</option><option${c.categorie==='Adultes'?' selected':''}>Adultes</option><option${c.categorie==='Taïso'?' selected':''}>Taïso</option><option${c.categorie==='Tous niveaux'?' selected':''}>Tous niveaux</option></select></div>
-    <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveEditCours('${id}')">Enregistrer</button><button class="bS" onclick="cm('m-edit-cours')">Annuler</button></div>
+    <div class="fg"><label>Catégories d'âge</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px" id="ec-cats-sel">
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Baby Judo')">Baby Judo</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Mini-Poussins')">Mini-Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Poussins')">Poussins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Benjamins')">Benjamins</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Minimes')">Minimes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Cadets(tes)')">Cadets(tes)</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Juniors')">Juniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Seniors')">Seniors</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Adultes')">Adultes</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Taïso')">Taïso</button>
+          <button type="button" class="chb" onclick="tglCoursCat(this,'Tous niveaux')">Tous niveaux</button>
+      </div>
+    </div>
+    <div class="fg"><label>Professeurs</label><div id="ec-profs-sel" style="font-size:0.78rem;color:var(--mu)">Chargement...</div></div>
+    <div style="display:flex;gap:7px;margin-top:12px"><button class="bP" style="flex:1" onclick="saveEditCours('${id}')">Enregistrer</button><button class="bS" onclick="cm('m-edit-cours')">Annuler</button></div>
   </div>`;
   document.body.appendChild(m);
+  // Marquer les cats déjà sélectionnées
+  document.querySelectorAll('#ec-cats-sel .chb').forEach(b=>{if(coursCats.includes(b.textContent))b.classList.add('sel');});
+  loadCoursProfsSelect('ec-profs-sel',c.profs_ids||[]);
 }
 async function saveEditCours(id){
-  await sb.from('cours').update({nom:document.getElementById('ec-nom')?.value.trim(),heure_debut:document.getElementById('ec-start')?.value,heure_fin:document.getElementById('ec-end')?.value,jour:parseInt(document.getElementById('ec-jour')?.value||'1'),dojo:document.getElementById('ec-dojo')?.value,categorie:document.getElementById('ec-cat')?.value}).eq('id',id);
+  const cats=coursCats.length?coursCats:[];
+  const catLegacy=cats[0]||'';
+  const profsIds=coursProfs.map(p=>p.id);
+  const profsNoms=coursProfs.map(p=>p.nom);
+  await sb.from('cours').update({
+    nom:document.getElementById('ec-nom')?.value.trim(),
+    heure_debut:document.getElementById('ec-start')?.value,
+    heure_fin:document.getElementById('ec-end')?.value,
+    jour:parseInt(document.getElementById('ec-jour')?.value||'1'),
+    dojo:document.getElementById('ec-dojo')?.value,
+    categorie:catLegacy,categories:cats,
+    profs_ids:profsIds,profs_noms:profsNoms,
+    prof:profsNoms.length?profsNoms.join(', '):jFN(CP)
+  }).eq('id',id);
   cm('m-edit-cours');showSync();toast('Cours modifié !');loadProfCours();
 }
 
@@ -4634,7 +4732,7 @@ async function loadProfCours(){
   if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours. Ajoute-en un !</p></div>';return;}
   el.innerHTML=cours.map(c=>{const col=DCOLS[c.dojo]||'var(--navy)';return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px;border-left:4px solid ${col}">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}</div><div style="font-size:0.65rem;color:var(--mu)">${c.categorie||''} • ${c.dojo||''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
+      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}</div><div style="font-size:0.65rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''} • ${c.dojo||''}${c.profs_noms?.length?' • 👨‍🏫 '+c.profs_noms.join(', '):c.prof?' • 👨‍🏫 '+c.prof:''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
       <div style="display:flex;gap:4px"><button class="bE" onclick="editCours('${c.id}')">✏️</button><button class="bR" onclick="deleteCours('${c.id}')">🗑️</button></div>
     </div>
   </div>`;}).join('');
