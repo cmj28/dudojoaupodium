@@ -2063,18 +2063,34 @@ async function saveActu(){
     await sb.from(table).insert({id:crypto.randomUUID(),titre,texte,type_actu:type,auteur:jFN(CP),prof_id:CU.id,created_at:new Date().toISOString()});
   }
   cm('m-actu');toast(id?'Publication modifiée !':'Publié !');
-  if(context==='section')loadSectionActualites();
-  else if(context==='bureau')loadClubActualites();
-  else loadClubActualites();
+  if(context==='section'){
+    loadSectionActualites();
+    // Recharger aussi la liste "Mes annonces" dans l'espace prof section si ouverte
+    if(document.getElementById('sann-list'))loadSectionAnnoncesList();
+  } else if(context==='bureau'||context==='club'){
+    loadClubActualites();
+    // Recharger aussi "Mes annonces" dans bureau et prof si ouvertes
+    if(document.getElementById('bureau-ann-list'))loadBureauAnnonces();
+    if(document.getElementById('mes-annonces-list'))loadMesAnnonces();
+  }
 }
 async function loadClubActualites(readOnly=false){
   const el=document.getElementById('club-actu-view');if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.78rem">Chargement...</div>';
   try{
     const{data,error}=await sb.from('annonces').select('*').order('created_at',{ascending:false});
-    if(error){console.error('annonces error:',error);el.innerHTML='<div style="text-align:center;padding:16px;color:var(--rd);font-size:0.78rem">Erreur : '+error.message+'</div>';return;}
+    if(error){
+      console.error('annonces error:',error);
+      // Si erreur RLS, essayer de charger uniquement les annonces du user
+      const{data:myData}=await sb.from('annonces').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
+      renderActualites(el,myData||[],'club',readOnly);
+      return;
+    }
     renderActualites(el,data||[],'club',readOnly);
-  }catch(e){console.error(e);el.innerHTML='<div style="text-align:center;padding:16px;color:var(--rd);font-size:0.78rem">Erreur de chargement</div>';}
+  }catch(e){
+    console.error(e);
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📰</div><p style="font-size:0.8rem;margin-top:8px">Aucune publication pour le moment.</p></div>';
+  }
 }
 async function loadSectionActualites(readOnly=false){
   const el=document.getElementById('section-actu-view');if(!el)return;
@@ -3477,6 +3493,15 @@ function openAddCours(){
       </div>
     </div>
     <div class="fg"><label>Professeurs</label><div id="cours-profs-sel" style="font-size:0.78rem;color:var(--mu)">Chargement...</div></div>
+    <div class="fg" style="margin-top:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(217,79,79,0.06);border:1.5px solid rgba(217,79,79,0.2);border-radius:10px;padding:10px 12px">
+        <input type="checkbox" id="cours-compet" style="width:18px;height:18px;cursor:pointer;accent-color:var(--rd)">
+        <div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--rd)">⚔️ Cours Compétiteurs</div>
+          <div style="font-size:0.68rem;color:var(--mu)">Affiche un badge distinctif sur ce cours</div>
+        </div>
+      </label>
+    </div>
     <div style="display:flex;gap:7px;margin-top:12px"><button class="bP" style="flex:1" onclick="saveCours()">Enregistrer</button><button class="bS" onclick="cm('m-add-cours')">Annuler</button></div>
   </div>`;
   document.body.appendChild(m);
@@ -3488,6 +3513,7 @@ async function saveCours(){
   const catLegacy=cats[0]||'';
   const profsIds=coursProfs.map(p=>p.id);
   const profsNoms=coursProfs.map(p=>p.nom);
+  const isCompet=!!document.getElementById('cours-compet')?.checked;
   await sb.from('cours').insert({id:crypto.randomUUID(),nom,
     heure_debut:document.getElementById('cours-start').value,
     heure_fin:document.getElementById('cours-end').value,
@@ -3496,7 +3522,7 @@ async function saveCours(){
     categorie:catLegacy,categories:cats,
     profs_ids:profsIds,profs_noms:profsNoms,
     prof:profsNoms.length?profsNoms.join(', '):jFN(CP),
-    prof_id:CU.id,created_at:new Date().toISOString()});
+    prof_id:CU.id,is_competition:isCompet,created_at:new Date().toISOString()});
   cm('m-add-cours');loadProfCours();showSync();toast('Cours ajouté !');
 }
 function deleteCours(id){askConfirm('Supprimer ce cours ?','🗑️ Supprimer',async()=>{await sb.from('cours').delete().eq('id',id);loadProfCours();toast('Cours supprimé.');});}
@@ -4256,10 +4282,16 @@ async function sendBureauAnnonce(){
   showSync();toast('Annonce publiée !');loadBureauAnnonces();
 }
 async function loadBureauAnnonces(){
-  const{data:ann}=await sb.from('annonces').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
+  // Bureau voit toutes ses annonces (filtre sur prof_id)
+  const{data:ann,error}=await sb.from('annonces').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
   const el=document.getElementById('bureau-ann-list');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce publiée.</div>';return;}
-  el.innerHTML=ann.map(a=>`<div class="annonce-item"><div style="display:flex;justify-content:space-between"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><button class="bR" style="margin-left:8px;flex-shrink:0" onclick="deleteBureauAnnonce('${a.id}')">🗑️</button></div></div>`).join('');
+  el.innerHTML=ann.map(a=>{
+    const k='bann_'+a.id.replace(/-/g,'');
+    if(!window._actuData)window._actuData={};
+    window._actuData[k]={id:a.id,titre:a.titre||'',texte:a.texte||'',type:a.type_actu||'annonce',context:'club'};
+    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" data-actu-key="${k}" onclick="editActuFromKey(this.dataset.actuKey)">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteBureauAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+  }).join('');
 }
 function deleteBureauAnnonce(id){askConfirm('Supprimer ?','🗑️',async()=>{await sb.from('annonces').delete().eq('id',id);loadBureauAnnonces();toast('Supprimée.');});}
 async function loadClubStats(){
@@ -4392,7 +4424,12 @@ async function loadSectionAnnoncesList(){
   const{data:ann}=await sb.from('annonces_section').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
   const el=document.getElementById('sann-list');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce.</div>';return;}
-  el.innerHTML=ann.map(a=>`<div class="annonce-item" style="border-left-color:var(--pu)"><div style="display:flex;justify-content:space-between"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><button class="bR" style="margin-left:8px" onclick="deleteSectionAnnonce('${a.id}')">🗑️</button></div></div>`).join('');
+  el.innerHTML=ann.map(a=>{
+    const k='sann_'+a.id.replace(/-/g,'');
+    if(!window._actuData)window._actuData={};
+    window._actuData[k]={id:a.id,titre:a.titre||'',texte:a.texte||'',type:'annonce',context:'section'};
+    return `<div class="annonce-item" style="border-left-color:var(--pu)"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" data-actu-key="${k}" onclick="editActuFromKey(this.dataset.actuKey)">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteSectionAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+  }).join('');
 }
 function deleteSectionAnnonce(id){askConfirm('Supprimer ?','🗑️',async()=>{await sb.from('annonces_section').delete().eq('id',id);loadSectionAnnoncesList();toast('Supprimée.');});}
 
@@ -4627,8 +4664,8 @@ function renderClubPlanning(cours,dojoFilter){
         const dc=DCOLS[c.dojo]||col;
         t+=`<div style="background:var(--sf);border-radius:7px;padding:6px 7px;margin-bottom:5px;border-left:3px solid ${dc}">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;color:${dc}">${c.heure_debut}–${c.heure_fin}</div>
-          <div style="font-weight:600;font-size:0.75rem;margin:2px 0;line-height:1.2">${c.nom}</div>
-          <div style="font-size:0.6rem;color:var(--mu)">${c.categorie||''}${salles.length>1&&c.dojo?' • '+DSHORT[c.dojo]:''}</div>
+          <div style="font-weight:600;font-size:0.75rem;margin:2px 0;line-height:1.2">${c.nom}${c.is_competition?` <span style="font-size:0.55rem;background:var(--rd);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700;vertical-align:middle">⚔️ Compétiteurs</span>`:''}</div>
+          <div style="font-size:0.6rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''}${salles.length>1&&c.dojo?' • '+DSHORT[c.dojo]:''}</div>
           ${inscrits.length?`<div style="font-size:0.58rem;color:var(--mu)">👥 ${inscrits.length}</div>`:''}
           ${canInscrit?`<button class="${isInscrit?'bR':'bE'}" style="width:100%;margin-top:4px;font-size:0.58rem;padding:2px 4px" onclick="toggleInscriptionCours('${c.id}')">${isInscrit?'Se désinscrire':'S\'inscrire'}</button>`:''}
         </div>`;
@@ -4698,6 +4735,15 @@ async function editCours(id){
       </div>
     </div>
     <div class="fg"><label>Professeurs</label><div id="ec-profs-sel" style="font-size:0.78rem;color:var(--mu)">Chargement...</div></div>
+    <div class="fg" style="margin-top:8px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:rgba(217,79,79,0.06);border:1.5px solid rgba(217,79,79,0.2);border-radius:10px;padding:10px 12px">
+        <input type="checkbox" id="ec-compet" ${c.is_competition?'checked':''} style="width:18px;height:18px;cursor:pointer;accent-color:var(--rd)">
+        <div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--rd)">⚔️ Cours Compétiteurs</div>
+          <div style="font-size:0.68rem;color:var(--mu)">Affiche un badge distinctif sur ce cours</div>
+        </div>
+      </label>
+    </div>
     <div style="display:flex;gap:7px;margin-top:12px"><button class="bP" style="flex:1" onclick="saveEditCours('${id}')">Enregistrer</button><button class="bS" onclick="cm('m-edit-cours')">Annuler</button></div>
   </div>`;
   document.body.appendChild(m);
@@ -4710,6 +4756,7 @@ async function saveEditCours(id){
   const catLegacy=cats[0]||'';
   const profsIds=coursProfs.map(p=>p.id);
   const profsNoms=coursProfs.map(p=>p.nom);
+  const isCompet=!!document.getElementById('ec-compet')?.checked;
   await sb.from('cours').update({
     nom:document.getElementById('ec-nom')?.value.trim(),
     heure_debut:document.getElementById('ec-start')?.value,
@@ -4718,7 +4765,8 @@ async function saveEditCours(id){
     dojo:document.getElementById('ec-dojo')?.value,
     categorie:catLegacy,categories:cats,
     profs_ids:profsIds,profs_noms:profsNoms,
-    prof:profsNoms.length?profsNoms.join(', '):jFN(CP)
+    prof:profsNoms.length?profsNoms.join(', '):jFN(CP),
+    is_competition:isCompet
   }).eq('id',id);
   cm('m-edit-cours');showSync();toast('Cours modifié !');loadProfCours();
 }
@@ -4732,7 +4780,7 @@ async function loadProfCours(){
   if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours. Ajoute-en un !</p></div>';return;}
   el.innerHTML=cours.map(c=>{const col=DCOLS[c.dojo]||'var(--navy)';return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px;border-left:4px solid ${col}">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}</div><div style="font-size:0.65rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''} • ${c.dojo||''}${c.profs_noms?.length?' • 👨‍🏫 '+c.profs_noms.join(', '):c.prof?' • 👨‍🏫 '+c.prof:''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
+      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}${c.is_competition?` <span style="font-size:0.58rem;background:var(--rd);color:#fff;padding:1px 6px;border-radius:4px;font-weight:700">⚔️ Compétiteurs</span>`:''}</div><div style="font-size:0.65rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''} • ${c.dojo||''}${c.profs_noms?.length?' • 👨‍🏫 '+c.profs_noms.join(', '):c.prof?' • 👨‍🏫 '+c.prof:''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
       <div style="display:flex;gap:4px"><button class="bE" onclick="editCours('${c.id}')">✏️</button><button class="bR" onclick="deleteCours('${c.id}')">🗑️</button></div>
     </div>
   </div>`;}).join('');
