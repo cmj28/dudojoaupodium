@@ -3419,7 +3419,23 @@ async function updCoachSelect(){
     .or('is_judoka.eq.true,is_competiteur.eq.true,is_section.eq.true')
     .order('nom');
   const sel=document.getElementById('cjs');if(!sel)return;const cur=sel.value;
-  sel.innerHTML='<option value="">-- Sélectionner --</option>'+(judokas||[]).map(j=>`<option value="${j.id}"${j.id===cur?' selected':''}>${jFN(j)} (${j.cat||''} • ${j.poids||''})</option>`).join('');
+  // Tri par catégorie d'âge puis alphabétique
+  const CAT_ORDER=['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans',''];
+  const sorted=(judokas||[]).slice().sort((a,b)=>{
+    const ia=CAT_ORDER.indexOf(a.cat||'');const ib=CAT_ORDER.indexOf(b.cat||'');
+    const ca=ia<0?99:ia;const cb=ib<0?99:ib;
+    if(ca!==cb)return ca-cb;
+    return (a.nom||'').localeCompare(b.nom||'','fr');
+  });
+  // Grouper par catégorie
+  let html='<option value="">-- Sélectionner --</option>';
+  let lastCat=null;
+  sorted.forEach(j=>{
+    const cat=j.cat||'Sans catégorie';
+    if(cat!==lastCat){html+=`<option disabled>── ${cat} ──</option>`;lastCat=cat;}
+    html+=`<option value="${j.id}"${j.id===cur?' selected':''}>${jFN(j)} (${j.poids||''})</option>`;
+  });
+  sel.innerHTML=html;
 }
 
 function showAuthPage(){
@@ -3729,25 +3745,62 @@ function adminSearchProfiles(q){
 function renderAdminProfilesList(profiles){
   const el=document.getElementById('admin-profiles-list');if(!el)return;
   if(!profiles.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Aucun profil trouvé.</div>';return;}
-  el.innerHTML=profiles.map(p=>{
-    const roles=[];
-    if(p.is_bureau)roles.push('Bureau');
-    if(p.is_prof)roles.push('Prof');
-    if(p.is_coach)roles.push('Coach');
-    if(p.is_prof_section)roles.push('Prof Section');
-    if(p.is_competiteur)roles.push('Compétiteur');
-    if(p.is_section)roles.push('Section');
-    if(p.is_licencie)roles.push('Licencié');
-    if(p.is_parent)roles.push('Parent');
-    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:0.88rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.prenom||'—'} ${p.nom||''}</div>
-        <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">${p.email||'Sans email'}</div>
-        <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${roles.map(r=>`<span style="font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(64,65,104,0.08);color:var(--navy)">${r}</span>`).join('')}</div>
-      </div>
-      <button class="bE" style="flex-shrink:0" onclick="openAdminEditProfile('${p.id}')">✏️ Modifier</button>
-    </div>`;
-  }).join('');
+  // Tri : Bureau/Prof en haut, puis par catégorie, puis alphabétique
+  const CAT_ORDER=['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans',''];
+  function roleRank(p){if(p.is_bureau)return 0;if(p.is_prof||p.is_prof_section||p.is_coach)return 1;return 2;}
+  const sorted=[...profiles].sort((a,b)=>{
+    const ra=roleRank(a),rb=roleRank(b);
+    if(ra!==rb)return ra-rb;
+    const ia=CAT_ORDER.indexOf(a.cat||'');const ib=CAT_ORDER.indexOf(b.cat||'');
+    const ca=ia<0?99:ia;const cb=ib<0?99:ib;
+    if(ca!==cb)return ca-cb;
+    return (a.nom||'').localeCompare(b.nom||'','fr');
+  });
+  // Groupes
+  const groups=[
+    {label:'🏛️ Bureau & Direction',filter:p=>p.is_bureau||p.is_prof||p.is_prof_section||p.is_coach},
+    {label:'🥋 Judokas & Compétiteurs',filter:p=>!p.is_bureau&&!p.is_prof&&!p.is_prof_section&&!p.is_coach},
+  ];
+  let html='';
+  groups.forEach(g=>{
+    const items=sorted.filter(g.filter);
+    if(!items.length)return;
+    html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;text-transform:uppercase;color:var(--mu);letter-spacing:0.08em;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--bd)">${g.label}</div>`;
+    // Sous-groupes par catégorie pour les judokas
+    if(g.label.includes('Judokas')){
+      let lastCat=null;
+      items.forEach(p=>{
+        const cat=p.cat||'Sans catégorie';
+        if(cat!==lastCat){
+          html+=`<div style="font-size:0.65rem;font-weight:700;color:var(--navy);background:rgba(64,65,104,0.06);padding:3px 8px;border-radius:5px;margin:6px 0 4px">${cat}</div>`;
+          lastCat=cat;
+        }
+        html+=profileAdminCard(p);
+      });
+    } else {
+      items.forEach(p=>{html+=profileAdminCard(p);});
+    }
+  });
+  el.innerHTML=html;
+}
+function profileAdminCard(p){
+  const roles=[];
+  if(p.is_bureau)roles.push('Bureau');
+  if(p.is_prof)roles.push('Prof');
+  if(p.is_coach)roles.push('Coach');
+  if(p.is_prof_section)roles.push('Prof Section');
+  if(p.is_competiteur)roles.push('Compétiteur');
+  if(p.is_section)roles.push('Section');
+  if(p.is_licencie)roles.push('Licencié');
+  if(p.is_parent)roles.push('Parent');
+  return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;font-size:0.88rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.prenom||'—'} ${p.nom||''}</div>
+      <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">${p.email||'Sans email'}</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${roles.map(r=>`<span style="font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(64,65,104,0.08);color:var(--navy)">${r}</span>`).join('')}</div>
+    </div>
+    <button class="bE" style="flex-shrink:0" onclick="openAdminEditProfile('${p.id}')">✏️</button>
+  </div>`;
 }
 
 // Dojos et cats sélectionnés dans le modal admin
@@ -4599,41 +4652,41 @@ async function showBureauMemberDetail(id){
 // ÉQUIPE PÉDAGOGIQUE — DT en haut
 // ============================================================
 async function loadEquipe(){
-  const{data:profs}=await sb.from('profiles').select('*').eq('is_prof',true).order('nom');
-  const{data:coaches}=await sb.from('profiles').select('*').eq('is_coach',true).order('nom');
-  const{data:bureaux}=await sb.from('profiles').select('*').eq('is_bureau',true).order('nom');
+  const{data:all}=await sb.from('profiles').select('*').eq('is_prof',true).order('nom');
   const el=document.getElementById('equipe-view');if(!el)return;
-  const seen=new Set();
-  let all=[...(profs||[]),...(coaches||[]),...(bureaux||[])].filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
-  // DT (Kylian) en haut, puis président, puis autres
-  all.sort((a,b)=>{
-    const isDT_A=a.titre&&a.titre.toLowerCase().includes('directeur technique');
-    const isDT_B=b.titre&&b.titre.toLowerCase().includes('directeur technique');
-    const isPres_A=a.titre&&a.titre.toLowerCase().includes('président');
-    const isPres_B=b.titre&&b.titre.toLowerCase().includes('président');
-    if(isDT_A)return -1;if(isDT_B)return 1;
-    if(isPres_A)return -1;if(isPres_B)return 1;
-    return 0;
-  });
-  if(!all.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">👨‍🏫</div><p style="font-size:0.8rem;margin-top:8px">Aucun membre de l\'équipe renseigné.</p></div>';return;}
-  el.innerHTML=all.map((p,idx)=>{
+  if(!all||!all.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">👨‍🏫</div><p style="font-size:0.8rem;margin-top:8px">Aucun membre de l\'équipe renseigné.</p></div>';return;}
+  const ORDER_NAMES=['wuillot','fayol','chamard','corniaux','eschler','ait si selmi','davaze','beaumont','carnis'];
+  function rankProf(p){const n=(p.nom||'').toLowerCase();const i=ORDER_NAMES.findIndex(x=>n.includes(x));return i>=0?i:99;}
+  const sorted=[...all].sort((a,b)=>rankProf(a)-rankProf(b));
+  const dtNames=['wuillot','fayol','chamard'];
+  const dtProfs=sorted.filter(p=>dtNames.some(n=>(p.nom||'').toLowerCase().includes(n)));
+  const autresProfs=sorted.filter(p=>!dtNames.some(n=>(p.nom||'').toLowerCase().includes(n)));
+  function profCard(p,isDT){
     const av=p.avatar_url?`<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`:`<span style="font-size:1.4rem;color:#fff">${((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase()}</span>`;
-    const roles=[];if(p.is_prof)roles.push('Professeur');if(p.is_coach)roles.push('Coach');if(p.is_bureau)roles.push('Bureau');
-    const isDT=p.titre&&p.titre.toLowerCase().includes('directeur technique');
-    const borderStyle=isDT?'border:2px solid var(--gold)':'border:1px solid var(--bd)';
-    return `<div class="prof-card" style="${borderStyle}">
-      <div class="prof-avatar-big" style="background:${isDT?'var(--gold)':'var(--navy)'}">${av}</div>
+    const col=isDT?'var(--gold)':'var(--navy)';
+    return `<div class="prof-card" style="border:${isDT?'2px solid var(--gold)':'1px solid var(--bd)'}">
+      <div class="prof-avatar-big" style="background:${col}">${av}</div>
       <div style="flex:1">
         <div class="prof-name">${jFN(p)}${isDT?` <span style="font-size:0.6rem;background:var(--gold);color:#000;padding:2px 6px;border-radius:6px;font-weight:700;vertical-align:middle">DT</span>`:''}</div>
-        <div class="prof-role-tag">${p.titre||roles.join(' · ')}</div>
-        ${p.diplome?`<div class="prof-diplome">🎖️ ${p.diplome}</div>`:''}
+        <div class="prof-role-tag" style="color:${col}">${p.titre||'Professeur'}</div>
+        ${p.diplome?`<div class="prof-diplome">🏖️ ${p.diplome}</div>`:''}
         ${p.tel?`<div style="font-size:0.72rem;color:var(--mu)">📞 ${p.tel}</div>`:''}
         ${p.email_display?`<div style="font-size:0.72rem;color:var(--mu)">✉️ ${p.email_display}</div>`:''}
         ${(p.dojos||[]).length?`<div style="margin-top:5px">${p.dojos.map(d=>`<span class="prof-dojo-tag">${d}</span>`).join('')}</div>`:''}
         ${p.bio?`<div style="font-size:0.78rem;color:var(--tx);margin-top:4px;line-height:1.4">${p.bio}</div>`:''}
       </div>
     </div>`;
-  }).join('');
+  }
+  let html='';
+  if(dtProfs.length){
+    html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;text-transform:uppercase;color:var(--mu);letter-spacing:0.1em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--bd)">Direction Technique</div>`;
+    html+=dtProfs.map(p=>profCard(p,true)).join('');
+  }
+  if(autresProfs.length){
+    html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;text-transform:uppercase;color:var(--mu);letter-spacing:0.1em;margin:12px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--bd)">Équipe pédagogique</div>`;
+    html+=autresProfs.map(p=>profCard(p,false)).join('');
+  }
+  el.innerHTML=html;
 }
 
 // ============================================================
