@@ -3415,25 +3415,37 @@ async function saveProfProfil(){
 
 // updCoachSelect alias
 async function updCoachSelect(){
-  const{data:judokas}=await sb.from('profiles').select('*')
-    .or('is_judoka.eq.true,is_competiteur.eq.true,is_section.eq.true')
-    .order('nom');
+  // Charger les judokas depuis profiles ET profils_section (ceux sans compte)
+  const[{data:judokas},{data:section}]=await Promise.all([
+    sb.from('profiles').select('*').or('is_judoka.eq.true,is_competiteur.eq.true,is_section.eq.true').order('nom'),
+    sb.from('profils_section').select('*').order('nom')
+  ]);
+  // Fusionner — éviter les doublons (linked_profile_id = déjà dans profiles)
+  const linkedIds=new Set((section||[]).filter(s=>s.linked_profile_id).map(s=>s.linked_profile_id));
+  const sectionSansCompte=(section||[]).filter(s=>!s.linked_profile_id).map(s=>({
+    id:'sec_'+s.id, // préfixe pour distinguer
+    prenom:s.prenom,nom:s.nom,
+    cat:s.categorie||s.cat||'',
+    poids:s.poids||'',
+    _is_section_only:true,
+    _section_id:s.id
+  }));
+  const all=[...(judokas||[]),...sectionSansCompte];
   const sel=document.getElementById('cjs');if(!sel)return;const cur=sel.value;
-  // Tri par catégorie d'âge puis alphabétique
   const CAT_ORDER=['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans',''];
-  const sorted=(judokas||[]).slice().sort((a,b)=>{
+  const sorted=all.slice().sort((a,b)=>{
     const ia=CAT_ORDER.indexOf(a.cat||'');const ib=CAT_ORDER.indexOf(b.cat||'');
     const ca=ia<0?99:ia;const cb=ib<0?99:ib;
     if(ca!==cb)return ca-cb;
     return (a.nom||'').localeCompare(b.nom||'','fr');
   });
-  // Grouper par catégorie
   let html='<option value="">-- Sélectionner --</option>';
   let lastCat=null;
   sorted.forEach(j=>{
     const cat=j.cat||'Sans catégorie';
     if(cat!==lastCat){html+=`<option disabled>── ${cat} ──</option>`;lastCat=cat;}
-    html+=`<option value="${j.id}"${j.id===cur?' selected':''}>${jFN(j)} (${j.poids||''})</option>`;
+    const label=jFN(j)+(j._is_section_only?' 🏫':'')+(j.poids?' ('+j.poids+')':'');
+    html+=`<option value="${j.id}"${j.id===cur?' selected':''}>${label}</option>`;
   });
   sel.innerHTML=html;
 }
@@ -3733,8 +3745,21 @@ function showAdminSection(sec){
 
 let _adminAllProfiles=[];
 async function loadAdminProfiles(){
-  const{data:profiles}=await sb.from('profiles').select('*').order('nom');
-  _adminAllProfiles=profiles||[];
+  const[{data:profiles},{data:section}]=await Promise.all([
+    sb.from('profiles').select('*').order('nom'),
+    sb.from('profils_section').select('*').order('nom')
+  ]);
+  // Ajouter les judokas section sans compte (pas encore dans profiles)
+  const sectionSansCompte=(section||[]).filter(s=>!s.linked_profile_id).map(s=>({
+    id:'sec_'+s.id,
+    prenom:s.prenom,nom:s.nom,
+    cat:s.categorie||s.cat||'',
+    poids:s.poids||'',
+    is_section:true,is_licencie:true,
+    _is_section_only:true,
+    _section_id:s.id
+  }));
+  _adminAllProfiles=[...(profiles||[]),...sectionSansCompte];
   renderAdminProfilesList(_adminAllProfiles);
 }
 function adminSearchProfiles(q){
@@ -3793,13 +3818,17 @@ function profileAdminCard(p){
   if(p.is_section)roles.push('Section');
   if(p.is_licencie)roles.push('Licencié');
   if(p.is_parent)roles.push('Parent');
-  return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px">
+  if(p._is_section_only)roles.push('🏫 Sans compte');
+  const btnEdit=p._is_section_only
+    ?`<span style="font-size:0.65rem;color:var(--mu);font-style:italic">Pas de compte</span>`
+    :`<button class="bE" style="flex-shrink:0" onclick="openAdminEditProfile('${p.id}')">✏️</button>`;
+  return `<div style="background:var(--sf);border:1px solid ${p._is_section_only?'rgba(155,89,182,0.3)':'var(--bd)'};border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;gap:10px">
     <div style="flex:1;min-width:0">
       <div style="font-weight:700;font-size:0.88rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.prenom||'—'} ${p.nom||''}</div>
       <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">${p.email||'Sans email'}</div>
       <div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px">${roles.map(r=>`<span style="font-size:0.58rem;font-weight:700;padding:1px 6px;border-radius:5px;background:rgba(64,65,104,0.08);color:var(--navy)">${r}</span>`).join('')}</div>
     </div>
-    <button class="bE" style="flex-shrink:0" onclick="openAdminEditProfile('${p.id}')">✏️</button>
+    ${btnEdit}
   </div>`;
 }
 
@@ -3896,6 +3925,7 @@ async function openAdminEditProfile(id){
     <input type="hidden" id="aep-id" value="${p.id}">
     <div id="aep-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
     <button class="bP" style="width:100%" onclick="saveAdminEditProfile()">💾 Enregistrer</button>
+    <button class="bR" style="width:100%;margin-top:8px;font-size:0.8rem" onclick="deleteAdminProfile(document.getElementById('aep-id').value)">🗑️ Supprimer ce profil</button>
   </div>`;
   document.body.appendChild(mo);
 }
@@ -3938,6 +3968,31 @@ async function saveAdminEditProfile(){
     showSync();toast('Profil mis à jour ! 👊');
     loadAdminProfiles();
   }catch(e){console.error(e);toast('Erreur inattendue',1);}
+}
+
+async function deleteAdminProfile(id){
+  if(!id)return;
+  // Confirmation
+  askConfirm('Supprimer définitivement ce profil ? Cette action est irréversible.','🗑️',async()=>{
+    try{
+      // Supprimer les données liées en cascade
+      await sb.from('notes_profs').delete().eq('judoka_id',id);
+      await sb.from('notes_profs').delete().eq('prof_id',id);
+      await sb.from('training').delete().eq('user_id',id);
+      await sb.from('appels').delete().eq('prof_id',id);
+      await sb.from('resultats').delete().eq('judoka_id',id);
+      await sb.from('attaques').delete().eq('user_id',id);
+      // Supprimer le profil
+      const{error}=await sb.from('profiles').delete().eq('id',id);
+      if(error){toast('Erreur : '+error.message,1);return;}
+      document.getElementById('m-admin-edit')?.remove();
+      toast('Profil supprimé.');
+      loadAdminProfiles();
+    }catch(e){
+      console.error(e);
+      toast('Erreur lors de la suppression',1);
+    }
+  });
 }
 
 async function loadAdminCodes(){
