@@ -3744,41 +3744,120 @@ function renderAdminProfilesList(profiles){
   }).join('');
 }
 
+// Dojos et cats sélectionnés dans le modal admin
+let _aepDojos=[];let _aepCats=[];
+function aepTglDojo(btn,d){if(_aepDojos.includes(d)){_aepDojos=_aepDojos.filter(x=>x!==d);btn.classList.remove('sel');}else{_aepDojos.push(d);btn.classList.add('sel');}}
+function aepTglCat(btn,c){if(_aepCats.includes(c)){_aepCats=_aepCats.filter(x=>x!==c);btn.classList.remove('sel');}else{_aepCats.push(c);btn.classList.add('sel');}}
+async function handleAdminPhoto(input,profileId){
+  const file=input.files[0];if(!file)return;
+  const ext=file.name.split('.').pop();
+  const path=`avatars/${profileId}.${ext}`;
+  const{error}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+  if(error){toast('Erreur upload photo',1);return;}
+  const{data:urlData}=sb.storage.from('avatars').getPublicUrl(path);
+  const url=urlData.publicUrl+'?t='+Date.now();
+  await sb.from('profiles').update({avatar_url:url}).eq('id',profileId);
+  const zone=document.getElementById('aep-photo-zone');
+  if(zone)zone.innerHTML=`<img src="${url}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
+  toast('Photo mise à jour ! 📸');
+}
 async function openAdminEditProfile(id){
   const{data:p}=await sb.from('profiles').select('*').eq('id',id).single();if(!p)return;
   const existing=document.getElementById('m-admin-edit');if(existing)existing.remove();
-  const catOpts=['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans'].map(c=>`<option value="${c}"${(p.cat||'')=== c?' selected':''}>${c}</option>`).join('');
+  _aepDojos=p.dojos||[];_aepCats=p.cats||[];
+  const catOpts=['','Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans'].map(c=>`<option value="${c}"${(p.cat||'')=== c?' selected':''}>${c||'— Auto (DDN) —'}</option>`).join('');
+  const DOJOS_LIST=['Chartres - La Madeleine','Chartres - Dojo Section','Mainvilliers','Lucé','Fontaine'];
+  const CATS_LIST=['Baby','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets','Adultes','Taïso'];
+  const POSTES=['president','vice_president','secretaire','vice_secretaire','tresorier','vice_tresorier','membre'];
+  const POSTES_LABEL={'president':'Président(e)','vice_president':'Vice-Président(e)','secretaire':'Secrétaire','vice_secretaire':'Vice-Secrétaire','tresorier':'Trésorier(e)','vice_tresorier':'Vice-Trésorier(e)','membre':'Membre du Bureau'};
+  const sexeSel=p.sexe||'H';
   const mo=document.createElement('div');mo.className='mo open';mo.id='m-admin-edit';
-  mo.innerHTML=`<div class="modal">
-    <h3>✏️ Modifier le profil</h3>
-    <div style="font-size:0.72rem;color:var(--mu);margin-bottom:12px">ID: ${p.id.slice(0,8)}...</div>
-    <div class="tc"><div class="fg"><label>Prénom</label><input type="text" id="aep-prenom" value="${p.prenom||''}"></div><div class="fg"><label>Nom</label><input type="text" id="aep-nom" value="${p.nom||''}"></div></div>
-    <div class="tc">
-      <div class="fg"><label>Catégorie</label><select id="aep-cat">${catOpts}</select></div>
-      <div class="fg"><label>Poids</label><input type="text" id="aep-poids" value="${p.poids||''}"></div>
+  mo.innerHTML=`<div class="modal" style="max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">✏️ ${p.prenom||''} ${p.nom||''}</h3>
+      <button class="bS" style="padding:4px 10px" onclick="document.getElementById('m-admin-edit').remove()">✕</button>
     </div>
-    <div class="fg"><label>Titre / Poste</label><input type="text" id="aep-titre" value="${p.titre||''}" placeholder="Ex: Directeur Technique"></div>
-    <div class="fg"><label>Diplôme</label><input type="text" id="aep-diplome" value="${p.diplome||''}" placeholder="Ex: DESJEPS"></div>
-    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mu);margin-bottom:8px">Rôles</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <!-- PHOTO -->
+    <div style="text-align:center;margin-bottom:14px">
+      <div class="photo-zone" id="aep-photo-zone" onclick="document.getElementById('aep-photo-input').click()" style="cursor:pointer">
+        ${p.avatar_url?`<img src="${p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`:'<span>📷</span>'}
+      </div>
+      <input type="file" id="aep-photo-input" accept="image/*" style="display:none" onchange="handleAdminPhoto(this,'${p.id}')">
+      <div style="font-size:0.68rem;color:var(--mu);margin-top:4px">Clique pour changer la photo</div>
+    </div>
+    <!-- IDENTITÉ -->
+    <div class="tc">
+      <div class="fg"><label>Prénom</label><input type="text" id="aep-prenom" value="${p.prenom||''}"></div>
+      <div class="fg"><label>Nom</label><input type="text" id="aep-nom" value="${p.nom||''}"></div>
+    </div>
+    <!-- TITRE & DIPLÔME -->
+    <div class="fg"><label>Titre / Rôle</label><input type="text" id="aep-titre" value="${p.titre||''}" placeholder="Ex: Directeur Technique, Professeur..."></div>
+    <div class="fg"><label>Diplôme(s)</label><input type="text" id="aep-diplome" value="${p.diplome||''}" placeholder="Ex: DESJEPS, DEJEPS, CQP..."></div>
+    <!-- TEL + EMAIL -->
+    <div class="tc">
+      <div class="fg"><label>Téléphone</label><input type="tel" id="aep-tel" value="${p.tel||''}" placeholder="06 XX XX XX XX"></div>
+      <div class="fg"><label>Email affiché</label><input type="email" id="aep-email-display" value="${p.email_display||p.email||''}" placeholder="contact@email.com"></div>
+    </div>
+    <!-- POSTE BUREAU (visible si bureau) -->
+    ${p.is_bureau?`<div class="fg"><label>Poste dans l'association</label>
+      <select id="aep-poste-bureau">${POSTES.map(pos=>`<option value="${pos}"${(p.poste_bureau||'membre')===pos?' selected':''}>${POSTES_LABEL[pos]}</option>`).join('')}</select>
+    </div>`:'<input type="hidden" id="aep-poste-bureau" value="">'}
+    <!-- SEXE -->
+    <div class="fg"><label>Sexe</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="button" id="aep-sexe-h" class="ftab ${sexeSel==='H'?'active':''}" onclick="document.getElementById('aep-sexe').value='H';document.getElementById('aep-sexe-h').classList.add('active');document.getElementById('aep-sexe-f').classList.remove('active')">Homme</button>
+        <button type="button" id="aep-sexe-f" class="ftab ${sexeSel==='F'?'active':''}" onclick="document.getElementById('aep-sexe').value='F';document.getElementById('aep-sexe-f').classList.add('active');document.getElementById('aep-sexe-h').classList.remove('active')">Femme</button>
+      </div>
+      <input type="hidden" id="aep-sexe" value="${sexeSel}">
+    </div>
+    <!-- CATÉGORIE FFJudo -->
+    <div class="tc">
+      <div class="fg"><label>Catégorie FFJudo</label><select id="aep-cat">${catOpts}</select></div>
+      <div class="fg"><label>Poids</label><input type="text" id="aep-poids" value="${p.poids||''}" placeholder="-66kg"></div>
+    </div>
+    <!-- DOJOS -->
+    <div class="fg"><label>Dojos</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">
+        ${DOJOS_LIST.map(d=>`<button type="button" class="chb ${_aepDojos.includes(d)?'sel':''}" onclick="aepTglDojo(this,'${d}')">${d}</button>`).join('')}
+      </div>
+    </div>
+    <!-- CATÉGORIES ENSEIGNÉES -->
+    <div class="fg"><label>Catégories enseignées</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">
+        ${CATS_LIST.map(c=>`<button type="button" class="chb ${_aepCats.includes(c)?'sel':''}" onclick="aepTglCat(this,'${c}')">${c}</button>`).join('')}
+      </div>
+    </div>
+    <!-- BIO -->
+    <div class="fg"><label>Bio / Présentation</label><textarea id="aep-bio" style="min-height:70px" placeholder="Parcours, expériences...">${p.bio||''}</textarea></div>
+    <!-- RÔLES -->
+    <div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--mu);margin:10px 0 6px">Rôles</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       ${['is_licencie','is_competiteur','is_prof','is_coach','is_bureau','is_section','is_prof_section','is_parent','is_admin'].map(r=>`<label style="display:flex;align-items:center;gap:4px;font-size:0.78rem;cursor:pointer"><input type="checkbox" id="aep-${r}" ${p[r]?'checked':''}> ${r.replace('is_','')}</label>`).join('')}
     </div>
     <input type="hidden" id="aep-id" value="${p.id}">
-    <div id="aep-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px;display:none"></div>
-    <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveAdminEditProfile()">💾 Enregistrer</button><button class="bS" onclick="document.getElementById('m-admin-edit').remove()">Annuler</button></div>
+    <div id="aep-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+    <button class="bP" style="width:100%" onclick="saveAdminEditProfile()">💾 Enregistrer</button>
   </div>`;
   document.body.appendChild(mo);
 }
 
 async function saveAdminEditProfile(){
   const id=document.getElementById('aep-id')?.value;if(!id)return;
+  const poste=document.getElementById('aep-poste-bureau')?.value||'';
   const update={
     prenom:document.getElementById('aep-prenom')?.value.trim()||'',
     nom:document.getElementById('aep-nom')?.value.trim()||'',
     cat:document.getElementById('aep-cat')?.value||'',
-    poids:document.getElementById('aep-poids')?.value||'',
+    poids:document.getElementById('aep-poids')?.value.trim()||'',
     titre:document.getElementById('aep-titre')?.value.trim()||null,
     diplome:document.getElementById('aep-diplome')?.value.trim()||null,
+    tel:document.getElementById('aep-tel')?.value.trim()||null,
+    email_display:document.getElementById('aep-email-display')?.value.trim()||null,
+    bio:document.getElementById('aep-bio')?.value.trim()||null,
+    sexe:document.getElementById('aep-sexe')?.value||'H',
+    dojos:_aepDojos,
+    cats:_aepCats,
+    poste_bureau:poste||null,
     is_licencie:!!document.getElementById('aep-is_licencie')?.checked,
     is_competiteur:!!document.getElementById('aep-is_competiteur')?.checked,
     is_prof:!!document.getElementById('aep-is_prof')?.checked,
@@ -3792,10 +3871,9 @@ async function saveAdminEditProfile(){
   try{
     const{error}=await sb.from('profiles').update(update).eq('id',id);
     if(error){console.error('Update error:',error);toast('Erreur : '+error.message,1);return;}
-    // is_admin dans un update séparé (colonne ajoutée manuellement)
     if(isAdminEl){
       const{error:e2}=await sb.from('profiles').update({is_admin:!!isAdminEl.checked}).eq('id',id);
-      if(e2)console.warn('is_admin non mis à jour:',e2.message);
+      if(e2)console.warn('is_admin:',e2.message);
     }
     document.getElementById('m-admin-edit')?.remove();
     showSync();toast('Profil mis à jour ! 👊');
