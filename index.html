@@ -737,7 +737,15 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
       <div class="fg" style="margin-bottom:8px"><label>Description</label><input type="text" id="slot-desc" placeholder="Ex: Randori, Prépa sur piste..."></div>
       <div class="fg" style="margin-bottom:8px"><label>Catégories d'âge</label>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="slot-cats-sel">
-          ${['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Tous'].map(c=>`<button type="button" class="chb" onclick="tglSlotCat(this,'${c}')">${c}</button>`).join('')}
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Baby Judo')">Baby Judo</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Mini-Poussins')">Mini-Poussins</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Poussins')">Poussins</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Benjamins')">Benjamins</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Minimes')">Minimes</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Cadets(tes)')">Cadets(tes)</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Juniors')">Juniors</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Seniors')">Seniors</button>
+          <button type="button" class="chb" onclick="tglSlotCat(this,'Tous')">Tous</button>
         </div>
       </div>
       <div class="fg" style="margin-bottom:8px"><label>Professeurs</label>
@@ -2049,13 +2057,19 @@ async function saveActu(){
   } else {
     await sb.from(table).insert({id:crypto.randomUUID(),titre,texte,type_actu:type,auteur:jFN(CP),prof_id:CU.id,created_at:new Date().toISOString()});
   }
-  cm('m-actu');toast('Publié !');
-  if(context==='section')loadSectionActualites();else loadClubActualites();
+  cm('m-actu');toast(id?'Publication modifiée !':'Publié !');
+  if(context==='section')loadSectionActualites();
+  else if(context==='bureau')loadClubActualites();
+  else loadClubActualites();
 }
 async function loadClubActualites(readOnly=false){
   const el=document.getElementById('club-actu-view');if(!el)return;
-  const{data}=await sb.from('annonces').select('*').order('created_at',{ascending:false});
-  renderActualites(el,data||[],'club',readOnly);
+  el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.78rem">Chargement...</div>';
+  try{
+    const{data,error}=await sb.from('annonces').select('*').order('created_at',{ascending:false});
+    if(error){console.error('annonces error:',error);el.innerHTML='<div style="text-align:center;padding:16px;color:var(--rd);font-size:0.78rem">Erreur : '+error.message+'</div>';return;}
+    renderActualites(el,data||[],'club',readOnly);
+  }catch(e){console.error(e);el.innerHTML='<div style="text-align:center;padding:16px;color:var(--rd);font-size:0.78rem">Erreur de chargement</div>';}
 }
 async function loadSectionActualites(readOnly=false){
   const el=document.getElementById('section-actu-view');if(!el)return;
@@ -2063,7 +2077,7 @@ async function loadSectionActualites(readOnly=false){
   renderActualites(el,data||[],'section',readOnly);
 }
 function renderActualites(el,items,context,readOnly=false){
-  const canManage=!readOnly&&(context==='section'?(CP.is_prof_section||CP.is_bureau):(CP.is_prof||CP.is_coach||CP.is_bureau));
+  const canManage=!readOnly&&(CP.is_bureau||(context==='section'?(CP.is_prof_section):(CP.is_prof||CP.is_coach)));
   const actu=items.filter(a=>a.type_actu!=='annonce');
   const ann=items.filter(a=>a.type_actu==='annonce');
   const resultats=actu.filter(a=>a.type_actu==='resultat');
@@ -3451,8 +3465,13 @@ async function loadMesAnnonces(){
   const el=document.getElementById('mes-annonces');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce publiée.</div>';return;}
   el.innerHTML=ann.map(a=>{
-    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="openActuModal('club','${encodeURIComponent(a.id)}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="editAnnonceProf('${a.id}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
   }).join('');
+}
+function editAnnonceProf(id,titre,texte,type){
+  openActuModal('club',id,titre,texte,type);
+  // Surcharger le callback de saveActu pour recharger loadMesAnnonces
+  const origSave=document.getElementById('m-actu').querySelector('[onclick*="saveActu"]');
 }
 function deleteAnnonce(id){askConfirm('Supprimer cette annonce ?','🗑️ Supprimer',async()=>{await sb.from('annonces').delete().eq('id',id);loadMesAnnonces();toast('Annonce supprimée.');});}
 
@@ -3521,7 +3540,7 @@ async function updCoachSelect(){
   sorted.forEach(j=>{
     const cat=j.cat||'Sans catégorie';
     if(cat!==lastCat){html+=`<option disabled>── ${cat} ──</option>`;lastCat=cat;}
-    const label=jFN(j)+(j._is_section_only?' 🏫':'')+(j.poids?' ('+j.poids+')':'');
+    const label=jFN(j)+(j._is_section_only?' 🏫':'')+(j.poids?' ('+fmtPoids(j.poids)+')':'');
     html+=`<option value="${j.id}"${j.id===cur?' selected':''}>${label}</option>`;
   });
   sel.innerHTML=html;
