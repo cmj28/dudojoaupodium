@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Du Dojo au Podium — CMJ28</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
@@ -1021,7 +1021,7 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+
 
 <script>
 // ============================================================
@@ -1407,7 +1407,7 @@ function renderNavTabs(){
   if(CP.is_licencie||CP.is_bureau||CP.is_coach||CP.is_prof||CP.is_competiteur||CP.is_judoka)html+=`<button class="ntb${!canAccessPerf()&&!canAccessSection()?' active':''}" id="ntb-club" onclick="showMainPage('club',this)">🏯 Club</button>`;
   if(canAccessSection())html+=`<button class="ntb${!canAccessPerf()?' active':''}" id="ntb-section" onclick="showMainPage('section',this)">🏫 Section</button>`;
   if(CP.is_prof)html+=`<button class="ntb" id="ntb-prof" onclick="showMainPage('prof',this)">👨‍🏫 Prof</button>`;
-  if(CP.is_prof_section)html+=`<button class="ntb" id="ntb-profsec" onclick="showMainPage('prof_section',this)">🏫 Prof Sect.</button>`;
+  if(CP.is_prof_section)html+=`<button class="ntb" id="ntb-profsec" onclick="showMainPage('prof_section',this)">📋 Prof Sect.</button>`;
   if(CP.is_coach)html+=`<button class="ntb" id="ntb-coach" onclick="showMainPage('coach',this)">📊 Coach</button>`;
   if(CP.is_bureau)html+=`<button class="ntb" id="ntb-bureau" onclick="showMainPage('bureau',this)">🏛️ Bureau</button>`;
   if(CP.is_admin)html+=`<button class="ntb" id="ntb-admin" onclick="showMainPage('admin',this)">⚙️ Admin</button>`;
@@ -2754,7 +2754,7 @@ async function loadPartenairesBanner(){
   const nologos=data.filter(p=>!p.logo).map(p=>`<div style="display:inline-flex;align-items:center;margin:0 24px;flex-shrink:0"><span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:var(--navy);white-space:nowrap">🤝 ${p.nom}</span></div>`).join('');
   const content=logos+nologos;
   el.innerHTML=`<div style="overflow:hidden;white-space:nowrap;position:relative">
-    <div class="banner-scroll" style="display:inline-flex;animation:bannerScroll 20s linear infinite">${content}${content}</div>
+    <div class="banner-scroll" style="display:inline-flex;animation:bannerScroll 20s linear infinite">${content}<span aria-hidden="true">${content}</span></div>
   </div>`;
 }
 
@@ -2792,6 +2792,7 @@ function renderPrepPhys(el,seances){
       </div>
     </div>`;
   });
+  if(!html){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">💪</div><p style="font-size:0.8rem;margin-top:8px">Aucune séance de préparation disponible.</p></div>';return;}
   el.innerHTML=html;
 }
 function toggleFold(id){
@@ -2813,6 +2814,7 @@ function renderPrepPhysCoach(el,seances){
   const CAT_EMOJI={'Musculation (salle)':'🏋️','PP dojo maison':'🥋','Course':'🏃','Vélo':'🚴'};
   const CAT_LABEL={'Musculation (salle)':'Musculation (salle)','PP dojo maison':'PP (dojo / maison)','Course':'Course','Vélo':'Vélo'};
   let html=`<button class="bP" style="width:100%;margin-bottom:14px" onclick="openSeanceModal()">💪 + Nouvelle séance</button>`;
+  if(!seances.length){el.innerHTML=html+'<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">💪</div><p style="font-size:0.8rem;margin-top:8px">Aucune séance créée. Clique sur "+ Nouvelle séance" pour commencer.</p></div>';return;}
   CATS_PP.forEach((cat,i)=>{
     const items=seances.filter(s=>(s.categorie_pp||'PP dojo maison')===cat);
     if(!items.length)return;
@@ -3065,7 +3067,11 @@ function openEditProfile(){
     } else if(catInfo){catInfo.remove();}
   }
   if(po)po.value=CP.poids||'-81kg';
-  if(st)st.value=CP.structure||'';
+  if(st){
+    st.value=CP.structure||'';
+    // S'assurer que la valeur est bien sélectionnée
+    if(CP.structure){const opt=Array.from(st.options).find(o=>o.value===CP.structure);if(opt)st.value=opt.value;}
+  }
   modal.classList.add('open');
 }
 async function saveProfile(){
