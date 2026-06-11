@@ -735,6 +735,14 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
         <div class="fg" style="margin:0"><label>Fin</label><input type="time" id="slot-end" value="10:30"></div>
       </div>
       <div class="fg" style="margin-bottom:8px"><label>Description</label><input type="text" id="slot-desc" placeholder="Ex: Randori, Prépa sur piste..."></div>
+      <div class="fg" style="margin-bottom:8px"><label>Catégories d'âge</label>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px" id="slot-cats-sel">
+          ${['Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Tous'].map(c=>`<button type="button" class="chb" onclick="tglSlotCat(this,'${c}')">${c}</button>`).join('')}
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:8px"><label>Professeurs</label>
+        <div id="slot-profs-sel" style="font-size:0.78rem;color:var(--mu)">Chargement...</div>
+      </div>
       <div class="fg" style="margin-bottom:10px"><label>Type</label>
         <div style="display:flex;gap:6px;margin-top:4px">
           <button type="button" class="ftab active" id="slot-type-judo" onclick="setSlotType('judo')">🥋 Judo</button>
@@ -1074,6 +1082,7 @@ function jFN(p){return p?((p.prenom||'')+(p.nom?' '+p.nom:'')).trim()||'Sans nom
 function aFN(a){return a?((a.prenom||'')+(a.nom?' '+a.nom:'')).trim()||'Sans nom':'?';}
 function initials(p){if(!p)return '?';return ((p.prenom||'')[0]||(p.nom||'')[0]||'?').toUpperCase();}
 function slotColor(t){return t==='judo'?'var(--navy)':t==='prepa'?'var(--gr)':'var(--orange)';}
+function fmtPoids(p){if(!p)return '';const s=String(p).trim();if(!s)return '';return s.endsWith('kg')?s:s+'kg';}
 function slotTypeLabel(t){return t==='judo'?'🥋':t==='prepa'?'💪':'➕';}
 function slotsFromPlan(p){return JSON.parse(JSON.stringify(p.slots||[]));}
 
@@ -1385,6 +1394,14 @@ async function initApp(user){
   if(!profile){showAuthPage();return;}
   CP=profile;
   if(CP.is_judoka&&!CP.is_competiteur)CP.is_competiteur=true;
+  // Vérifier si ce compte est lié à un profil_section → mettre is_section=true
+  if(!CP.is_section){
+    const{data:secLink}=await sb.from('profils_section').select('id').eq('linked_profile_id',user.id).single();
+    if(secLink){
+      CP.is_section=true;
+      await sb.from('profiles').update({is_section:true}).eq('id',user.id);
+    }
+  }
   // Recalcul auto de la catégorie à chaque connexion (mise à jour de saison)
   if(CP.date_naissance){
     const catCalc=getCatFFJudo(CP.date_naissance);
@@ -1725,12 +1742,68 @@ function openDM(dk,d,currentSlots,sessions,planningType){
   slotType='judo';editingSlotId=null;resetSlotForm();renderDaySlots();
   document.getElementById('m-day').classList.add('open');
 }
-function resetSlotForm(){slotType='judo';document.getElementById('slot-start').value='09:00';document.getElementById('slot-end').value='10:30';document.getElementById('slot-desc').value='';document.getElementById('slot-edit-id').value='';document.getElementById('slot-cancel-edit').style.display='none';document.getElementById('slot-form-title').textContent='Ajouter un créneau';['judo','prepa','autre'].forEach(x=>document.getElementById('slot-type-'+x).classList.toggle('active',x==='judo'));}
-function renderDaySlots(){const list=document.getElementById('day-slots-list');if(!daySlots.length){list.innerHTML='<div style="color:var(--mu);font-size:0.78rem;text-align:center;padding:8px;background:var(--sf2);border-radius:8px">Aucun créneau — ajoute-en un</div>';return;}const sorted=[...daySlots].sort((a,b)=>a.start>b.start?1:-1);list.innerHTML=sorted.map(s=>`<div class="slot-row ${s.type}"><div class="slot-body"><div class="slot-badge badge-${s.type}">${slotTypeLabel(s.type)} ${s.type==='judo'?'Judo':s.type==='prepa'?'Prépa':'Autre'}</div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${slotColor(s.type)}">${s.start} → ${s.end}</div><div class="slot-desc">${s.desc||''}</div></div><div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0"><button class="bE" onclick="editSlot('${s.id}')">✏️</button><button class="bR" onclick="removeSlot('${s.id}')">✕</button></div></div>`).join('');}
+let slotCats=[];let slotProfs=[];
+function tglSlotCat(btn,c){if(slotCats.includes(c)){slotCats=slotCats.filter(x=>x!==c);btn.classList.remove('sel');}else{slotCats.push(c);btn.classList.add('sel');}}
+function tglSlotProf(btn,id){if(slotProfs.includes(id)){slotProfs=slotProfs.filter(x=>x!==id);btn.classList.remove('sel');}else{slotProfs.push(id);btn.classList.add('sel');}}
+async function loadSlotProfs(){
+  const el=document.getElementById('slot-profs-sel');if(!el)return;
+  const{data:profs}=await sb.from('profiles').select('id,prenom,nom').eq('is_prof',true).order('nom');
+  if(!profs||!profs.length){el.innerHTML='<span style="color:var(--mu);font-size:0.75rem">Aucun prof disponible</span>';return;}
+  el.innerHTML=profs.map(p=>`<button type="button" class="chb ${slotProfs.includes(p.id)?'sel':''}" onclick="tglSlotProf(this,'${p.id}')" style="font-size:0.75rem">${p.prenom} ${p.nom}</button>`).join(' ');
+}
+function resetSlotForm(){
+  slotType='judo';slotCats=[];slotProfs=[];
+  document.getElementById('slot-start').value='09:00';
+  document.getElementById('slot-end').value='10:30';
+  document.getElementById('slot-desc').value='';
+  document.getElementById('slot-edit-id').value='';
+  document.getElementById('slot-cancel-edit').style.display='none';
+  document.getElementById('slot-form-title').textContent='Ajouter un créneau';
+  ['judo','prepa','autre'].forEach(x=>document.getElementById('slot-type-'+x).classList.toggle('active',x==='judo'));
+  document.querySelectorAll('#slot-cats-sel .chb').forEach(b=>b.classList.remove('sel'));
+  loadSlotProfs();
+}
+function renderDaySlots(){
+  const list=document.getElementById('day-slots-list');
+  if(!daySlots.length){list.innerHTML='<div style="color:var(--mu);font-size:0.78rem;text-align:center;padding:8px;background:var(--sf2);border-radius:8px">Aucun créneau — ajoute-en un</div>';return;}
+  const sorted=[...daySlots].sort((a,b)=>a.start>b.start?1:-1);
+  list.innerHTML=sorted.map(s=>`<div class="slot-row ${s.type}">
+    <div class="slot-body">
+      <div class="slot-badge badge-${s.type}">${slotTypeLabel(s.type)} ${s.type==='judo'?'Judo':s.type==='prepa'?'Prépa':'Autre'}</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${slotColor(s.type)}">${s.start} → ${s.end}</div>
+      <div class="slot-desc">${s.desc||''}</div>
+      ${(s.cats||[]).length?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${s.cats.map(c=>`<span style="font-size:0.58rem;background:rgba(64,65,104,0.1);color:var(--navy);padding:1px 5px;border-radius:4px">${c}</span>`).join('')}</div>`:''}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+      <button class="bE" onclick="editSlot('${s.id}')">✏️</button>
+      <button class="bR" onclick="removeSlot('${s.id}')">✕</button>
+    </div>
+  </div>`).join('');
+}
 function setSlotType(t){slotType=t;['judo','prepa','autre'].forEach(x=>document.getElementById('slot-type-'+x).classList.toggle('active',x===t));}
-function editSlot(sid){const s=daySlots.find(x=>x.id===sid);if(!s)return;editingSlotId=sid;slotType=s.type;document.getElementById('slot-start').value=s.start;document.getElementById('slot-end').value=s.end;document.getElementById('slot-desc').value=s.desc||'';document.getElementById('slot-edit-id').value=sid;document.getElementById('slot-cancel-edit').style.display='';document.getElementById('slot-form-title').textContent='Modifier ce créneau';['judo','prepa','autre'].forEach(x=>document.getElementById('slot-type-'+x).classList.toggle('active',x===s.type));}
+function editSlot(sid){
+  const s=daySlots.find(x=>x.id===sid);if(!s)return;
+  editingSlotId=sid;slotType=s.type;
+  slotCats=s.cats||[];slotProfs=s.profs||[];
+  document.getElementById('slot-start').value=s.start;
+  document.getElementById('slot-end').value=s.end;
+  document.getElementById('slot-desc').value=s.desc||'';
+  document.getElementById('slot-edit-id').value=sid;
+  document.getElementById('slot-cancel-edit').style.display='';
+  document.getElementById('slot-form-title').textContent='Modifier ce créneau';
+  ['judo','prepa','autre'].forEach(x=>document.getElementById('slot-type-'+x).classList.toggle('active',x===s.type));
+  document.querySelectorAll('#slot-cats-sel .chb').forEach(b=>b.classList.toggle('sel',slotCats.includes(b.textContent)));
+  loadSlotProfs();
+}
 function cancelSlotEdit(){resetSlotForm();editingSlotId=null;}
-function addOrUpdateSlot(){const start=document.getElementById('slot-start').value,end=document.getElementById('slot-end').value,desc=document.getElementById('slot-desc').value.trim();if(!start||!end){toast('Choisis les heures !',1);return;}if(editingSlotId){const i=daySlots.findIndex(x=>x.id===editingSlotId);if(i>=0)daySlots[i]={...daySlots[i],start,end,desc,type:slotType};}else daySlots.push({id:'s_'+Date.now(),start,end,desc,type:slotType});resetSlotForm();editingSlotId=null;renderDaySlots();}
+function addOrUpdateSlot(){
+  const start=document.getElementById('slot-start').value,end=document.getElementById('slot-end').value,desc=document.getElementById('slot-desc').value.trim();
+  if(!start||!end){toast('Choisis les heures !',1);return;}
+  const slotData={start,end,desc,type:slotType,cats:[...slotCats],profs:[...slotProfs]};
+  if(editingSlotId){const i=daySlots.findIndex(x=>x.id===editingSlotId);if(i>=0)daySlots[i]={...daySlots[i],...slotData};}
+  else daySlots.push({id:'s_'+Date.now(),...slotData});
+  resetSlotForm();editingSlotId=null;renderDaySlots();
+}
 function removeSlot(sid){daySlots=daySlots.filter(s=>s.id!==sid);renderDaySlots();}
 async function saveDS(){
   if(!dKey)return;
@@ -2119,7 +2192,7 @@ let _judokasSectionCache=[];
 async function loadJudokasCacheSection(){
   if(_judokasSectionCache.length)return;
   const{data:a}=await sb.from('profils_section').select('id,prenom,nom,cat').order('cat').order('nom');
-  const{data:b}=await sb.from('profiles').select('id,prenom,nom,cat').or('is_section.eq.true,is_judoka.eq.true').order('cat').order('nom');
+  const{data:b}=await sb.from('profiles').select('id,prenom,nom,cat').eq('is_section',true).order('cat').order('nom');
   _judokasSectionCache=[...(a||[]).map(j=>({...j,source:'section'})),...(b||[]).map(j=>({...j,source:'profile'}))];
 }
 
@@ -3262,7 +3335,7 @@ function showProfSection(sec){
         <div class="fg"><label>Email</label><input type="email" id="prof-email-display" placeholder="ton@email.com"></div>
       </div>
       <div class="fg"><label>Diplômes</label><input type="text" id="prof-diplome" placeholder="Ex: DEJEPS Judo, 4ème Dan..."></div>
-      <div class="fg"><label>Dojos</label><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px" id="prof-dojos-sel"><button type="button" class="chb" onclick="tglDojo(this,'Chartres - La Madeleine')">Chartres - La Madeleine</button><button type="button" class="chb" onclick="tglDojo(this,'Chartres - Dojo Section')">Chartres - Dojo Section</button><button type="button" class="chb" onclick="tglDojo(this,'Mainvilliers')">Mainvilliers</button><button type="button" class="chb" onclick="tglDojo(this,'Lucé')">Lucé</button><button type="button" class="chb" onclick="tglDojo(this,'Fontaine')">Fontaine</button></div></div>
+      <div class="fg"><label>Dojos</label><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px" id="prof-dojos-sel"><button type="button" class="chb" onclick="tglDojo(this,'Chartres - La Madeleine')">Chartres - La Madeleine</button><button type="button" class="chb" onclick="tglDojo(this,'Chartres - Dojo Section')">Chartres - Dojo Section</button><button type="button" class="chb" onclick="tglDojo(this,'Chartres - MMA')">Chartres - MMA</button><button type="button" class="chb" onclick="tglDojo(this,'Mainvilliers')">Mainvilliers</button><button type="button" class="chb" onclick="tglDojo(this,'Lucé')">Lucé</button><button type="button" class="chb" onclick="tglDojo(this,'Fontaine')">Fontaine</button></div></div>
       <div class="fg"><label>Catégories enseignées</label><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px" id="prof-cats-sel"><button type="button" class="chb" onclick="tglCat(this,'Baby')">Baby</button><button type="button" class="chb" onclick="tglCat(this,'Mini-Poussins')">Mini-Poussins</button><button type="button" class="chb" onclick="tglCat(this,'Poussins')">Poussins</button><button type="button" class="chb" onclick="tglCat(this,'Benjamins')">Benjamins</button><button type="button" class="chb" onclick="tglCat(this,'Minimes')">Minimes</button><button type="button" class="chb" onclick="tglCat(this,'Cadets')">Cadets</button><button type="button" class="chb" onclick="tglCat(this,'Adultes')">Adultes</button><button type="button" class="chb" onclick="tglCat(this,'Taïso')">Taïso</button></div></div>
       <div class="fg"><label>Bio / Présentation</label><textarea id="prof-bio" placeholder="Quelques mots sur toi, ton parcours..." style="min-height:80px"></textarea></div>
       <button class="bP" onclick="saveProfProfil()">💾 Enregistrer mon profil</button>
@@ -3376,7 +3449,11 @@ async function loadMesAnnonces(){
   const{data:ann}=await sb.from('annonces').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
   const el=document.getElementById('mes-annonces');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce publiée.</div>';return;}
-  el.innerHTML=ann.map(a=>`<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><button class="bR" style="margin-left:8px;flex-shrink:0" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div>`).join('');
+  el.innerHTML=ann.map(a=>{
+    const t=(a.titre||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+    const tx=(a.texte||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="openActuModal('club','${a.id}','${t}','${tx}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+  }).join('');
 }
 function deleteAnnonce(id){askConfirm('Supprimer cette annonce ?','🗑️ Supprimer',async()=>{await sb.from('annonces').delete().eq('id',id);loadMesAnnonces();toast('Annonce supprimée.');});}
 
@@ -3862,7 +3939,7 @@ async function openAdminEditProfile(id){
   const existing=document.getElementById('m-admin-edit');if(existing)existing.remove();
   _aepDojos=p.dojos||[];_aepCats=p.cats||[];
   const catOpts=['','Baby Judo','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Seniors / Vétérans'].map(c=>`<option value="${c}"${(p.cat||'')=== c?' selected':''}>${c||'— Auto (DDN) —'}</option>`).join('');
-  const DOJOS_LIST=['Chartres - La Madeleine','Chartres - Dojo Section','Mainvilliers','Lucé','Fontaine'];
+  const DOJOS_LIST=['Chartres - La Madeleine','Chartres - Dojo Section','Chartres - MMA','Mainvilliers','Lucé','Fontaine'];
   const CATS_LIST=['Baby','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets','Adultes','Taïso'];
   const POSTES=['president','vice_president','secretaire','vice_secretaire','tresorier','vice_tresorier','membre'];
   const POSTES_LABEL={'president':'Président(e)','vice_president':'Vice-Président(e)','secretaire':'Secrétaire','vice_secretaire':'Vice-Secrétaire','tresorier':'Trésorier(e)','vice_tresorier':'Vice-Trésorier(e)','membre':'Membre du Bureau'};
@@ -4333,7 +4410,7 @@ async function loadJudokasSectionList(){
   // Charger les deux sources : profils_section + profiles is_section
   const[{data:profilsSection},{data:profiles}]=await Promise.all([
     sb.from('profils_section').select('*').order('cat').order('nom'),
-    sb.from('profiles').select('*').or('is_section.eq.true,is_judoka.eq.true').order('cat').order('nom')
+    sb.from('profiles').select('*').eq('is_section',true).order('cat').order('nom')
   ]);
   // Fusionner sans doublons (si un profil_section est lié à un profile)
   const tous=[
@@ -4450,7 +4527,7 @@ function renderClubPlanning(cours,dojoFilter){
   if(!filtered.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours pour le moment.</p></div>';return;}
   const JOURS=[1,2,3,4,5,6]; // Lun→Sam, pas dimanche
   const JNOMS=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const DOJOS=['Chartres - La Madeleine','Chartres - Dojo Section','Mainvilliers','Lucé','Fontaine'];
+  const DOJOS=['Chartres - La Madeleine','Chartres - Dojo Section','Chartres - MMA','Mainvilliers','Lucé','Fontaine'];
   const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
   const DSHORT={'Chartres - La Madeleine':'La Madeleine','Chartres - Dojo Section':'Section','Mainvilliers':'Mainvilliers','Lucé':'Lucé','Fontaine':'Fontaine'};
 
@@ -4649,7 +4726,7 @@ async function loadBureauFicheForm(){
   bureauDojos=p?.bureau_dojos||p?.dojos||[];
   const posteSel=p?.bureau_poste||p?.poste_bureau||'membre';
   const sexeSel=p?.sexe||'H';
-  const DOJOS_LIST=['Chartres - La Madeleine','Chartres - Dojo Section','Mainvilliers','Lucé','Fontaine'];
+  const DOJOS_LIST=['Chartres - La Madeleine','Chartres - Dojo Section','Chartres - MMA','Mainvilliers','Lucé','Fontaine'];
   el.innerHTML=`<div class="card">
     <div style="text-align:center;margin-bottom:14px">
       <div class="photo-zone" id="bureau-photo-zone" onclick="document.getElementById('bureau-photo-input').click()">${(p?.bureau_photo||p?.avatar_url)?`<img src="${p.bureau_photo||p.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;">`:'<span>📷</span>'}</div>
