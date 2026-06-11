@@ -1508,7 +1508,7 @@ async function saveProfile(){
   const hnameEl=document.getElementById('hname');
   const hmetaEl=document.getElementById('hmeta');
   if(hnameEl)hnameEl.textContent=jFN(CP);
-  if(hmetaEl)hmetaEl.textContent=cat+' • '+poids;
+  if(hmetaEl)hmetaEl.textContent=cat+' • '+fmtPoids(poids);
   renderNavUser();cm('m-edit-profile');showSync();toast('Profil mis à jour ! 👊');
 }
 
@@ -1740,6 +1740,7 @@ function openDM(dk,d,currentSlots,sessions,planningType){
   dKey={dk,sessions,planningType};daySlots=JSON.parse(JSON.stringify(currentSlots||[]));
   document.getElementById('mdayt').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   slotType='judo';editingSlotId=null;resetSlotForm();renderDaySlots();
+  loadSlotProfs();
   document.getElementById('m-day').classList.add('open');
 }
 let slotCats=[];let slotProfs=[];
@@ -2028,9 +2029,9 @@ function setActuType(t){
 }
 function openActuModal(context,id,titre,texte,type){
   document.getElementById('mactu-context').value=context;
-  document.getElementById('mactu-id').value=id||'';
-  document.getElementById('mactu-titre').value=titre||'';
-  document.getElementById('mactu-texte').value=texte||'';
+  document.getElementById('mactu-id').value=id?decodeURIComponent(id):'';
+  document.getElementById('mactu-titre').value=titre?decodeURIComponent(titre):'';
+  document.getElementById('mactu-texte').value=texte?decodeURIComponent(texte):'';
   setActuType(type||'actu');
   document.getElementById('mactu-title').textContent=id?'✏️ Modifier':'📰 Nouvelle actualité';
   document.getElementById('m-actu').classList.add('open');
@@ -2076,7 +2077,7 @@ function renderActualites(el,items,context,readOnly=false){
         <div style="font-size:0.82rem;color:var(--tx);line-height:1.5">${a.texte}</div>
       </div>
       ${canManage?`<div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0">
-        <button class="bE" style="padding:3px 7px" onclick="openActuModal('${context}','${a.id}','${a.titre.replace(/'/g,"\\'")}','${(a.texte||'').replace(/'/g,"\\'")}','${a.type_actu||'actu'}')">✏️</button>
+        <button class="bE" style="padding:3px 7px" onclick="openActuModal('${context}','${encodeURIComponent(a.id)}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'actu'}')">✏️</button>
         <button class="bR" style="padding:3px 7px" onclick="deleteActu('${a.id}','${context}')">🗑️</button>
       </div>`:''}
     </div>
@@ -2381,7 +2382,7 @@ async function showJudokaResultatDetail(judokaId){
       ${avatar}
       <div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">${j.prenom} ${j.nom}</div>
-        <div style="font-size:0.72rem;color:var(--mu)">${j.cat||''}${j.poids?' • '+j.poids:''}</div>
+        <div style="font-size:0.72rem;color:var(--mu)">${j.cat||''}${j.poids?' • '+fmtPoids(j.poids):''}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
@@ -3249,7 +3250,7 @@ function showClubSection(sec){
     loadPartenaires('club-partenaires-view');
     if(CP.is_parent)loadEnfantsSection();
   }
-  else if(sec==='planning'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📅 Planning des cours</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div class="dojo-filter"><button class="dojo-btn active" onclick="filterDojo('tous',this)">Tous</button><button class="dojo-btn" onclick="filterDojo('Chartres - La Madeleine',this)">La Madeleine</button><button class="dojo-btn" onclick="filterDojo('Chartres - Dojo Section',this)">Section</button><button class="dojo-btn" onclick="filterDojo('Mainvilliers',this)">Mainvilliers</button><button class="dojo-btn" onclick="filterDojo('Lucé',this)">Lucé</button><button class="dojo-btn" onclick="filterDojo('Fontaine',this)">Fontaine</button></div><div id="planning-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadClubPlanning('tous');}
+  else if(sec==='planning'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📅 Planning des cours</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div class="dojo-filter"><button class="dojo-btn active" onclick="filterDojo('tous',this)">Tous</button><button class="dojo-btn" onclick="filterDojo('Chartres - La Madeleine',this)">La Madeleine</button><button class="dojo-btn" onclick="filterDojo('Chartres - Dojo Section',this)">Section</button><button class="dojo-btn" onclick="filterDojo('Chartres - MMA',this)">MMA</button><button class="dojo-btn" onclick="filterDojo('Mainvilliers',this)">Mainvilliers</button><button class="dojo-btn" onclick="filterDojo('Lucé',this)">Lucé</button><button class="dojo-btn" onclick="filterDojo('Fontaine',this)">Fontaine</button></div><div id="planning-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadClubPlanning('tous');}
   else if(sec==='equipe'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">👨‍🏫 L'équipe pédagogique</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="equipe-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadEquipe();}
   else if(sec==='annonces'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📢 Annonces</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="annonces-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadAnnonces();}
   else if(sec==='calendrier'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📅 Calendrier compétitions, stages & événements</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="club-cal-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadCalendrier('club');}
@@ -3424,7 +3425,7 @@ function openAddCours(){
     <div class="fg"><label>Nom du cours</label><input type="text" id="cours-nom" placeholder="Ex: Judo Poussins, Baby Judo..."></div>
     <div class="tc"><div class="fg"><label>Heure début</label><input type="time" id="cours-start" value="17:30"></div><div class="fg"><label>Heure fin</label><input type="time" id="cours-end" value="18:30"></div></div>
     <div class="fg"><label>Jour</label><select id="cours-jour"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></div>
-    <div class="fg"><label>Dojo</label><select id="cours-dojo"><option value="Chartres - La Madeleine">Chartres - La Madeleine</option><option value="Chartres - Dojo Section">Chartres - Dojo Section</option><option value="Mainvilliers">Mainvilliers</option><option value="Lucé">Lucé</option><option value="Fontaine">Fontaine-la-Guyon</option></select></div>
+    <div class="fg"><label>Dojo</label><select id="cours-dojo"><option value="Chartres - La Madeleine">Chartres - La Madeleine</option><option value="Chartres - Dojo Section">Chartres - Dojo Section</option><option value="Chartres - MMA">Chartres - MMA</option><option value="Mainvilliers">Mainvilliers</option><option value="Lucé">Lucé</option><option value="Fontaine">Fontaine-la-Guyon</option></select></div>
     <div class="fg"><label>Catégorie</label><select id="cours-cat"><option>Baby</option><option>Mini-Poussins</option><option>Poussins</option><option>Benjamins</option><option>Minimes</option><option>Cadets</option><option>Adultes</option><option>Taïso</option><option>Tous niveaux</option></select></div>
     <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveCours()">Enregistrer</button><button class="bS" onclick="cm('m-add-cours')">Annuler</button></div>
   </div>`;
@@ -3450,9 +3451,7 @@ async function loadMesAnnonces(){
   const el=document.getElementById('mes-annonces');if(!el)return;
   if(!ann||!ann.length){el.innerHTML='<div style="color:var(--mu);font-size:0.8rem;text-align:center;padding:12px">Aucune annonce publiée.</div>';return;}
   el.innerHTML=ann.map(a=>{
-    const t=(a.titre||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
-    const tx=(a.texte||'').replace(/'/g,"&#39;").replace(/"/g,"&quot;");
-    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="openActuModal('club','${a.id}','${t}','${tx}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
+    return `<div class="annonce-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div style="flex:1"><div class="annonce-date">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}</div><div class="annonce-title">${a.titre}</div><div class="annonce-text">${a.texte}</div></div><div style="display:flex;gap:4px;margin-left:8px;flex-shrink:0"><button class="bE" style="padding:3px 7px" onclick="openActuModal('club','${encodeURIComponent(a.id)}','${encodeURIComponent(a.titre||'')}','${encodeURIComponent(a.texte||'')}','${a.type_actu||'annonce'}')">✏️</button><button class="bR" style="padding:3px 7px" onclick="deleteAnnonce('${a.id}')">🗑️</button></div></div></div>`;
   }).join('');
 }
 function deleteAnnonce(id){askConfirm('Supprimer cette annonce ?','🗑️ Supprimer',async()=>{await sb.from('annonces').delete().eq('id',id);loadMesAnnonces();toast('Annonce supprimée.');});}
@@ -4435,7 +4434,7 @@ async function loadJudokasSectionList(){
         <div style="width:38px;height:38px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${av}</div>
         <div style="flex:1">
           <div style="font-weight:700;font-size:0.88rem;color:var(--navy)">${jFN(j)}</div>
-          <div style="font-size:0.68rem;color:var(--mu)">${j.cat||''}${j.poids?' • '+j.poids:''}${isSection?' • <span style="color:var(--pu)">Profil section</span>':''}</div>
+          <div style="font-size:0.68rem;color:var(--mu)">${j.cat||''}${j.poids?' • '+fmtPoids(j.poids):''}${isSection?' • <span style="color:var(--pu)">Profil section</span>':''}</div>
           ${isSection&&j.code_invitation?`<div style="font-size:0.62rem;color:var(--mu);margin-top:2px">Code : <strong style="color:var(--navy);letter-spacing:0.1em">${j.code_invitation}</strong></div>`:''}
         </div>
         <div style="display:flex;gap:4px">
@@ -4460,7 +4459,7 @@ async function viewJudokaPerf(userId){
   const podiums=(comps||[]).filter(c=>['or','argent','bronze'].includes(c.resultat)).length;
   pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">${jFN(profile)}</div>
-    <div style="font-size:0.68rem;color:var(--mu)">${profile.cat||''}${profile.poids?' • '+profile.poids:''}</div></div>
+    <div style="font-size:0.68rem;color:var(--mu)">${profile.cat||''}${profile.poids?' • '+fmtPoids(profile.poids):''}</div></div>
     <button class="bS" onclick="showProfSectionSection('judokas')">← Retour</button>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px">
@@ -4528,8 +4527,8 @@ function renderClubPlanning(cours,dojoFilter){
   const JOURS=[1,2,3,4,5,6]; // Lun→Sam, pas dimanche
   const JNOMS=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const DOJOS=['Chartres - La Madeleine','Chartres - Dojo Section','Chartres - MMA','Mainvilliers','Lucé','Fontaine'];
-  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
-  const DSHORT={'Chartres - La Madeleine':'La Madeleine','Chartres - Dojo Section':'Section','Mainvilliers':'Mainvilliers','Lucé':'Lucé','Fontaine':'Fontaine'};
+  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Chartres - MMA':'#e84393','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
+  const DSHORT={'Chartres - La Madeleine':'La Madeleine','Chartres - Dojo Section':'Section','Chartres - MMA':'MMA','Mainvilliers':'Mainvilliers','Lucé':'Lucé','Fontaine':'Fontaine'};
 
   const renderTable=(salles,titre,col)=>{
     const salleCours=cours.filter(c=>salles.includes(c.dojo));
@@ -4596,7 +4595,7 @@ async function editCours(id){
     <div class="fg"><label>Nom</label><input type="text" id="ec-nom" value="${c.nom||''}"></div>
     <div class="tc"><div class="fg"><label>Début</label><input type="time" id="ec-start" value="${c.heure_debut||''}"></div><div class="fg"><label>Fin</label><input type="time" id="ec-end" value="${c.heure_fin||''}"></div></div>
     <div class="fg"><label>Jour</label><select id="ec-jour">${[0,1,2,3,4,5,6].map(d=>`<option value="${d}"${c.jour===d?' selected':''}>${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d]}</option>`).join('')}</select></div>
-    <div class="fg"><label>Dojo</label><select id="ec-dojo"><option value="Chartres - La Madeleine"${c.dojo==='Chartres - La Madeleine'?' selected':''}>Chartres - La Madeleine</option><option value="Chartres - Dojo Section"${c.dojo==='Chartres - Dojo Section'?' selected':''}>Chartres - Dojo Section</option><option value="Mainvilliers"${c.dojo==='Mainvilliers'?' selected':''}>Mainvilliers</option><option value="Lucé"${c.dojo==='Lucé'?' selected':''}>Lucé</option><option value="Fontaine"${c.dojo==='Fontaine'?' selected':''}>Fontaine</option></select></div>
+    <div class="fg"><label>Dojo</label><select id="ec-dojo"><option value="Chartres - La Madeleine"${c.dojo==='Chartres - La Madeleine'?' selected':''}>Chartres - La Madeleine</option><option value="Chartres - Dojo Section"${c.dojo==='Chartres - Dojo Section'?' selected':''}>Chartres - Dojo Section</option><option value="Chartres - MMA"${c.dojo==='Chartres - MMA'?' selected':''}>Chartres - MMA</option><option value="Mainvilliers"${c.dojo==='Mainvilliers'?' selected':''}>Mainvilliers</option><option value="Lucé"${c.dojo==='Lucé'?' selected':''}>Lucé</option><option value="Fontaine"${c.dojo==='Fontaine'?' selected':''}>Fontaine</option></select></div>
     <div class="fg"><label>Catégorie</label><select id="ec-cat"><option${c.categorie==='Baby'?' selected':''}>Baby</option><option${c.categorie==='Mini-Poussins'?' selected':''}>Mini-Poussins</option><option${c.categorie==='Poussins'?' selected':''}>Poussins</option><option${c.categorie==='Benjamins'?' selected':''}>Benjamins</option><option${c.categorie==='Minimes'?' selected':''}>Minimes</option><option${c.categorie==='Cadets'?' selected':''}>Cadets</option><option${c.categorie==='Adultes'?' selected':''}>Adultes</option><option${c.categorie==='Taïso'?' selected':''}>Taïso</option><option${c.categorie==='Tous niveaux'?' selected':''}>Tous niveaux</option></select></div>
     <div style="display:flex;gap:7px"><button class="bP" style="flex:1" onclick="saveEditCours('${id}')">Enregistrer</button><button class="bS" onclick="cm('m-edit-cours')">Annuler</button></div>
   </div>`;
@@ -4612,7 +4611,7 @@ async function loadProfCours(){
   const{data:cours}=await sb.from('cours').select('*').eq('prof_id',CU.id).order('jour').order('heure_debut');
   const el=document.getElementById('prof-cours-list');if(!el)return;
   const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
+  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Chartres - MMA':'#e84393','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
   if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours. Ajoute-en un !</p></div>';return;}
   el.innerHTML=cours.map(c=>{const col=DCOLS[c.dojo]||'var(--navy)';return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px;border-left:4px solid ${col}">
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -4646,7 +4645,7 @@ async function loadLicencies(){
     byCat[cat].forEach(l=>{
       const mesCours=(cours||[]).filter(c=>(c.inscrits||[]).includes(l.id));
       html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px;margin-bottom:6px">
-        <div style="font-weight:700;font-size:0.88rem;color:var(--navy)">${jFN(l)}${l.poids?' <span style="font-size:0.68rem;color:var(--mu)">• '+l.poids+'</span>':''}</div>
+        <div style="font-weight:700;font-size:0.88rem;color:var(--navy)">${jFN(l)}${l.poids?' <span style="font-size:0.68rem;color:var(--mu)">• '+fmtPoids(l.poids)+'</span>':''}</div>
         <div style="margin-top:4px">${mesCours.length?mesCours.map(c=>`<span style="font-size:0.62rem;padding:2px 8px;border-radius:8px;background:rgba(64,65,104,0.08);color:var(--navy);margin-right:4px;display:inline-block;margin-bottom:2px">📅 ${c.nom} — ${c.dojo||''} (${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][c.jour]} ${c.heure_debut})</span>`).join(''):'<span style="font-size:0.68rem;color:var(--mu);font-style:italic">Aucun cours inscrit</span>'}</div>
       </div>`;
     });
@@ -5132,7 +5131,7 @@ async function openEnfantPage(id){
   const{data:cours}=await sb.from('cours').select('*').order('jour').order('heure_debut');
   const pg=document.getElementById('page-club');if(!pg)return;
   const inscrits=e.inscrits||[];
-  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
+  const DCOLS={'Chartres - La Madeleine':'var(--navy)','Chartres - Dojo Section':'var(--pu)','Chartres - MMA':'#e84393','Mainvilliers':'var(--gr)','Lucé':'var(--rd)','Fontaine':'var(--orange)'};
   const DN=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">${e.prenom} ${e.nom||''}</div>
