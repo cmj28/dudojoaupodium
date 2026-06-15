@@ -354,6 +354,20 @@ body{font-size:14px;}
 .annonce-date{font-size:0.6rem;}
 
 /* Tablette et desktop : on réaugmente */
+/* NAV portrait : logo court + tabs compacts */
+.nb-short{display:inline;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:0.08em;text-transform:uppercase;}
+.nb-short span{color:var(--gold);}
+.nb-full{display:none;}
+.top-nav{height:52px;flex-wrap:nowrap;overflow:hidden;}
+.nt{max-width:calc(100vw - 80px);}
+
+/* En paysage ou grand écran : logo complet */
+@media(min-width:540px),(orientation:landscape){
+  .nb-short{display:none;}
+  .nb-full{display:inline;}
+  .nt{max-width:calc(100vw - 200px);}
+}
+
 @media(min-width:640px){
   .page{padding:16px 20px 60px;max-width:700px;}
   .ntb{font-size:0.65rem;padding:5px 10px;}
@@ -529,7 +543,7 @@ body{font-size:14px;}
 <!-- MAIN APP -->
 <div id="app" style="display:none">
   <nav class="top-nav">
-    <div class="nb">Du Dojo au <span>Podium</span></div>
+    <div class="nb"><span class="nb-short">DDaP</span><span class="nb-full">Du Dojo au <span>Podium</span></span></div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="user-info" id="nav-user-info"></div>
       <div class="nt" id="nav-tabs"></div>
