@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Du Dojo au Podium — CMJ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
@@ -22,7 +22,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--tx);min-he
 label{display:block;font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;}
 input.bilan-chk{display:inline-block!important;width:16px!important;height:16px!important;margin:0!important;padding:0!important;cursor:pointer;accent-color:var(--pu);flex-shrink:0;vertical-align:middle;}
 .bilan-label{display:inline-flex!important;align-items:center;gap:6px;cursor:pointer;font-size:0.82rem;text-transform:none!important;letter-spacing:0!important;font-weight:400;color:var(--tx);padding:4px 8px;background:var(--sf2);border:1px solid var(--bd);border-radius:7px;}
-input:not([type=checkbox]):not([type=radio]),select,textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;color:var(--tx);font-family:'Barlow',sans-serif;font-size:0.88rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+input:not([type=checkbox]):not([type=radio]),select,textarea{width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:8px;padding:9px 11px;color:var(--tx);font-family:'Barlow',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
 input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{border-color:var(--navy);}
 textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 .bP{width:100%;padding:12px;border-radius:10px;border:none;background:var(--navy);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.95rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;}
@@ -244,6 +244,126 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 .photo-zone img{width:100%;height:100%;object-fit:cover;}
 .sync-indicator{position:fixed;top:60px;right:12px;background:rgba(42,157,92,0.9);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.62rem;font-weight:700;z-index:50;opacity:0;transition:opacity 0.3s;}
 .sync-indicator.show{opacity:1;}
+
+/* ============================================================
+   MOBILE FIRST — Optimisations pour smartphone
+   ============================================================ */
+
+/* Navigation : scroll horizontal sur petits écrans */
+.nt{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;flex-wrap:nowrap;}
+.nt::-webkit-scrollbar{display:none;}
+.ntb{padding:6px 9px;border-radius:6px;white-space:nowrap;flex-shrink:0;min-height:36px;font-size:0.6rem;}
+.top-nav{height:52px;padding:0 10px;}
+
+/* Pages : padding adapté mobile */
+.page{padding:12px 12px 80px;max-width:700px;}
+
+/* Cards : coins plus arrondis, ombre subtile */
+.card{border-radius:14px;padding:14px 13px;}
+
+/* Boutons : touch targets min 44px */
+.bP{padding:13px;font-size:1rem;min-height:48px;border-radius:12px;}
+.bS{padding:9px 14px;min-height:36px;font-size:0.75rem;}
+.bG{min-height:44px;padding:11px 18px;}
+.bE{min-height:32px;padding:4px 10px;font-size:0.65rem;}
+.bR{min-height:32px;padding:4px 10px;font-size:0.65rem;}
+
+/* Inputs : taille confortable sur mobile */
+input:not([type=checkbox]):not([type=radio]),select,textarea{
+  padding:11px 13px;
+  font-size:1rem; /* évite le zoom auto iOS */
+  border-radius:10px;
+}
+
+/* Grille 2 colonnes sur mobile */
+.tc{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+
+/* Modal : plein écran sur mobile */
+.modal{
+  border-radius:20px 20px 0 0;
+  padding:20px 14px 40px;
+  max-height:92vh;
+}
+
+/* Dash tiles : plus d'espace tactile */
+.dash-tile{padding:18px 14px;border-radius:14px;}
+.dash-tile-icon{font-size:2rem;width:44px;}
+.dash-tile-title{font-size:1.1rem;}
+
+/* Stats grid */
+.sc{padding:12px 10px;border-radius:12px;}
+.sv{font-size:1.6rem;}
+
+/* Calendrier : cellules plus petites sur mobile */
+.dc{min-height:60px;padding:3px 2px;border-radius:6px;}
+.dcd{font-size:0.6rem;}
+.dcs{font-size:0.48rem;}
+
+/* Planning hebdo : scroll horizontal */
+.wg,.wh{gap:2px;}
+
+/* Fiches prof */
+.prof-card{gap:10px;padding:12px;}
+.prof-avatar-big{width:58px;height:58px;font-size:1.3rem;}
+.prof-name{font-size:1rem;}
+
+/* Tags et chips */
+.chb{min-height:32px;padding:5px 10px;font-size:0.72rem;border-radius:8px;}
+.ftab{min-height:36px;padding:7px 12px;}
+.dojo-btn{min-height:32px;padding:5px 11px;font-size:0.7rem;}
+
+/* Auth page */
+.auth-card{padding:28px 18px;border-radius:18px;}
+.auth-logo-text{font-size:1.8rem;}
+.role-btn{padding:12px 8px;font-size:0.75rem;min-height:52px;}
+
+/* Coaching : sous-tabs */
+.cst{min-height:36px;padding:6px 11px;}
+
+/* Appel boutons */
+.appel-btn{width:40px;height:40px;}
+
+/* Toast */
+.toast{font-size:0.82rem;padding:10px 18px;min-width:200px;max-width:88vw;}
+
+/* Organigramme : scroll horizontal */
+#organigramme-view{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* Planning club : tableau scrollable */
+.planning-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* Slots */
+.slot-row{padding:9px 10px;border-radius:10px;}
+.slot-badge{font-size:0.6rem;padding:3px 7px;}
+
+/* Safe area pour iPhone (encoche + barre home) */
+.page{padding-bottom:calc(80px + env(safe-area-inset-bottom));}
+.top-nav{padding-top:env(safe-area-inset-top);}
+
+/* Bottom nav scrollable safe area */
+body{padding-bottom:env(safe-area-inset-bottom);}
+
+/* Textes */
+body{font-size:14px;}
+.ST{font-size:0.88rem;}
+
+/* Annonces */
+.annonce-title{font-size:0.88rem;}
+.annonce-text{font-size:0.8rem;}
+.annonce-date{font-size:0.6rem;}
+
+/* Tablette et desktop : on réaugmente */
+@media(min-width:640px){
+  .page{padding:16px 20px 60px;max-width:700px;}
+  .ntb{font-size:0.65rem;padding:5px 10px;}
+  body{font-size:15px;}
+  .bP{font-size:0.95rem;padding:12px;}
+  .modal{max-height:88vh;border-radius:16px 16px 0 0;}
+  .dash-tile-icon{font-size:2.2rem;width:52px;}
+  .dc{min-height:72px;}
+  .prof-avatar-big{width:68px;height:68px;font-size:1.5rem;}
+}
 </style>
 </head>
 <body>
