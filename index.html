@@ -10,10 +10,12 @@
 :root{--navy:#404168;--gold:#F2BA1D;--bg:#eef1f8;--sf:#fff;--sf2:#e8ecf5;--bd:rgba(64,65,104,0.13);--tx:#1a1c2e;--mu:#7b7e9e;--gr:#2a9d5c;--rd:#d94f4f;--pu:#9b59b6;--orange:#e07b39;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:15px;}
-.top-nav{background:var(--navy);padding:0 14px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.18);}
-.nb{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:0.1em;text-transform:uppercase;color:#fff;}.nb span{color:var(--gold);}
-.nt{display:flex;gap:3px;}
-.ntb{padding:5px 10px;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,0.5);font-family:'Barlow',sans-serif;font-size:0.65rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.top-nav{background:var(--navy);padding:0;display:flex;flex-direction:column;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,0.18);}
+.nav-top-row{display:flex;align-items:center;justify-content:space-between;padding:0 12px;height:44px;flex-shrink:0;}
+.nb{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:0.1em;text-transform:uppercase;color:#fff;white-space:nowrap;}.nb span{color:var(--gold);}
+.nt{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:4px 8px 6px;flex-wrap:nowrap;width:100%;}
+.nt::-webkit-scrollbar{display:none;}
+.ntb{padding:5px 9px;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,0.6);font-family:'Barlow',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;}
 .ntb.active{background:var(--gold);color:#000;}
 .page{display:none;padding:16px 14px 40px;max-width:700px;margin:0 auto;}.page.active{display:block;}
 .ST{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);margin-bottom:11px;display:flex;align-items:center;gap:8px;}.ST::after{content:'';flex:1;height:2px;background:var(--bd);}
@@ -253,7 +255,7 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 .nt{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;flex-wrap:nowrap;}
 .nt::-webkit-scrollbar{display:none;}
 .ntb{padding:6px 9px;border-radius:6px;white-space:nowrap;flex-shrink:0;min-height:36px;font-size:0.6rem;}
-.top-nav{height:52px;padding:0 10px;}
+/* nav height géré par flex */
 
 /* Pages : padding adapté mobile */
 .page{padding:12px 12px 80px;max-width:700px;}
@@ -339,7 +341,7 @@ input:not([type=checkbox]):not([type=radio]),select,textarea{
 
 /* Safe area pour iPhone (encoche + barre home) */
 .page{padding-bottom:calc(80px + env(safe-area-inset-bottom));}
-.top-nav{padding-top:env(safe-area-inset-top);}
+.nav-top-row{padding-top:env(safe-area-inset-top);height:calc(44px + env(safe-area-inset-top));}
 
 /* Bottom nav scrollable safe area */
 body{padding-bottom:env(safe-area-inset-bottom);}
@@ -355,19 +357,6 @@ body{font-size:14px;}
 
 /* Tablette et desktop : on réaugmente */
 /* NAV portrait : logo court + tabs compacts */
-.nb-short{display:inline;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:0.08em;text-transform:uppercase;}
-.nb-short span{color:var(--gold);}
-.nb-full{display:none;}
-.top-nav{height:52px;flex-wrap:nowrap;overflow:hidden;}
-.nt{max-width:calc(100vw - 80px);}
-
-/* En paysage ou grand écran : logo complet */
-@media(min-width:540px),(orientation:landscape){
-  .nb-short{display:none;}
-  .nb-full{display:inline;}
-  .nt{max-width:calc(100vw - 200px);}
-}
-
 @media(min-width:640px){
   .page{padding:16px 20px 60px;max-width:700px;}
   .ntb{font-size:0.65rem;padding:5px 10px;}
@@ -543,11 +532,11 @@ body{font-size:14px;}
 <!-- MAIN APP -->
 <div id="app" style="display:none">
   <nav class="top-nav">
-    <div class="nb"><span class="nb-short">DDaP</span><span class="nb-full">Du Dojo au <span>Podium</span></span></div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="nav-top-row">
+      <div class="nb">Du Dojo au <span>Podium</span></div>
       <div class="user-info" id="nav-user-info"></div>
-      <div class="nt" id="nav-tabs"></div>
     </div>
+    <div class="nt" id="nav-tabs"></div>
   </nav>
 
   <!-- PAGE JUDOKA -->
