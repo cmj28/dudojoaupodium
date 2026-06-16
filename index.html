@@ -368,6 +368,14 @@ body{font-size:14px;}
   .prof-avatar-big{width:68px;height:68px;font-size:1.5rem;}
 }
 </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    // Initialiser EmailJS — remplace les valeurs ci-dessous après création du compte
+    (function(){
+      const EMAILJS_PUBLIC_KEY = 'BJt_xkcH3WB8xjBRK';
+      if(EMAILJS_PUBLIC_KEY !== 'VOTRE_PUBLIC_KEY') emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+    })();
+  </script>
 </head>
 <body>
 
@@ -3404,7 +3412,13 @@ function showClubSection(sec){
         <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Charte du Club</div><div style="font-size:0.72rem;color:var(--mu);margin-top:2px">Les valeurs et engagements CMJ</div></div>
         <div style="font-size:1.2rem;color:var(--bd)">›</div>
       </div>
-      <!-- 8. PARTENAIRES -->
+      <!-- 8. CONTACT -->
+      <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('contact')">
+        <div style="font-size:2rem;width:48px;text-align:center">💬</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Signaler un problème, une suggestion</div></div>
+        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+      </div>
+      <!-- 9. PARTENAIRES -->
       <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:14px">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">🤝 Nos partenaires</div>
         <div id="club-partenaires-view"><div style="text-align:center;padding:12px;color:var(--mu)">Chargement...</div></div>
@@ -3421,7 +3435,99 @@ function showClubSection(sec){
   else if(sec==='newsletter'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📬 Newsletter</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="newsletter-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('newsletter','newsletter-view');}
   else if(sec==='charte'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📋 Charte du Club</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="charte-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('charte','charte-view');}
   else if(sec==='organigramme'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">🏛️ Organigramme</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="organigramme-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadOrganigramme();}
+  else if(sec==='contact'){
+    pg.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;text-transform:uppercase;color:var(--navy)">💬 Nous contacter</div>
+        <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">Signaler un problème ou faire une suggestion</div>
+      </div>
+      <button class="bS" onclick="showClubSection('main')">← Retour</button>
+    </div>
+    <div class="card">
+      <div class="fg">
+        <label>Votre nom</label>
+        <input type="text" id="contact-nom" value="${CP.prenom||''} ${CP.nom||''}" placeholder="Nom Prénom">
+      </div>
+      <div class="fg">
+        <label>Votre email</label>
+        <input type="email" id="contact-email" value="${CP.email_display||''}" placeholder="votre@email.com">
+      </div>
+      <div class="fg">
+        <label>Sujet</label>
+        <select id="contact-sujet">
+          <option value="Problème technique">🐛 Problème technique</option>
+          <option value="Question">❓ Question</option>
+          <option value="Suggestion">💡 Suggestion d'amélioration</option>
+          <option value="Autre">📌 Autre</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Message</label>
+        <textarea id="contact-message" style="min-height:120px" placeholder="Décris ton problème ou ta suggestion en détail..."></textarea>
+      </div>
+      <div id="contact-status" style="display:none;text-align:center;padding:10px;border-radius:8px;font-size:0.8rem;margin-bottom:10px"></div>
+      <button class="bP" onclick="sendContactForm()" id="contact-btn">📨 Envoyer le message</button>
+      <div style="text-align:center;margin-top:12px;font-size:0.65rem;color:var(--mu)">
+        Ou directement par email : <a href="mailto:dudojoaupodium@gmail.com" style="color:var(--navy);font-weight:600">dudojoaupodium@gmail.com</a>
+      </div>
+    </div>`;
+  }
   window.scrollTo(0,0);
+}
+
+async function sendContactForm(){
+  const nom=document.getElementById('contact-nom')?.value.trim();
+  const email=document.getElementById('contact-email')?.value.trim();
+  const sujet=document.getElementById('contact-sujet')?.value;
+  const message=document.getElementById('contact-message')?.value.trim();
+  const status=document.getElementById('contact-status');
+  const btn=document.getElementById('contact-btn');
+
+  if(!nom){toast('Entre ton nom',1);return;}
+  if(!email){toast('Entre ton email',1);return;}
+  if(!message){toast('Écris ton message',1);return;}
+
+  btn.disabled=true;btn.textContent='Envoi en cours...';
+
+  // Vérifier si EmailJS est configuré
+  const EMAILJS_SERVICE_ID='service_gzuxpyv';
+  const EMAILJS_TEMPLATE_ID='template_1srn2kd';
+
+  if(EMAILJS_SERVICE_ID==='VOTRE_SERVICE_ID'){
+    // Fallback : ouvrir le client mail avec le message pré-rempli
+    const body=encodeURIComponent('Nom: '+nom+'\nEmail: '+email+'\nSujet: '+sujet+'\n\nMessage:\n'+message);
+    window.location.href='mailto:dudojoaupodium@gmail.com?subject=[DDaP] '+encodeURIComponent(sujet)+'&body='+body;
+    btn.disabled=false;btn.textContent='📨 Envoyer le message';
+    return;
+  }
+
+  try{
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      from_name: nom,
+      from_email: email,
+      sujet: sujet,
+      message: message,
+      to_email: 'dudojoaupodium@gmail.com',
+      user_id: CU?.id||'non connecté'
+    });
+    status.style.display='block';
+    status.style.background='rgba(42,157,92,0.1)';
+    status.style.color='var(--gr)';
+    status.style.border='1px solid rgba(42,157,92,0.3)';
+    status.textContent='✅ Message envoyé ! On vous répondra dès que possible.';
+    document.getElementById('contact-message').value='';
+    btn.textContent='✅ Message envoyé';
+  }catch(e){
+    console.error(e);
+    status.style.display='block';
+    status.style.background='rgba(217,79,79,0.1)';
+    status.style.color='var(--rd)';
+    status.style.border='1px solid rgba(217,79,79,0.3)';
+    status.textContent="❌ Erreur d'envoi. Contactez-nous directement à dudojoaupodium@gmail.com";
+    btn.disabled=false;
+    btn.textContent='📨 Réessayer';
+  }
 }
 
 async function loadClubPlanning(dojoFilter){
