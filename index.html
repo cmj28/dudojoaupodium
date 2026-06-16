@@ -543,6 +543,130 @@ body{font-size:14px;}
         <button class="bP" style="margin-top:12px" onclick="doRegister()">Créer mon compte</button>
         <div id="reg-error" style="color:var(--rd);font-size:0.78rem;margin-top:10px;text-align:center"></div>
       </div>
+
+      <!-- PRÉ-INSCRIPTION -->
+      <div id="form-preinscription" style="display:none;max-height:75vh;overflow-y:auto">
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="font-size:0.72rem;color:var(--mu);line-height:1.5">Remplis ce formulaire pour t'inscrire au club. Le bureau validera ta demande.</div>
+        </div>
+        <!-- ÉTAPES -->
+        <div style="display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid var(--bd)">
+          <div id="pi-step-1" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--navy);color:#fff">1. Infos</div>
+          <div id="pi-step-2" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">2. Tarif</div>
+          <div id="pi-step-3" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">3. Docs</div>
+          <div id="pi-step-4" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">4. Paiement</div>
+        </div>
+        <!-- PAGE 1 : INFOS -->
+        <div id="pi-page-1">
+          <div class="tc">
+            <div class="fg"><label>Prénom *</label><input type="text" id="pi-prenom" placeholder="Prénom"></div>
+            <div class="fg"><label>Nom *</label><input type="text" id="pi-nom" placeholder="Nom"></div>
+          </div>
+          <div class="fg"><label>Date de naissance *</label><input type="date" id="pi-ddn" onchange="piUpdateCategorie()"></div>
+          <div id="pi-cat-display" style="display:none;background:rgba(64,65,104,0.06);border:1px solid rgba(64,65,104,0.2);border-radius:8px;padding:8px 12px;font-size:0.8rem;color:var(--navy);font-weight:600;margin-bottom:8px"></div>
+          <div class="fg"><label>Email *</label><input type="email" id="pi-email" placeholder="votre@email.com"></div>
+          <div class="fg"><label>Téléphone</label><input type="tel" id="pi-tel" placeholder="06 XX XX XX XX"></div>
+          <div class="fg"><label>Dojo souhaité *</label>
+            <select id="pi-dojo">
+              <option value="">-- Choisir un dojo --</option>
+              <option value="Chartres - La Madeleine">Chartres - La Madeleine</option>
+              <option value="Chartres - MMA">Chartres - MMA</option>
+              <option value="Mainvilliers">Mainvilliers</option>
+              <option value="Lucé">Lucé</option>
+              <option value="Fontaine">Fontaine-la-Guyon</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="pi-competiteur" style="width:16px;height:16px">
+              <span style="font-size:0.82rem">Je souhaite participer aux compétitions</span>
+            </label>
+          </div>
+          <div id="pi-parental-block" style="display:none;background:rgba(242,186,29,0.1);border:1px solid rgba(242,186,29,0.3);border-radius:8px;padding:10px;margin-bottom:8px;font-size:0.75rem;color:var(--navy)">
+            ⚠️ Autorisation parentale requise pour les moins de 15 ans.
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+              <input type="checkbox" id="pi-parental" style="width:16px;height:16px">
+              <span style="font-weight:600">Le représentant légal autorise la participation</span>
+            </label>
+          </div>
+          <div id="pi-error-1" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+          <button class="bP" onclick="piNext(1)">Suivant →</button>
+        </div>
+        <!-- PAGE 2 : TARIF -->
+        <div id="pi-page-2" style="display:none">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Choisir votre tarif</div>
+          <div class="pi-tarif-card" onclick="piSelectTarif(this,'elite',250,'Groupe Élite')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-weight:700;font-size:0.88rem">🏆 Groupe Élite</div><div style="font-size:0.68rem;color:var(--mu)">Compétiteurs haut niveau</div></div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--gold)">250€</div>
+            </div>
+          </div>
+          <div class="pi-tarif-card" onclick="piSelectTarif(this,'senior',200,'Cadets à Vétérans')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-weight:700;font-size:0.88rem">🥋 Cadets à Vétérans</div><div style="font-size:0.68rem;color:var(--mu)">Cadets, Juniors, Seniors, Vétérans</div></div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">200€</div>
+            </div>
+          </div>
+          <div class="pi-tarif-card" onclick="piSelectTarif(this,'jeune',180,'Baby à Minimes')">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-weight:700;font-size:0.88rem">⭐ Baby à Minimes</div><div style="font-size:0.68rem;color:var(--mu)">Baby Judo, Poussins, Benjamins, Minimes</div></div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">180€</div>
+            </div>
+          </div>
+          <div id="pi-tarif-selected" style="display:none;background:rgba(42,157,92,0.08);border:1px solid rgba(42,157,92,0.3);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:0.8rem;color:var(--gr);font-weight:600"></div>
+          <div id="pi-error-2" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(2)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(2)">Suivant →</button></div>
+        </div>
+        <!-- PAGE 3 : DOCUMENTS -->
+        <div id="pi-page-3" style="display:none">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Pièces justificatives</div>
+          <div style="font-size:0.68rem;color:var(--mu);margin-bottom:12px">* obligatoires — PDF, JPG ou PNG, max 5MB</div>
+          <div class="pi-doc-zone" id="pi-doc-charte">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:1.2rem">📋</div>
+              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Charte du club signée *</div><div style="font-size:0.63rem;color:var(--mu)">Télécharge, signe et uploade la charte</div></div>
+              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-charte').click()">📎</button>
+            </div>
+            <input type="file" id="pi-file-charte" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'charte')">
+            <div id="pi-doc-charte-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
+          </div>
+          <div class="pi-doc-zone" id="pi-doc-sante">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:1.2rem">❤️</div>
+              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Attestation questionnaire de santé *</div><div style="font-size:0.63rem;color:var(--mu)">QS-Sport rempli et signé</div></div>
+              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-sante').click()">📎</button>
+            </div>
+            <input type="file" id="pi-file-sante" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'sante')">
+            <div id="pi-doc-sante-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
+          </div>
+          <div class="pi-doc-zone" id="pi-doc-certif">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font-size:1.2rem">🩺</div>
+              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Certificat médical</div><div style="font-size:0.63rem;color:var(--mu)">Optionnel — si première inscription</div></div>
+              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-certif').click()">📎</button>
+            </div>
+            <input type="file" id="pi-file-certif" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'certif')">
+            <div id="pi-doc-certif-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
+          </div>
+          <div id="pi-error-3" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(3)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(3)">Suivant →</button></div>
+        </div>
+        <!-- PAGE 4 : CONFIRMATION + PAIEMENT -->
+        <div id="pi-page-4" style="display:none">
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="font-size:2.5rem;margin-bottom:8px">✅</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;color:var(--navy)">Demande enregistrée !</div>
+            <div style="font-size:0.75rem;color:var(--mu);margin-top:6px;line-height:1.5">Il ne reste plus qu'à effectuer le paiement via HelloAsso.</div>
+          </div>
+          <div id="pi-recap" style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--navy)"></div>
+          <a id="pi-helloasso-btn" href="HELLOASSO_PLACEHOLDER" target="_blank" style="display:block;text-decoration:none">
+            <button class="bP" style="width:100%;background:linear-gradient(135deg,#e8445a,#e06b00);border:none">💳 Payer via HelloAsso</button>
+          </a>
+          <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Zéro commission pour l'association · Paiement sécurisé</div>
+          <div style="margin-top:12px;text-align:center"><button class="bS" onclick="switchAuthTab('login')" style="font-size:0.72rem">Retour à la connexion</button></div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
