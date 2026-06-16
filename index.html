@@ -247,6 +247,13 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 .sync-indicator{position:fixed;top:60px;right:12px;background:rgba(42,157,92,0.9);color:#fff;padding:4px 10px;border-radius:20px;font-size:0.62rem;font-weight:700;z-index:50;opacity:0;transition:opacity 0.3s;}
 .sync-indicator.show{opacity:1;}
 
+.pi-tarif-card{background:var(--sf);border:2px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;}
+.pi-tarif-card:hover,.pi-tarif-card.selected{border-color:var(--navy);background:rgba(64,65,104,0.05);}
+.pi-tarif-card.selected{border-color:var(--gold);background:rgba(242,186,29,0.06);}
+.pi-doc-zone{background:var(--sf2);border:1.5px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px;transition:border-color 0.2s;}
+.pi-doc-zone.uploaded{border-color:var(--gr);background:rgba(42,157,92,0.04);}
+.pi-step.done{background:var(--gr)!important;color:#fff!important;}
+.pi-step.active{background:var(--navy)!important;color:#fff!important;}
 /* ============================================================
    MOBILE FIRST — Optimisations pour smartphone
    ============================================================ */
@@ -400,7 +407,8 @@ body{font-size:14px;}
       </div>
       <div class="auth-tabs">
         <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
-        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Inscription</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Créer un compte</button>
+        <button class="auth-tab" id="tab-preinscription" onclick="switchAuthTab('preinscription')" style="background:rgba(242,186,29,0.15);color:var(--gold);font-weight:800">📋 S'inscrire</button>
       </div>
 
       <!-- LOGIN -->
@@ -1320,7 +1328,14 @@ function checkDOBParental(){
   else{catDisp.style.display='none';}
 }
 
-function switchAuthTab(tab){document.getElementById('tab-login').classList.toggle('active',tab==='login');document.getElementById('tab-register').classList.toggle('active',tab==='register');document.getElementById('form-login').style.display=tab==='login'?'':'none';document.getElementById('form-register').style.display=tab==='register'?'':'none';}
+function switchAuthTab(tab){
+  document.getElementById('tab-login').classList.toggle('active',tab==='login');
+  document.getElementById('tab-register').classList.toggle('active',tab==='register');
+  const tabPi=document.getElementById('tab-preinscription');if(tabPi)tabPi.classList.toggle('active',tab==='preinscription');
+  document.getElementById('form-login').style.display=tab==='login'?'':'none';
+  document.getElementById('form-register').style.display=tab==='register'?'':'none';
+  const pi=document.getElementById('form-preinscription');if(pi)pi.style.display=tab==='preinscription'?'':'none';
+}
 // ============================================================
 // INSCRIPTION — MULTI RÔLES
 // ============================================================
@@ -1369,18 +1384,27 @@ async function doRegister(){
       const{data:p}=await sb.from('profiles').select('*').eq('code_invitation',combatCodeInput).single();
       if(!p){err.textContent='Code compétiteur introuvable. Vérifie le code fourni par ton club.';return;}
       profilExistant=p;
-    } else if(combatCodeInput!==COMBAT_CODE){
+    } else if(combatCodeInput&&combatCodeInput!==COMBAT_CODE){
       err.textContent='Code compétiteur incorrect.';return;
     }
   }
 
   // Vérifie code section
   if(checked.includes('section')){
-    if(sectionCodeInput.startsWith('SEC-')){
-      const{data:p}=await sb.from('profils_section').select('*').eq('code_invitation',sectionCodeInput).single();
-      if(!p){err.textContent='Code section introuvable. Vérifie le code fourni par ton prof.';return;}
-      profilSectionExistant=p;
-    } else if(sectionCodeInput!==SECTION_CODE){
+    if(sectionCodeInput.startsWith('CMJ-')){
+      // Code personnel section (ex: CMJ-RBEAUMONT) → chercher dans profils_section
+      const{data:pSec}=await sb.from('profils_section').select('*').eq('code_invitation',sectionCodeInput).single();
+      if(pSec){
+        profilSectionExistant=pSec;
+      } else {
+        // Pas trouvé dans profils_section → chercher dans profiles (judoka club avec section)
+        const{data:pProf}=await sb.from('profiles').select('*').eq('code_invitation',sectionCodeInput).single();
+        if(!pProf){err.textContent='Code section introuvable. Vérifie le code fourni par ton prof.';return;}
+        profilExistant=pProf;
+      }
+    } else if(sectionCodeInput===SECTION_CODE){
+      // Code global section — OK, pas de profil pré-créé à lier
+    } else if(sectionCodeInput){
       err.textContent='Code section incorrect.';return;
     }
   }
@@ -1394,10 +1418,9 @@ async function doRegister(){
 
   let profileData;
   if(profilExistant){
-    // Lie le compte auth au profil existant — on met à jour l'id et l'email
-    profileData={
-      ...profilExistant,
-      id:data.user.id,
+    // Mise à jour du profil existant avec le nouvel id auth
+    // On UPDATE plutôt que DELETE+INSERT pour préserver les données liées
+    const updateData={
       email,
       date_naissance:dob,
       autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
@@ -1411,8 +1434,22 @@ async function doRegister(){
       is_bureau:isBureau||profilExistant.is_bureau,
       is_parent:checked.includes('parent'),
     };
-    // Supprimer l'ancien profil (il avait un id différent)
-    await sb.from('profiles').delete().eq('id',profilExistant.id);
+    // Mettre à jour l'ancien profil avec le nouvel auth id
+    // On doit d'abord mettre à jour les FK dans les tables liées
+    const oldId=profilExistant.id;
+    const newId=data.user.id;
+    // Créer le nouveau profil avec le bon id auth
+    profileData={...profilExistant,...updateData,id:newId};
+    // Mettre à jour les références dans les tables liées
+    await Promise.all([
+      sb.from('notes_profs').update({judoka_id:newId}).eq('judoka_id',oldId),
+      sb.from('notes_profs').update({prof_id:newId}).eq('prof_id',oldId),
+      sb.from('resultats').update({judoka_id:newId}).eq('judoka_id',oldId),
+      sb.from('attaques').update({user_id:newId}).eq('user_id',oldId),
+      sb.from('training').update({user_id:newId}).eq('user_id',oldId),
+    ]);
+    // Supprimer l'ancien profil et insérer le nouveau
+    await sb.from('profiles').delete().eq('id',oldId);
   } else {
     const catAuto=getCatFFJudo(dob);
     const cat=catAuto||(isComp?document.getElementById('reg-cat')?.value||'':'');
@@ -1445,7 +1482,11 @@ async function doRegister(){
     <div style="text-align:center;padding:24px 12px">
       <div style="font-size:3rem;margin-bottom:12px">🎉</div>
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy);margin-bottom:8px">Compte créé avec succès !</div>
-      <div style="font-size:0.85rem;color:var(--mu);margin-bottom:20px;line-height:1.5">Bienvenue ${profilExistant?profilExistant.prenom:prenom} ! Tu peux maintenant te connecter.</div>
+      <div style="font-size:0.85rem;color:var(--mu);margin-bottom:20px;line-height:1.5">
+        Bienvenue ${profilExistant?profilExistant.prenom:prenom} !<br>
+        ${profilExistant?'Ton profil a bien été lié à ton compte. ':''}
+        Tu peux maintenant te connecter.
+      </div>
       <button class="bP" onclick="switchAuthTab('login')">Se connecter →</button>
     </div>`;
 }
@@ -3529,6 +3570,118 @@ async function sendContactForm(){
     status.textContent="❌ Erreur d'envoi. Contactez-nous directement à dudojoaupodium@gmail.com";
     btn.disabled=false;
     btn.textContent='📨 Réessayer';
+  }
+}
+
+// ============================================================
+// PRÉ-INSCRIPTION — Variables et fonctions
+// ============================================================
+let piData={prenom:'',nom:'',email:'',tel:'',ddn:'',dojo:'',competiteur:false,categorie:'',tarif:'',tarifNom:'',prix:0,docs:{charte:null,sante:null,certif:null}};
+
+function piUpdateCategorie(){
+  const ddn=document.getElementById('pi-ddn')?.value;
+  const age=ddn?Math.floor((new Date()-new Date(ddn))/(365.25*24*3600*1000)):0;
+  const disp=document.getElementById('pi-cat-display');
+  const parBlock=document.getElementById('pi-parental-block');
+  if(!ddn){if(disp)disp.style.display='none';return;}
+  const cat=getCatFFJudo(ddn);
+  if(cat&&disp){disp.style.display='';disp.textContent='🥋 Catégorie : '+cat;}
+  if(parBlock)parBlock.style.display=age<15?'':'none';
+}
+
+function piSelectTarif(el,tarif,prix,nom){
+  document.querySelectorAll('.pi-tarif-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  piData.tarif=tarif;piData.prix=prix;piData.tarifNom=nom;
+  const disp=document.getElementById('pi-tarif-selected');
+  if(disp){disp.style.display='';disp.textContent='✅ Sélectionné : '+nom+' — '+prix+'€';}
+}
+
+async function piHandleDoc(input,type){
+  const file=input.files[0];if(!file)return;
+  const status=document.getElementById('pi-doc-'+type+'-status');
+  const zone=document.getElementById('pi-doc-'+type);
+  if(file.size>5*1024*1024){if(status)status.textContent='❌ Fichier trop lourd (max 5MB)';return;}
+  if(status)status.textContent='⏳ Upload en cours...';
+  try{
+    const ext=file.name.split('.').pop();
+    const path='preinscriptions/'+Date.now()+'_'+type+'.'+ext;
+    const{data,error}=await sb.storage.from('documents').upload(path,file);
+    if(error)throw error;
+    const{data:urlData}=sb.storage.from('documents').getPublicUrl(path);
+    piData.docs[type]=urlData.publicUrl;
+    if(status)status.textContent='✅ '+file.name+' uploadé';
+    if(zone)zone.classList.add('uploaded');
+  }catch(e){
+    if(status)status.textContent='❌ Erreur : '+e.message;
+  }
+}
+
+function piSetStep(n){
+  for(let i=1;i<=4;i++){
+    const s=document.getElementById('pi-step-'+i);
+    const p=document.getElementById('pi-page-'+i);
+    if(s){
+      s.style.background=i<n?'var(--gr)':i===n?'var(--navy)':'var(--sf2)';
+      s.style.color=i<=n?'#fff':'var(--mu)';
+    }
+    if(p)p.style.display=i===n?'':'none';
+  }
+}
+
+function piNext(step){
+  const err=document.getElementById('pi-error-'+step);
+  if(err)err.textContent='';
+  if(step===1){
+    const prenom=document.getElementById('pi-prenom')?.value.trim();
+    const nom=document.getElementById('pi-nom')?.value.trim();
+    const email=document.getElementById('pi-email')?.value.trim();
+    const ddn=document.getElementById('pi-ddn')?.value;
+    const dojo=document.getElementById('pi-dojo')?.value;
+    const age=ddn?Math.floor((new Date()-new Date(ddn))/(365.25*24*3600*1000)):0;
+    if(!prenom||!nom||!email||!ddn||!dojo){if(err)err.textContent='Remplis tous les champs obligatoires.';return;}
+    if(age<15&&!document.getElementById('pi-parental')?.checked){if(err)err.textContent="L'autorisation parentale est obligatoire.";return;}
+    piData.prenom=prenom;piData.nom=nom;piData.email=email;
+    piData.tel=document.getElementById('pi-tel')?.value.trim()||'';
+    piData.ddn=ddn;piData.dojo=dojo;
+    piData.categorie=getCatFFJudo(ddn)||'';
+    piData.competiteur=!!document.getElementById('pi-competiteur')?.checked;
+    piSetStep(2);
+  } else if(step===2){
+    if(!piData.tarif){if(err)err.textContent='Sélectionne un tarif.';return;}
+    piSetStep(3);
+  } else if(step===3){
+    if(!piData.docs.charte){if(err)err.textContent='La charte du club signée est obligatoire.';return;}
+    if(!piData.docs.sante){if(err)err.textContent="L'attestation questionnaire de santé est obligatoire.";return;}
+    piSendPreinscription();
+  }
+}
+
+function piBack(step){piSetStep(step-1);}
+
+async function piSendPreinscription(){
+  try{
+    await sb.from('preinscriptions').insert({
+      prenom:piData.prenom,nom:piData.nom,email:piData.email,tel:piData.tel,
+      date_naissance:piData.ddn,categorie:piData.categorie,dojo:piData.dojo,
+      competiteur:piData.competiteur,tarif:piData.tarif,tarif_nom:piData.tarifNom,
+      prix:piData.prix,
+      doc_charte:piData.docs.charte,doc_sante:piData.docs.sante,doc_certif:piData.docs.certif||null,
+      statut:'en_attente',created_at:new Date().toISOString()
+    });
+    // Afficher le récap et le bouton HelloAsso
+    const recap=document.getElementById('pi-recap');
+    if(recap)recap.innerHTML=`
+      <div style="margin-bottom:6px"><strong>${piData.prenom} ${piData.nom}</strong></div>
+      <div>📧 ${piData.email}</div>
+      <div>🥋 ${piData.categorie} • ${piData.dojo}</div>
+      <div style="margin-top:6px;font-weight:700;color:var(--gold)">💳 ${piData.tarifNom} — ${piData.prix}€</div>
+    `;
+    piSetStep(4);
+  }catch(e){
+    console.error(e);
+    const err=document.getElementById('pi-error-3');
+    if(err)err.textContent="Erreur lors de l'envoi : "+e.message;
   }
 }
 
