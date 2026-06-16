@@ -544,113 +544,53 @@ body{font-size:14px;}
         <div id="reg-error" style="color:var(--rd);font-size:0.78rem;margin-top:10px;text-align:center"></div>
       </div>
 
-      <!-- PRÉ-INSCRIPTION -->
+      <!-- PRÉ-INSCRIPTION FAMILLE -->
       <div id="form-preinscription" style="display:none;max-height:75vh;overflow-y:auto">
-        <div style="text-align:center;margin-bottom:14px">
-          <div style="font-size:0.72rem;color:var(--mu);line-height:1.5">Remplis ce formulaire pour t'inscrire au club. Le bureau validera ta demande.</div>
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="font-size:0.7rem;color:var(--mu);line-height:1.5">Inscription individuelle ou familiale. Le bureau validera votre demande.</div>
         </div>
         <!-- ÉTAPES -->
-        <div style="display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid var(--bd)">
-          <div id="pi-step-1" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--navy);color:#fff">1. Infos</div>
-          <div id="pi-step-2" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">2. Tarif</div>
-          <div id="pi-step-3" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">3. Docs</div>
-          <div id="pi-step-4" style="flex:1;text-align:center;padding:7px 3px;font-size:0.6rem;font-weight:700;background:var(--sf2);color:var(--mu)">4. Paiement</div>
+        <div style="display:flex;gap:0;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--bd)">
+          <div id="pi-step-1" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--navy);color:#fff">1. Responsable</div>
+          <div id="pi-step-2" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">2. Membres</div>
+          <div id="pi-step-3" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">3. Documents</div>
+          <div id="pi-step-4" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">4. Paiement</div>
         </div>
-        <!-- PAGE 1 : INFOS -->
+
+        <!-- PAGE 1 : RESPONSABLE LÉGAL -->
         <div id="pi-page-1">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">👤 Responsable légal</div>
           <div class="tc">
-            <div class="fg"><label>Prénom *</label><input type="text" id="pi-prenom" placeholder="Prénom"></div>
-            <div class="fg"><label>Nom *</label><input type="text" id="pi-nom" placeholder="Nom"></div>
+            <div class="fg"><label>Prénom *</label><input type="text" id="pi-resp-prenom" placeholder="Prénom"></div>
+            <div class="fg"><label>Nom *</label><input type="text" id="pi-resp-nom" placeholder="Nom"></div>
           </div>
-          <div class="fg"><label>Date de naissance *</label><input type="date" id="pi-ddn" onchange="piUpdateCategorie()"></div>
-          <div id="pi-cat-display" style="display:none;background:rgba(64,65,104,0.06);border:1px solid rgba(64,65,104,0.2);border-radius:8px;padding:8px 12px;font-size:0.8rem;color:var(--navy);font-weight:600;margin-bottom:8px"></div>
-          <div class="fg"><label>Email *</label><input type="email" id="pi-email" placeholder="votre@email.com"></div>
-          <div class="fg"><label>Téléphone</label><input type="tel" id="pi-tel" placeholder="06 XX XX XX XX"></div>
-          <div class="fg"><label>Dojo souhaité *</label>
-            <select id="pi-dojo">
-              <option value="">-- Choisir un dojo --</option>
-              <option value="Chartres - La Madeleine">Chartres - La Madeleine</option>
-              <option value="Chartres - MMA">Chartres - MMA</option>
-              <option value="Mainvilliers">Mainvilliers</option>
-              <option value="Lucé">Lucé</option>
-              <option value="Fontaine">Fontaine-la-Guyon</option>
-            </select>
-          </div>
-          <div class="fg">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="pi-competiteur" style="width:16px;height:16px">
-              <span style="font-size:0.82rem">Je souhaite participer aux compétitions</span>
-            </label>
-          </div>
-          <div id="pi-parental-block" style="display:none;background:rgba(242,186,29,0.1);border:1px solid rgba(242,186,29,0.3);border-radius:8px;padding:10px;margin-bottom:8px;font-size:0.75rem;color:var(--navy)">
-            ⚠️ Autorisation parentale requise pour les moins de 15 ans.
-            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
-              <input type="checkbox" id="pi-parental" style="width:16px;height:16px">
-              <span style="font-weight:600">Le représentant légal autorise la participation</span>
-            </label>
-          </div>
+          <div class="fg"><label>Email *</label><input type="email" id="pi-resp-email" placeholder="votre@email.com"></div>
+          <div class="fg"><label>Téléphone *</label><input type="tel" id="pi-resp-tel" placeholder="06 XX XX XX XX"></div>
           <div id="pi-error-1" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
           <button class="bP" onclick="piNext(1)">Suivant →</button>
         </div>
-        <!-- PAGE 2 : TARIF -->
+
+        <!-- PAGE 2 : MEMBRES (judokas) -->
         <div id="pi-page-2" style="display:none">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">Choisir votre tarif</div>
-          <div class="pi-tarif-card" onclick="piSelectTarif(this,'elite',250,'Groupe Élite')">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-weight:700;font-size:0.88rem">🏆 Groupe Élite</div><div style="font-size:0.68rem;color:var(--mu)">Compétiteurs haut niveau</div></div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--gold)">250€</div>
-            </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">🥋 Membres à inscrire</div>
+            <button class="bS" style="font-size:0.7rem;padding:5px 10px" onclick="piAddMembre()">+ Ajouter</button>
           </div>
-          <div class="pi-tarif-card" onclick="piSelectTarif(this,'senior',200,'Cadets à Vétérans')">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-weight:700;font-size:0.88rem">🥋 Cadets à Vétérans</div><div style="font-size:0.68rem;color:var(--mu)">Cadets, Juniors, Seniors, Vétérans</div></div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">200€</div>
-            </div>
-          </div>
-          <div class="pi-tarif-card" onclick="piSelectTarif(this,'jeune',180,'Baby à Minimes')">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-weight:700;font-size:0.88rem">⭐ Baby à Minimes</div><div style="font-size:0.68rem;color:var(--mu)">Baby Judo, Poussins, Benjamins, Minimes</div></div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy)">180€</div>
-            </div>
-          </div>
-          <div id="pi-tarif-selected" style="display:none;background:rgba(42,157,92,0.08);border:1px solid rgba(42,157,92,0.3);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:0.8rem;color:var(--gr);font-weight:600"></div>
+          <div id="pi-membres-list"></div>
+          <div id="pi-total" style="background:rgba(64,65,104,0.06);border-radius:8px;padding:10px;text-align:right;font-weight:700;font-size:0.9rem;color:var(--navy);margin-bottom:10px;display:none"></div>
           <div id="pi-error-2" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
           <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(2)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(2)">Suivant →</button></div>
         </div>
-        <!-- PAGE 3 : DOCUMENTS -->
+
+        <!-- PAGE 3 : DOCUMENTS PAR MEMBRE -->
         <div id="pi-page-3" style="display:none">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Pièces justificatives</div>
-          <div style="font-size:0.68rem;color:var(--mu);margin-bottom:12px">* obligatoires — PDF, JPG ou PNG, max 5MB</div>
-          <div class="pi-doc-zone" id="pi-doc-charte">
-            <div style="display:flex;align-items:center;gap:10px">
-              <div style="font-size:1.2rem">📋</div>
-              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Charte du club signée *</div><div style="font-size:0.63rem;color:var(--mu)">Télécharge, signe et uploade la charte</div></div>
-              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-charte').click()">📎</button>
-            </div>
-            <input type="file" id="pi-file-charte" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'charte')">
-            <div id="pi-doc-charte-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
-          </div>
-          <div class="pi-doc-zone" id="pi-doc-sante">
-            <div style="display:flex;align-items:center;gap:10px">
-              <div style="font-size:1.2rem">❤️</div>
-              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Attestation questionnaire de santé *</div><div style="font-size:0.63rem;color:var(--mu)">QS-Sport rempli et signé</div></div>
-              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-sante').click()">📎</button>
-            </div>
-            <input type="file" id="pi-file-sante" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'sante')">
-            <div id="pi-doc-sante-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
-          </div>
-          <div class="pi-doc-zone" id="pi-doc-certif">
-            <div style="display:flex;align-items:center;gap:10px">
-              <div style="font-size:1.2rem">🩺</div>
-              <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">Certificat médical</div><div style="font-size:0.63rem;color:var(--mu)">Optionnel — si première inscription</div></div>
-              <button class="bS" style="font-size:0.68rem;padding:4px 9px;flex-shrink:0" onclick="document.getElementById('pi-file-certif').click()">📎</button>
-            </div>
-            <input type="file" id="pi-file-certif" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDoc(this,'certif')">
-            <div id="pi-doc-certif-status" style="font-size:0.68rem;margin-top:4px;color:var(--mu)"></div>
-          </div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);margin-bottom:4px">📎 Documents</div>
+          <div style="font-size:0.68rem;color:var(--mu);margin-bottom:10px">Documents requis pour chaque membre. * = obligatoire.</div>
+          <div id="pi-docs-list"></div>
           <div id="pi-error-3" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
-          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(3)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(3)">Suivant →</button></div>
+          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(3)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(3)">Envoyer ma demande</button></div>
         </div>
+
         <!-- PAGE 4 : CONFIRMATION + PAIEMENT -->
         <div id="pi-page-4" style="display:none">
           <div style="text-align:center;margin-bottom:14px">
@@ -658,11 +598,11 @@ body{font-size:14px;}
             <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;color:var(--navy)">Demande enregistrée !</div>
             <div style="font-size:0.75rem;color:var(--mu);margin-top:6px;line-height:1.5">Il ne reste plus qu'à effectuer le paiement via HelloAsso.</div>
           </div>
-          <div id="pi-recap" style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--navy)"></div>
+          <div id="pi-recap" style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--navy);line-height:1.7"></div>
           <a id="pi-helloasso-btn" href="HELLOASSO_PLACEHOLDER" target="_blank" style="display:block;text-decoration:none">
-            <button class="bP" style="width:100%;background:linear-gradient(135deg,#e8445a,#e06b00);border:none">💳 Payer via HelloAsso</button>
+            <button class="bP" style="width:100%;background:linear-gradient(135deg,#e8445a,#e06b00);border:none;font-size:0.95rem">💳 Payer via HelloAsso</button>
           </a>
-          <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Zéro commission pour l'association · Paiement sécurisé</div>
+          <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Zéro commission · Paiement en 1x ou 3x sans frais</div>
           <div style="margin-top:12px;text-align:center"><button class="bS" onclick="switchAuthTab('login')" style="font-size:0.72rem">Retour à la connexion</button></div>
         </div>
       </div>
@@ -3698,113 +3638,209 @@ async function sendContactForm(){
 }
 
 // ============================================================
-// PRÉ-INSCRIPTION — Variables et fonctions
+// PRÉ-INSCRIPTION FAMILLE — Variables et fonctions
 // ============================================================
-let piData={prenom:'',nom:'',email:'',tel:'',ddn:'',dojo:'',competiteur:false,categorie:'',tarif:'',tarifNom:'',prix:0,docs:{charte:null,sante:null,certif:null}};
-
-function piUpdateCategorie(){
-  const ddn=document.getElementById('pi-ddn')?.value;
-  const age=ddn?Math.floor((new Date()-new Date(ddn))/(365.25*24*3600*1000)):0;
-  const disp=document.getElementById('pi-cat-display');
-  const parBlock=document.getElementById('pi-parental-block');
-  if(!ddn){if(disp)disp.style.display='none';return;}
-  const cat=getCatFFJudo(ddn);
-  if(cat&&disp){disp.style.display='';disp.textContent='🥋 Catégorie : '+cat;}
-  if(parBlock)parBlock.style.display=age<15?'':'none';
-}
-
-function piSelectTarif(el,tarif,prix,nom){
-  document.querySelectorAll('.pi-tarif-card').forEach(c=>c.classList.remove('selected'));
-  el.classList.add('selected');
-  piData.tarif=tarif;piData.prix=prix;piData.tarifNom=nom;
-  const disp=document.getElementById('pi-tarif-selected');
-  if(disp){disp.style.display='';disp.textContent='✅ Sélectionné : '+nom+' — '+prix+'€';}
-}
-
-async function piHandleDoc(input,type){
-  const file=input.files[0];if(!file)return;
-  const status=document.getElementById('pi-doc-'+type+'-status');
-  const zone=document.getElementById('pi-doc-'+type);
-  if(file.size>5*1024*1024){if(status)status.textContent='❌ Fichier trop lourd (max 5MB)';return;}
-  if(status)status.textContent='⏳ Upload en cours...';
-  try{
-    const ext=file.name.split('.').pop();
-    const path='preinscriptions/'+Date.now()+'_'+type+'.'+ext;
-    const{data,error}=await sb.storage.from('documents').upload(path,file);
-    if(error)throw error;
-    const{data:urlData}=sb.storage.from('documents').getPublicUrl(path);
-    piData.docs[type]=urlData.publicUrl;
-    if(status)status.textContent='✅ '+file.name+' uploadé';
-    if(zone)zone.classList.add('uploaded');
-  }catch(e){
-    if(status)status.textContent='❌ Erreur : '+e.message;
-  }
-}
+const TARIFS=[
+  {id:'elite',nom:'Groupe Élite',prix:250,desc:'Compétiteurs haut niveau',emoji:'🏆'},
+  {id:'senior',nom:'Cadets à Vétérans',prix:200,desc:'Cadets, Juniors, Seniors, Vétérans',emoji:'🥋'},
+  {id:'jeune',nom:'Baby à Minimes',prix:180,desc:'Baby Judo, Poussins, Benjamins, Minimes',emoji:'⭐'},
+];
+const DOJOS_PI=['Chartres - La Madeleine','Chartres - MMA','Mainvilliers','Lucé','Fontaine-la-Guyon'];
+let piResp={prenom:'',nom:'',email:'',tel:''};
+let piMembres=[]; // [{prenom,nom,ddn,categorie,dojo,competiteur,tarif,prix,docs:{charte,sante,certif}}]
 
 function piSetStep(n){
   for(let i=1;i<=4;i++){
     const s=document.getElementById('pi-step-'+i);
     const p=document.getElementById('pi-page-'+i);
-    if(s){
-      s.style.background=i<n?'var(--gr)':i===n?'var(--navy)':'var(--sf2)';
-      s.style.color=i<=n?'#fff':'var(--mu)';
-    }
+    if(s){s.style.background=i<n?'var(--gr)':i===n?'var(--navy)':'var(--sf2)';s.style.color=i<=n?'#fff':'var(--mu)';}
     if(p)p.style.display=i===n?'':'none';
   }
+}
+
+function piAddMembre(){
+  const idx=piMembres.length;
+  piMembres.push({prenom:'',nom:'',ddn:'',categorie:'',dojo:'',competiteur:false,tarif:'',tarifNom:'',prix:0,docs:{charte:null,sante:null,certif:null}});
+  piRenderMembres();
+  // Scroll vers le nouveau membre
+  setTimeout(()=>{const el=document.getElementById('pi-membre-'+idx);if(el)el.scrollIntoView({behavior:'smooth'});},100);
+}
+
+function piRemoveMembre(idx){
+  piMembres.splice(idx,1);
+  piRenderMembres();
+}
+
+function piRenderMembres(){
+  const el=document.getElementById('pi-membres-list');if(!el)return;
+  if(!piMembres.length){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.8rem">Aucun membre — clique sur "+ Ajouter"</div>';
+    document.getElementById('pi-total').style.display='none';
+    return;
+  }
+  el.innerHTML=piMembres.map((m,i)=>`
+    <div id="pi-membre-${i}" style="background:var(--sf2);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">Membre ${i+1}${m.prenom?' — '+m.prenom:''}</div>
+        <button class="bR" style="padding:2px 8px;font-size:0.65rem" onclick="piRemoveMembre(${i})">✕</button>
+      </div>
+      <div class="tc">
+        <div class="fg"><label>Prénom *</label><input type="text" value="${m.prenom}" oninput="piMembres[${i}].prenom=this.value;piRenderMembreTitle(${i},this.value)" placeholder="Prénom"></div>
+        <div class="fg"><label>Nom *</label><input type="text" value="${m.nom}" oninput="piMembres[${i}].nom=this.value" placeholder="Nom"></div>
+      </div>
+      <div class="fg"><label>Date de naissance *</label><input type="date" value="${m.ddn}" onchange="piUpdateMembreCat(${i},this.value)"></div>
+      <div id="pi-m-cat-${i}" style="${m.categorie?'':'display:none'};background:rgba(64,65,104,0.06);border:1px solid rgba(64,65,104,0.15);border-radius:7px;padding:6px 10px;font-size:0.75rem;font-weight:600;color:var(--navy);margin-bottom:6px">🥋 ${m.categorie}</div>
+      <div class="fg"><label>Dojo *</label><select onchange="piMembres[${i}].dojo=this.value">
+        <option value="">-- Choisir --</option>
+        ${DOJOS_PI.map(d=>`<option value="${d}"${m.dojo===d?' selected':''}>${d}</option>`).join('')}
+      </select></div>
+      <div class="fg"><label>Tarif *</label>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+          ${TARIFS.map(t=>`<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1.5px solid ${m.tarif===t.id?'var(--gold)':'var(--bd)'};border-radius:8px;cursor:pointer;background:${m.tarif===t.id?'rgba(242,186,29,0.06)':'var(--sf)'}">
+            <input type="radio" name="pi-tarif-${i}" value="${t.id}" ${m.tarif===t.id?'checked':''} onchange="piSetMembreTarif(${i},'${t.id}','${t.nom}',${t.prix})" style="width:15px;height:15px">
+            <div style="flex:1"><div style="font-weight:700;font-size:0.8rem">${t.emoji} ${t.nom}</div><div style="font-size:0.62rem;color:var(--mu)">${t.desc}</div></div>
+            <div style="font-weight:900;font-size:1rem;color:var(--navy)">${t.prix}€</div>
+          </label>`).join('')}
+        </div>
+      </div>
+      <div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" ${m.competiteur?'checked':''} onchange="piMembres[${i}].competiteur=this.checked" style="width:15px;height:15px"><span style="font-size:0.8rem">Souhait de participer aux compétitions</span></label></div>
+    </div>
+  `).join('');
+  piUpdateTotal();
+}
+
+function piRenderMembreTitle(idx,prenom){
+  const el=document.querySelector('#pi-membre-'+idx+' div[style*="font-weight:700"]');
+  if(el)el.textContent='Membre '+(idx+1)+(prenom?' — '+prenom:'');
+}
+
+function piUpdateMembreCat(idx,ddn){
+  piMembres[idx].ddn=ddn;
+  const cat=getCatFFJudo(ddn)||'';
+  piMembres[idx].categorie=cat;
+  const el=document.getElementById('pi-m-cat-'+idx);
+  if(el){el.textContent='🥋 '+cat;el.style.display=cat?'':'none';}
+}
+
+function piSetMembreTarif(idx,tarif,nom,prix){
+  piMembres[idx].tarif=tarif;piMembres[idx].tarifNom=nom;piMembres[idx].prix=prix;
+  piUpdateTotal();
+  piRenderMembres();
+}
+
+function piUpdateTotal(){
+  const total=piMembres.reduce((s,m)=>s+m.prix,0);
+  const el=document.getElementById('pi-total');
+  if(!el)return;
+  if(total>0){el.style.display='';el.innerHTML='Total : <span style="color:var(--gold);font-size:1.1rem">'+total+'€</span> pour '+piMembres.length+' membre'+(piMembres.length>1?'s':'');}
+  else el.style.display='none';
+}
+
+function piRenderDocs(){
+  const el=document.getElementById('pi-docs-list');if(!el)return;
+  el.innerHTML=piMembres.map((m,i)=>`
+    <div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:0.82rem;color:var(--navy);margin-bottom:8px">📋 ${m.prenom||'Membre '+(i+1)} ${m.nom}</div>
+      ${['charte','sante','certif'].map(type=>{
+        const labels={charte:'Charte signée *',sante:'Attestation santé *',certif:'Certificat médical'};
+        const icons={charte:'📋',sante:'❤️',certif:'🩺'};
+        return `<div class="pi-doc-zone ${m.docs[type]?'uploaded':''}" id="pi-doc-${i}-${type}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>${icons[type]}</div>
+            <div style="flex:1"><div style="font-size:0.75rem;font-weight:600">${labels[type]}</div></div>
+            <button class="bS" style="font-size:0.65rem;padding:3px 8px;flex-shrink:0" onclick="document.getElementById('pi-file-${i}-${type}').click()">${m.docs[type]?'✅':'📎'}</button>
+          </div>
+          <input type="file" id="pi-file-${i}-${type}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDocMembre(this,${i},'${type}')">
+          <div id="pi-docst-${i}-${type}" style="font-size:0.65rem;margin-top:3px;color:var(--mu)">${m.docs[type]?'✅ Document uploadé':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('<hr style="border:none;border-top:1px solid var(--bd);margin:4px 0 14px">');
+}
+
+async function piHandleDocMembre(input,idx,type){
+  const file=input.files[0];if(!file)return;
+  const st=document.getElementById('pi-docst-'+idx+'-'+type);
+  const zone=document.getElementById('pi-doc-'+idx+'-'+type);
+  if(file.size>5*1024*1024){if(st)st.textContent='❌ Max 5MB';return;}
+  if(st)st.textContent='⏳ Upload...';
+  try{
+    const ext=file.name.split('.').pop();
+    const path='preinscriptions/'+Date.now()+'_m'+idx+'_'+type+'.'+ext;
+    const{error}=await sb.storage.from('documents').upload(path,file);
+    if(error)throw error;
+    const{data:u}=sb.storage.from('documents').getPublicUrl(path);
+    piMembres[idx].docs[type]=u.publicUrl;
+    if(st)st.textContent='✅ '+file.name;
+    if(zone)zone.classList.add('uploaded');
+  }catch(e){if(st)st.textContent='❌ '+e.message;}
 }
 
 function piNext(step){
   const err=document.getElementById('pi-error-'+step);
   if(err)err.textContent='';
   if(step===1){
-    const prenom=document.getElementById('pi-prenom')?.value.trim();
-    const nom=document.getElementById('pi-nom')?.value.trim();
-    const email=document.getElementById('pi-email')?.value.trim();
-    const ddn=document.getElementById('pi-ddn')?.value;
-    const dojo=document.getElementById('pi-dojo')?.value;
-    const age=ddn?Math.floor((new Date()-new Date(ddn))/(365.25*24*3600*1000)):0;
-    if(!prenom||!nom||!email||!ddn||!dojo){if(err)err.textContent='Remplis tous les champs obligatoires.';return;}
-    if(age<15&&!document.getElementById('pi-parental')?.checked){if(err)err.textContent="L'autorisation parentale est obligatoire.";return;}
-    piData.prenom=prenom;piData.nom=nom;piData.email=email;
-    piData.tel=document.getElementById('pi-tel')?.value.trim()||'';
-    piData.ddn=ddn;piData.dojo=dojo;
-    piData.categorie=getCatFFJudo(ddn)||'';
-    piData.competiteur=!!document.getElementById('pi-competiteur')?.checked;
+    const prenom=document.getElementById('pi-resp-prenom')?.value.trim();
+    const nom=document.getElementById('pi-resp-nom')?.value.trim();
+    const email=document.getElementById('pi-resp-email')?.value.trim();
+    const tel=document.getElementById('pi-resp-tel')?.value.trim();
+    if(!prenom||!nom||!email||!tel){if(err)err.textContent='Remplis tous les champs.';return;}
+    piResp={prenom,nom,email,tel};
+    if(!piMembres.length)piAddMembre();
     piSetStep(2);
+    piRenderMembres();
   } else if(step===2){
-    if(!piData.tarif){if(err)err.textContent='Sélectionne un tarif.';return;}
+    if(!piMembres.length){if(err)err.textContent='Ajoute au moins un membre.';return;}
+    for(let i=0;i<piMembres.length;i++){
+      const m=piMembres[i];
+      if(!m.prenom||!m.nom){if(err)err.textContent='Remplis le prénom et nom du membre '+(i+1)+'.';return;}
+      if(!m.ddn){if(err)err.textContent='Date de naissance requise pour le membre '+(i+1)+'.';return;}
+      if(!m.dojo){if(err)err.textContent='Choisis un dojo pour le membre '+(i+1)+'.';return;}
+      if(!m.tarif){if(err)err.textContent='Choisis un tarif pour le membre '+(i+1)+'.';return;}
+    }
     piSetStep(3);
+    piRenderDocs();
   } else if(step===3){
-    if(!piData.docs.charte){if(err)err.textContent='La charte du club signée est obligatoire.';return;}
-    if(!piData.docs.sante){if(err)err.textContent="L'attestation questionnaire de santé est obligatoire.";return;}
+    for(let i=0;i<piMembres.length;i++){
+      if(!piMembres[i].docs.charte){if(err)err.textContent='Charte obligatoire pour '+piMembres[i].prenom+'.';return;}
+      if(!piMembres[i].docs.sante){if(err)err.textContent='Attestation santé obligatoire pour '+piMembres[i].prenom+'.';return;}
+    }
     piSendPreinscription();
   }
 }
 
-function piBack(step){piSetStep(step-1);}
+function piBack(step){
+  piSetStep(step-1);
+  if(step-1===2)piRenderMembres();
+}
 
 async function piSendPreinscription(){
+  const err=document.getElementById('pi-error-3');
   try{
+    const total=piMembres.reduce((s,m)=>s+m.prix,0);
     await sb.from('preinscriptions').insert({
-      prenom:piData.prenom,nom:piData.nom,email:piData.email,tel:piData.tel,
-      date_naissance:piData.ddn,categorie:piData.categorie,dojo:piData.dojo,
-      competiteur:piData.competiteur,tarif:piData.tarif,tarif_nom:piData.tarifNom,
-      prix:piData.prix,
-      doc_charte:piData.docs.charte,doc_sante:piData.docs.sante,doc_certif:piData.docs.certif||null,
-      statut:'en_attente',created_at:new Date().toISOString()
+      resp_prenom:piResp.prenom,resp_nom:piResp.nom,
+      email:piResp.email,tel:piResp.tel,
+      membres:JSON.stringify(piMembres),
+      nb_membres:piMembres.length,
+      total:total,
+      statut:'en_attente',
+      created_at:new Date().toISOString()
     });
-    // Afficher le récap et le bouton HelloAsso
     const recap=document.getElementById('pi-recap');
-    if(recap)recap.innerHTML=`
-      <div style="margin-bottom:6px"><strong>${piData.prenom} ${piData.nom}</strong></div>
-      <div>📧 ${piData.email}</div>
-      <div>🥋 ${piData.categorie} • ${piData.dojo}</div>
-      <div style="margin-top:6px;font-weight:700;color:var(--gold)">💳 ${piData.tarifNom} — ${piData.prix}€</div>
-    `;
+    if(recap){
+      const total=piMembres.reduce((s,m)=>s+m.prix,0);
+      recap.innerHTML=
+        '<div style="margin-bottom:8px"><strong>'+piResp.prenom+' '+piResp.nom+'</strong> (responsable)</div>'+
+        '<div style="margin-bottom:6px">📧 '+piResp.email+' • 📞 '+piResp.tel+'</div>'+
+        '<hr style="border:none;border-top:1px solid var(--bd);margin:6px 0">'+
+        piMembres.map((m,i)=>'<div>🥋 '+m.prenom+' '+m.nom+' — '+m.categorie+' — '+m.tarifNom+' <strong>'+m.prix+'€</strong></div>').join('')+
+        '<hr style="border:none;border-top:1px solid var(--bd);margin:6px 0">'+
+        '<div style="font-weight:700;font-size:1rem;color:var(--gold)">Total : '+total+'€</div>';
+    }
     piSetStep(4);
   }catch(e){
     console.error(e);
-    const err=document.getElementById('pi-error-3');
     if(err)err.textContent="Erreur lors de l'envoi : "+e.message;
   }
 }
