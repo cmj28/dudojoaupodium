@@ -4091,30 +4091,22 @@ async function lierEnfantParent(parentId, enfantId){
 // ============================================================
 // BREVO — Configuration email
 // ============================================================
-const BREVO_API_KEY = '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';
+// Clé Brevo gérée via Supabase Edge Function (secrets)
 
 async function sendBrevoEmail(to_email, to_name, subject, htmlContent){
-  if(BREVO_API_KEY === 'VOTRE_CLE_BREVO'){
-    console.warn('Brevo non configuré — email non envoyé');
-    return false;
-  }
   try{
-    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const res = await fetch(SUPABASE_URL+'/functions/v1/send-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': BREVO_API_KEY
+        'Authorization': 'Bearer '+SUPABASE_ANON
       },
-      body: JSON.stringify({
-        sender: {name: 'Chartres Métropole Judo', email: 'dudojoaupodium@gmail.com'},
-        to: [{email: to_email, name: to_name}],
-        subject: subject,
-        htmlContent: htmlContent
-      })
+      body: JSON.stringify({to_email, to_name, subject, htmlContent})
     });
-    return res.ok;
+    const data = await res.json();
+    return data.ok;
   }catch(e){
-    console.error('Brevo error:', e);
+    console.error('Email error:', e);
     return false;
   }
 }
