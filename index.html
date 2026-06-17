@@ -1657,6 +1657,8 @@ async function initApp(user){
     }
   }
   hideLoader();showApp();renderNavUser();renderNavTabs();
+  // Charger le menu enfants si parent
+  if(CP.is_parent)renderEnfantsMenu();
   if(canAccessPerf())loadJudokaView();
   else if(canAccessSection())showMainPage('section',document.getElementById('ntb-section'));
   else showMainPage('club',document.getElementById('ntb-club'));
@@ -1990,6 +1992,10 @@ function openDM(dk,d,currentSlots,sessions,planningType){
   document.getElementById('m-day').classList.add('open');
 }
 let slotCats=[];let slotProfs=[];let coursCats=[];let coursProfs=[];
+// Bascule parent/enfant
+let CP_PARENT=null; // profil parent sauvegardé pendant la bascule
+let CU_PARENT=null; // auth parent sauvegardé
+let MODE_ENFANT=false; // true quand on navigue en tant qu'enfant
 function tglSlotCat(btn,c){if(slotCats.includes(c)){slotCats=slotCats.filter(x=>x!==c);btn.classList.remove('sel');}else{slotCats.push(c);btn.classList.add('sel');}}
 function tglSlotProf(btn,id){if(slotProfs.includes(id)){slotProfs=slotProfs.filter(x=>x!==id);btn.classList.remove('sel');}else{slotProfs.push(id);btn.classList.add('sel');}}
 async function loadSlotProfs(){
@@ -3535,7 +3541,13 @@ function showClubSection(sec){
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">🤝 Nos partenaires</div>
         <div id="club-partenaires-view"><div style="text-align:center;padding:12px;color:var(--mu)">Chargement...</div></div>
       </div>
-    </div>${CP.is_parent?'<div id="enfants-section" style="margin-top:16px"></div>':''}`;
+    </div>${CP.is_parent?`<div style="margin-top:20px">
+  <div class="ST" style="margin-bottom:10px">👨‍👩‍👧‍👦 Mes enfants</div>
+  <div id="enfants-cards"></div>
+  <button class="bS" style="width:100%;margin-top:8px;font-size:0.75rem" onclick="showLierEnfantModal()">+ Lier un enfant</button>
+</div>`:''}`;
+// Charger les cartes enfants si parent
+if(CP.is_parent)loadEnfantsCards();
     loadClubActualites(true);
     loadPartenaires('club-partenaires-view');
     if(CP.is_parent)loadEnfantsSection();
@@ -3934,11 +3946,441 @@ async function piSendPreinscription(){
         '<hr style="border:none;border-top:1px solid var(--bd);margin:6px 0">'+
         '<div style="font-weight:700;font-size:1rem;color:var(--gold)">Total : '+total+'€</div>';
     }
+    // Envoyer email de confirmation à la famille + notification au bureau
+    const piForEmail={resp_prenom:piResp.prenom,resp_nom:piResp.nom,email:piResp.email,membres:piMembres,total:piMembres.reduce((s,m)=>s+m.prix,0),tel:piResp.tel};
+    sendEmailConfirmationPreinscription(piForEmail);
+    sendEmailNotificationBureau(piForEmail);
     piSetStep(4);
   }catch(e){
     console.error(e);
     if(err)err.textContent="Erreur lors de l'envoi : "+e.message;
   }
+}
+
+// ============================================================
+// BASCULE PARENT / ENFANT
+// ============================================================
+async function loadEnfants(){
+  if(!CP.is_parent)return;
+  const{data:liens}=await sb.from('famille_liens').select('enfant_id').eq('parent_id',CU.id);
+  if(!liens||!liens.length)return[];
+  const ids=liens.map(l=>l.enfant_id);
+  const{data:enfants}=await sb.from('profiles').select('id,prenom,nom,cat,avatar_url').in('id',ids);
+  return enfants||[];
+}
+
+async function renderEnfantsMenu(){
+  if(!CP.is_parent)return;
+  const enfants=await loadEnfants();
+  if(!enfants.length)return;
+  // Ajouter le menu enfants dans la nav
+  const navEl=document.getElementById('nav-tabs');
+  if(!navEl)return;
+  // Supprimer ancien menu enfants si existe
+  const old=document.getElementById('enfants-menu-nav');if(old)old.remove();
+  const div=document.createElement('div');
+  div.id='enfants-menu-nav';
+  div.style.cssText='display:flex;align-items:center;gap:4px;margin-left:4px;padding-left:8px;border-left:2px solid rgba(255,255,255,0.2)';
+  div.innerHTML=`<span style="font-size:0.55rem;color:rgba(255,255,255,0.5);text-transform:uppercase;font-weight:700;letter-spacing:0.08em">Enfants</span>`+
+    enfants.map(e=>`
+      <button onclick="basculerEnfant('${e.id}')" style="background:${MODE_ENFANT&&CP.id===e.id?'var(--gold)':'rgba(255,255,255,0.1)'};border:none;border-radius:20px;padding:3px 8px;cursor:pointer;display:flex;align-items:center;gap:4px;color:${MODE_ENFANT&&CP.id===e.id?'#000':'#fff'};font-size:0.6rem;font-weight:700;white-space:nowrap">
+        ${e.avatar_url?`<img src="${e.avatar_url}" style="width:16px;height:16px;border-radius:50%;object-fit:cover">`:`<span style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.2);display:inline-flex;align-items:center;justify-content:center;font-size:0.55rem">${(e.prenom[0]||'').toUpperCase()}</span>`}
+        ${e.prenom}
+      </button>
+    `).join('')+
+    (MODE_ENFANT?`<button onclick="revenirParent()" style="background:rgba(217,79,79,0.3);border:none;border-radius:20px;padding:3px 8px;cursor:pointer;color:#fff;font-size:0.6rem;font-weight:700">← Moi</button>`:'');
+  navEl.appendChild(div);
+}
+
+async function basculerEnfant(enfantId){
+  // Sauvegarder le profil parent si pas déjà fait
+  if(!MODE_ENFANT){
+    CP_PARENT={...CP};
+    CU_PARENT={...CU};
+  }
+  MODE_ENFANT=true;
+  // Charger le profil de l'enfant
+  const{data:enfant}=await sb.from('profiles').select('*').eq('id',enfantId).single();
+  if(!enfant){toast('Profil introuvable',1);return;}
+  CP=enfant;
+  // Ré-afficher avec les tabs de l'enfant
+  renderNavTabs();
+  await renderEnfantsMenu();
+  // Aller sur la page perf de l'enfant si possible
+  const firstTab=document.querySelector('.ntb');
+  if(firstTab)firstTab.click();
+  toast('Navigation sur le profil de '+enfant.prenom+' 👶');
+}
+
+async function loadEnfantsCards(){
+  const el=document.getElementById('enfants-cards');if(!el)return;
+  const enfants=await loadEnfants();
+  if(!enfants.length){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.8rem">Aucun enfant lié. Clique sur "+ Lier un enfant".</div>';
+    return;
+  }
+  el.innerHTML=enfants.map(e=>`
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+        ${e.avatar_url?`<img src="${e.avatar_url}" style="width:100%;height:100%;object-fit:cover">`:`<span style="color:#fff;font-weight:900;font-family:'Barlow Condensed',sans-serif">${(e.prenom[0]||'').toUpperCase()}</span>`}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${e.prenom} ${e.nom}</div>
+        <div style="font-size:0.68rem;color:var(--mu)">${e.cat||''}</div>
+      </div>
+      <button class="bP" style="font-size:0.72rem;padding:7px 12px" onclick="basculerEnfant('${e.id}')">Voir son profil →</button>
+    </div>
+  `).join('');
+}
+
+async function showLierEnfantModal(){
+  const existing=document.getElementById('m-lier-enfant');if(existing)existing.remove();
+  const mo=document.createElement('div');mo.className='mo open';mo.id='m-lier-enfant';
+  mo.innerHTML=`<div class="modal">
+    <h3>👶 Lier un enfant</h3>
+    <div style="font-size:0.75rem;color:var(--mu);margin-bottom:12px">Entre le code personnel de l'enfant (CMJ-XXXX) fourni par le club.</div>
+    <div class="fg"><label>Code de l'enfant</label><input type="text" id="lier-code" placeholder="CMJ-XXXX" style="text-transform:uppercase"></div>
+    <div id="lier-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="bP" style="flex:1" onclick="lierEnfantParCode()">🔗 Lier</button>
+      <button class="bS" onclick="document.getElementById('m-lier-enfant').remove()">Annuler</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mo);
+}
+
+async function lierEnfantParCode(){
+  const code=document.getElementById('lier-code')?.value.trim().toUpperCase();
+  const errEl=document.getElementById('lier-error');
+  if(!code){if(errEl)errEl.textContent='Entre un code.';return;}
+  const{data:enfant}=await sb.from('profiles').select('*').eq('code_invitation',code).single();
+  if(!enfant){if(errEl)errEl.textContent='Code introuvable. Vérifie le code fourni par le club.';return;}
+  // Vérifier que ce n'est pas déjà lié
+  const{data:existant}=await sb.from('famille_liens').select('id').eq('parent_id',CU.id).eq('enfant_id',enfant.id).single();
+  if(existant){if(errEl)errEl.textContent='Cet enfant est déjà lié à votre compte.';return;}
+  const ok=await lierEnfantParent(CU.id,enfant.id);
+  if(ok){
+    document.getElementById('m-lier-enfant')?.remove();
+    toast('✅ '+enfant.prenom+' lié à votre compte !');
+    loadEnfantsCards();
+    renderEnfantsMenu();
+    // Marquer l'enfant comme non-compétiteur (géré par parent)
+    await sb.from('profiles').update({is_parent_managed:true}).eq('id',enfant.id);
+  } else {
+    if(errEl)errEl.textContent='Erreur lors de la liaison.';
+  }
+}
+
+function revenirParent(){
+  if(!CP_PARENT)return;
+  CP={...CP_PARENT};
+  MODE_ENFANT=false;
+  renderNavTabs();
+  renderEnfantsMenu();
+  const firstTab=document.querySelector('.ntb');
+  if(firstTab)firstTab.click();
+  toast('Retour à votre profil');
+}
+
+// Lier un enfant à un parent
+async function lierEnfantParent(parentId, enfantId){
+  const{error}=await sb.from('famille_liens').insert({parent_id:parentId,enfant_id:enfantId});
+  return !error;
+}
+
+// ============================================================
+// BREVO — Configuration email
+// ============================================================
+const BREVO_API_KEY = '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';
+
+async function sendBrevoEmail(to_email, to_name, subject, htmlContent){
+  if(BREVO_API_KEY === 'VOTRE_CLE_BREVO'){
+    console.warn('Brevo non configuré — email non envoyé');
+    return false;
+  }
+  try{
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': BREVO_API_KEY
+      },
+      body: JSON.stringify({
+        sender: {name: 'Chartres Métropole Judo', email: 'dudojoaupodium@gmail.com'},
+        to: [{email: to_email, name: to_name}],
+        subject: subject,
+        htmlContent: htmlContent
+      })
+    });
+    return res.ok;
+  }catch(e){
+    console.error('Brevo error:', e);
+    return false;
+  }
+}
+
+async function sendEmailConfirmationPreinscription(pi){
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+    <div style="background:#404168;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+      <div style="color:#F2BA1D;font-size:1.4rem;font-weight:900;letter-spacing:0.1em">DU DOJO AU PODIUM</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:4px">Chartres Métropole Judo</div>
+    </div>
+    <div style="background:#fff;padding:28px;border:1px solid #e0e0e0">
+      <h2 style="color:#404168;margin-top:0">✅ Pré-inscription bien reçue !</h2>
+      <p>Bonjour <strong>${pi.resp_prenom} ${pi.resp_nom}</strong>,</p>
+      <p>Nous avons bien reçu votre demande d'inscription au <strong>Chartres Métropole Judo</strong> pour la saison 2026/2027.</p>
+
+      <div style="background:#fff8e1;border:1px solid #F2BA1D;border-radius:8px;padding:16px;margin:20px 0">
+        <p style="margin:0;font-size:0.92rem;line-height:1.6">
+          <strong>⏳ Prochaine étape</strong><br>
+          Notre bureau va examiner votre dossier (documents + paiement HelloAsso).<br><br>
+          Vous recevrez une <strong>confirmation définitive sous 15 jours</strong> avec vos accès à l'application Du Dojo au Podium.
+        </p>
+      </div>
+
+      <p style="font-size:0.85rem;color:#666">Des questions ? Contactez-nous : <a href="mailto:dudojoaupodium@gmail.com" style="color:#404168">dudojoaupodium@gmail.com</a></p>
+    </div>
+    <div style="background:#f5f6fb;padding:14px;text-align:center;font-size:0.75rem;color:#888;border-radius:0 0 12px 12px">
+      Chartres Métropole Judo — Application Du Dojo au Podium
+    </div>
+  </div>`;
+
+  return sendBrevoEmail(pi.email, pi.resp_prenom+' '+pi.resp_nom,
+    '✅ Pré-inscription reçue — Chartres Métropole Judo', html);
+}
+
+function genCode(prenom,nom){
+  // Générer un code CMJ unique : CMJ-INITIALES+4CHIFFRES
+  const init=(prenom[0]||'X')+(nom[0]||'X');
+  const rand=Math.floor(1000+Math.random()*9000);
+  return 'CMJ-'+init.toUpperCase()+rand;
+}
+
+async function sendEmailValidationPreinscription(pi, membresAvecCodes){
+  const membresHtml = membresAvecCodes.map(m =>
+    `<tr>
+      <td style="padding:10px;font-weight:600">${m.prenom} ${m.nom}</td>
+      <td style="padding:10px">${m.categorie} — ${m.dojo}</td>
+      <td style="padding:10px;text-align:center">
+        <span style="font-family:monospace;font-size:1rem;font-weight:700;background:#f0f1f8;border:1px solid #404168;padding:4px 10px;border-radius:6px;color:#404168">${m.code}</span>
+      </td>
+    </tr>`
+  ).join('');
+
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+    <div style="background:#404168;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+      <div style="color:#F2BA1D;font-size:1.4rem;font-weight:900;letter-spacing:0.1em">DU DOJO AU PODIUM</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:4px">Chartres Métropole Judo</div>
+    </div>
+    <div style="background:#fff;padding:28px;border:1px solid #e0e0e0">
+      <h2 style="color:#2A9D5C;margin-top:0">🎉 Inscription validée !</h2>
+      <p>Bonjour <strong>${pi.resp_prenom} ${pi.resp_nom}</strong>,</p>
+      <p>Votre inscription au <strong>Chartres Métropole Judo</strong> pour la saison 2026/2027 est officiellement validée. Bienvenue sur les tatamis !</p>
+
+      <div style="background:#eaf7f0;border:1px solid #2A9D5C;border-radius:10px;padding:18px;margin:20px 0">
+        <p style="margin:0 0 12px;font-weight:700;color:#2A9D5C;font-size:1rem">🔑 Vos codes d'accès à l'application</p>
+        <p style="margin:0 0 12px;font-size:0.85rem;color:#444">Rendez-vous sur <a href="https://cmj28.github.io/dudojoaupodium" style="color:#404168;font-weight:700">cmj28.github.io/dudojoaupodium</a> → "Créer un compte" et saisissez votre code personnel :</p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.88rem">
+          <tr style="background:#d4edda;font-size:0.8rem">
+            <td style="padding:8px 10px;font-weight:700">Membre</td>
+            <td style="padding:8px 10px;font-weight:700">Catégorie</td>
+            <td style="padding:8px 10px;font-weight:700;text-align:center">Code personnel</td>
+          </tr>
+          ${membresHtml}
+        </table>
+        <p style="margin:12px 0 0;font-size:0.78rem;color:#666">⚠️ Ces codes sont personnels et confidentiels. Ne les partagez pas.</p>
+      </div>
+
+      <div style="background:#f5f6fb;border-radius:8px;padding:14px;margin:16px 0;font-size:0.85rem">
+        <strong>📋 Code club à saisir également :</strong> <span style="font-family:monospace;background:#fff;border:1px solid #ddd;padding:2px 8px;border-radius:4px">FamilyCMJ</span>
+      </div>
+
+      <p style="font-size:0.85rem;color:#666">Des questions ? <a href="mailto:dudojoaupodium@gmail.com" style="color:#404168">dudojoaupodium@gmail.com</a></p>
+    </div>
+    <div style="background:#f5f6fb;padding:14px;text-align:center;font-size:0.75rem;color:#888;border-radius:0 0 12px 12px">
+      Chartres Métropole Judo — Application Du Dojo au Podium
+    </div>
+  </div>`;
+
+  return sendBrevoEmail(pi.email, pi.resp_prenom+' '+pi.resp_nom,
+    '🎉 Inscription validée — Chartres Métropole Judo', html);
+}
+
+// ============================================================
+// SUIVI DES PRÉ-INSCRIPTIONS
+// ============================================================
+async function loadPreinscriptions(filtre='all', btn=null){
+  if(btn){document.querySelectorAll('.dojo-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  const el=document.getElementById('pi-list');if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div>';
+
+  let query=sb.from('preinscriptions').select('*').order('created_at',{ascending:false});
+  if(filtre!=='all')query=query.eq('statut',filtre);
+  const{data:pis,error}=await query;
+
+  if(error){el.innerHTML='<div style="color:var(--rd);padding:16px">Erreur : '+error.message+'</div>';return;}
+  if(!pis||!pis.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📋</div><p style="font-size:0.8rem;margin-top:8px">Aucune pré-inscription trouvée.</p></div>';return;}
+
+  // Badge sur la tuile
+  const badge=document.getElementById('pi-badge');
+  const nbAttente=pis.filter(p=>p.statut==='en_attente').length;
+  if(badge){badge.style.display=nbAttente>0?'flex':'none';badge.textContent=nbAttente;}
+
+  el.innerHTML=pis.map(pi=>{
+    const membres=typeof pi.membres==='string'?JSON.parse(pi.membres||'[]'):(pi.membres||[]);
+    const date=new Date(pi.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+    const statutColor=pi.statut==='en_attente'?'var(--orange)':pi.statut==='validee'?'var(--gr)':'var(--rd)';
+    const statutLabel=pi.statut==='en_attente'?'⏳ En attente':pi.statut==='validee'?'✅ Validée':'❌ Refusée';
+    return `<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:0.92rem;color:var(--navy)">${pi.resp_prenom||''} ${pi.resp_nom||''}</div>
+          <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">📧 ${pi.email||''} • 📞 ${pi.tel||''} • ${date}</div>
+        </div>
+        <span style="font-size:0.65rem;font-weight:700;color:${statutColor};background:${statutColor}18;padding:3px 8px;border-radius:6px;flex-shrink:0">${statutLabel}</span>
+      </div>
+
+      <!-- Membres -->
+      <div style="margin-bottom:10px">
+        ${membres.map(m=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--sf2);border-radius:7px;margin-bottom:4px;font-size:0.78rem">
+            <div><strong>${m.prenom} ${m.nom}</strong> — ${m.categorie} — ${m.dojo}</div>
+            <div style="font-weight:700;color:var(--navy)">${m.prix}€</div>
+          </div>
+        `).join('')}
+        <div style="text-align:right;font-size:0.78rem;font-weight:700;color:var(--gold);margin-top:4px">Total : ${pi.total}€</div>
+      </div>
+
+      <!-- Documents -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        ${membres.map((m,i)=>[
+          m.docs?.charte?`<a href="${m.docs.charte}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">📋 Charte M${i+1}</span></a>`:`<span style="font-size:0.62rem;background:rgba(217,79,79,0.1);color:var(--rd);padding:2px 7px;border-radius:5px">📋 Charte M${i+1} manquante</span>`,
+          m.docs?.sante?`<a href="${m.docs.sante}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">❤️ Santé M${i+1}</span></a>`:`<span style="font-size:0.62rem;background:rgba(217,79,79,0.1);color:var(--rd);padding:2px 7px;border-radius:5px">❤️ Santé M${i+1} manquante</span>`,
+          m.docs?.certif?`<a href="${m.docs.certif}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">🩺 Certif M${i+1}</span></a>`:''
+        ].join('')).join('')}
+      </div>
+
+      <!-- Actions -->
+      ${pi.statut==='en_attente'?`
+      <div style="display:flex;gap:6px">
+        <button class="bP" style="flex:1;font-size:0.75rem;padding:8px" onclick="validerPreinscription('${pi.id}')">✅ Valider</button>
+        <button class="bR" style="font-size:0.75rem;padding:8px 12px" onclick="refuserPreinscription('${pi.id}')">❌ Refuser</button>
+      </div>`:`
+      <div style="font-size:0.7rem;color:var(--mu)">Traitée le ${new Date(pi.updated_at||pi.created_at).toLocaleDateString('fr-FR')}</div>`}
+    </div>`;
+  }).join('');
+}
+
+async function sendEmailNotificationBureau(pi){
+  const membres = typeof pi.membres === 'string' ? JSON.parse(pi.membres) : (pi.membres || []);
+  const membresHtml = membres.map(m =>
+    `<tr>
+      <td style="padding:7px 10px;font-weight:600">${m.prenom} ${m.nom}</td>
+      <td style="padding:7px 10px">${m.categorie}</td>
+      <td style="padding:7px 10px">${m.dojo}</td>
+      <td style="padding:7px 10px;font-weight:700">${m.prix}€</td>
+      <td style="padding:7px 10px;font-size:0.8rem">
+        ${m.docs?.charte?'✅ Charte':'❌ Charte'} 
+        ${m.docs?.sante?'✅ Santé':'❌ Santé'}
+        ${m.docs?.certif?'✅ Certif':''}
+      </td>
+    </tr>`
+  ).join('');
+
+  const html = `
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+    <div style="background:#404168;padding:20px;text-align:center;border-radius:12px 12px 0 0">
+      <div style="color:#F2BA1D;font-size:1.2rem;font-weight:900">🔔 Nouvelle pré-inscription</div>
+    </div>
+    <div style="background:#fff;padding:24px;border:1px solid #e0e0e0">
+      <h3 style="color:#404168;margin-top:0">Responsable légal</h3>
+      <p><strong>${pi.resp_prenom} ${pi.resp_nom}</strong><br>
+      📧 ${pi.email}<br>📞 ${pi.tel}</p>
+
+      <h3 style="color:#404168">Membres inscrits</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <tr style="background:#f5f6fb;font-weight:700">
+          <td style="padding:7px 10px">Membre</td>
+          <td style="padding:7px 10px">Catégorie</td>
+          <td style="padding:7px 10px">Dojo</td>
+          <td style="padding:7px 10px">Tarif</td>
+          <td style="padding:7px 10px">Documents</td>
+        </tr>
+        ${membresHtml}
+      </table>
+      <p style="text-align:right;font-weight:700;font-size:1rem;color:#F2BA1D">Total : ${pi.total}€</p>
+
+      <div style="background:#fff8e1;border:1px solid #F2BA1D;border-radius:8px;padding:12px;margin-top:16px;font-size:0.85rem">
+        👉 Traitez cette demande depuis l'espace Bureau → Pré-inscriptions de l'application.
+      </div>
+    </div>
+  </div>`;
+
+  return sendBrevoEmail('dudojoaupodium@gmail.com', 'Bureau CMJ',
+    '🔔 Nouvelle pré-inscription — '+pi.resp_prenom+' '+pi.resp_nom, html);
+}
+
+async function validerPreinscription(id){
+  const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();if(!pi)return;
+  
+  // Générer les codes pour chaque membre et créer leurs profils
+  const membres = typeof pi.membres === 'string' ? JSON.parse(pi.membres) : (pi.membres || []);
+  const membresAvecCodes = [];
+  let parentProfileId = null;
+
+  for(let i=0; i<membres.length; i++){
+    const m=membres[i];
+    const code = genCode(m.prenom, m.nom);
+    const profileId = crypto.randomUUID();
+    const isCompetiteur = m.competiteur||false;
+    // Le premier membre non-compétiteur devient le compte parent si plusieurs membres
+    const isParent = membres.length > 1 && i === 0 && !isCompetiteur;
+    await sb.from('profiles').insert({
+      id: profileId,
+      prenom: m.prenom, nom: m.nom,
+      cat: m.categorie, poids: '',
+      dojo: m.dojo,
+      is_licencie: true,
+      is_competiteur: isCompetiteur,
+      is_judoka: true,
+      is_parent: isParent,
+      code_invitation: code,
+      created_at: new Date().toISOString()
+    });
+    if(isParent) parentProfileId = profileId;
+    membresAvecCodes.push({...m, code, profileId, isParent});
+  }
+
+  // Lier les enfants au parent si famille multiple
+  if(parentProfileId && membresAvecCodes.length > 1){
+    for(let i=1; i<membresAvecCodes.length; i++){
+      await sb.from('famille_liens').insert({
+        parent_id: parentProfileId,
+        enfant_id: membresAvecCodes[i].profileId
+      });
+    }
+  }
+
+  // Mettre à jour le statut
+  await sb.from('preinscriptions').update({
+    statut:'validee',
+    updated_at:new Date().toISOString()
+  }).eq('id',id);
+
+  // Envoyer email de validation avec les codes
+  const sent = await sendEmailValidationPreinscription(pi, membresAvecCodes);
+  toast(sent?'✅ Validée + email envoyé avec les codes !':'✅ Validée (Brevo non configuré)');
+  loadPreinscriptions('all');
+}
+
+async function refuserPreinscription(id){
+  askConfirm('Refuser cette pré-inscription ?','❌ Refuser',async()=>{
+    await sb.from('preinscriptions').update({statut:'refusee',updated_at:new Date().toISOString()}).eq('id',id);
+    toast('Pré-inscription refusée.');
+    loadPreinscriptions('all');
+  });
 }
 
 async function loadClubPlanning(dojoFilter){
@@ -4890,6 +5332,12 @@ function renderBureauPage(){
   const pg=document.getElementById('page-bureau');if(!pg)return;
   pg.innerHTML=`<div style="margin-bottom:16px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Espace Bureau</div><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">CMJ</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
+    <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative" onclick="showBureauSection('preinscriptions')">
+      <div style="font-size:2rem;width:48px;text-align:center">📋</div>
+      <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Pré-inscriptions</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Suivi des demandes d'inscription</div></div>
+      <div id="pi-badge" style="display:none;position:absolute;top:10px;right:10px;background:var(--rd);color:#fff;border-radius:50%;width:20px;height:20px;font-size:0.65rem;font-weight:700;display:flex;align-items:center;justify-content:center"></div>
+      <div style="font-size:1.2rem;color:var(--bd)">›</div>
+    </div>
     <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('actualites')"><div style="font-size:2rem;width:48px;text-align:center">📰</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Actualités & Annonces</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Résultats, actualités, annonces club</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('newsletter')"><div style="font-size:2rem;width:48px;text-align:center">📬</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Newsletter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Uploader la newsletter du mois</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('calendrier')"><div style="font-size:2rem;width:48px;text-align:center">🏆</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions, stages & événements</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Gérer le calendrier du club</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
@@ -4900,6 +5348,22 @@ function renderBureauPage(){
 }
 function showBureauSection(sec){
   const pg=document.getElementById('page-bureau');if(!pg)return;
+  if(sec==='preinscriptions'){
+    const pg2=document.getElementById('page-bureau');
+    pg2.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div><div class="ST" style="margin:0">📋 Pré-inscriptions</div><div style="font-size:0.65rem;color:var(--mu);margin-top:2px">Demandes d'inscription en attente de validation</div></div>
+      <button class="bS" onclick="renderBureauPage()">← Retour</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="dojo-btn active" onclick="loadPreinscriptions('all',this)">Toutes</button>
+      <button class="dojo-btn" onclick="loadPreinscriptions('en_attente',this)">⏳ En attente</button>
+      <button class="dojo-btn" onclick="loadPreinscriptions('validee',this)">✅ Validées</button>
+      <button class="dojo-btn" onclick="loadPreinscriptions('refusee',this)">❌ Refusées</button>
+    </div>
+    <div id="pi-list"><div style="text-align:center;padding:24px;color:var(--mu)">Chargement...</div></div>`;
+    loadPreinscriptions('all');
+  }
   if(sec==='actualites'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📰 Actualités & Annonces</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="club-actu-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadClubActualites();}
   else if(sec==='newsletter'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📬 Newsletter</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-doc-view"></div>`;loadDocumentAdmin('newsletter','bureau-doc-view');}
   else if(sec==='charte'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📋 Charte du Club</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-doc-view"></div>`;loadDocumentAdmin('charte','bureau-doc-view');}
