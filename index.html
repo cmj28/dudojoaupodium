@@ -3520,6 +3520,11 @@ function showClubSection(sec){
         <div style="font-size:1.2rem;color:var(--bd)">›</div>
       </div>
       <!-- 8. CONTACT -->
+      <div style="background:var(--sf);border:2px solid rgba(255,107,0,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('boutique')">
+        <div style="font-size:2rem;width:48px;text-align:center">🛒</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Boutique</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Kimonos & équipements Fighting Films</div></div>
+        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+      </div>
       <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('contact')">
         <div style="font-size:2rem;width:48px;text-align:center">💬</div>
         <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Signaler un problème, une suggestion</div></div>
@@ -3542,6 +3547,97 @@ function showClubSection(sec){
   else if(sec==='newsletter'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📬 Newsletter</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="newsletter-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('newsletter','newsletter-view');}
   else if(sec==='charte'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📋 Charte du Club</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="charte-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('charte','charte-view');}
   else if(sec==='organigramme'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">🏛️ Organigramme</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="organigramme-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadOrganigramme();}
+  else if(sec==='boutique'){
+    pg.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;text-transform:uppercase;color:var(--navy)">🛒 Boutique</div>
+        <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">Équipements Fighting Films — partenaire officiel CMJ</div>
+      </div>
+      <button class="bS" onclick="showClubSection('main')">← Retour</button>
+    </div>
+
+    <!-- Bannière Fighting Films -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;padding:18px;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+      <div style="font-size:2.5rem">🥋</div>
+      <div style="flex:1">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:#fff;text-transform:uppercase">Fighting Films</div>
+        <div style="font-size:0.7rem;color:rgba(255,255,255,0.6);margin-top:2px">La référence du judo depuis 1994</div>
+      </div>
+      <a href="https://www.fightingfilms.fr" target="_blank" style="text-decoration:none">
+        <button class="bP" style="font-size:0.72rem;padding:7px 12px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3)">Voir le site →</button>
+      </a>
+    </div>
+
+    <!-- Catégories -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <a href="https://www.fightingfilms.fr/nos-produits/kimonos/" target="_blank" style="text-decoration:none">
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer">
+          <div style="font-size:1.8rem;margin-bottom:6px">🥋</div>
+          <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">Kimonos</div>
+          <div style="font-size:0.62rem;color:var(--mu);margin-top:2px">Tous niveaux</div>
+        </div>
+      </a>
+      <a href="https://www.fightingfilms.fr/nos-produits/ceintures/" target="_blank" style="text-decoration:none">
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer">
+          <div style="font-size:1.8rem;margin-bottom:6px">🎌</div>
+          <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">Ceintures</div>
+          <div style="font-size:0.62rem;color:var(--mu);margin-top:2px">IJF approved</div>
+        </div>
+      </a>
+      <a href="https://www.fightingfilms.fr/nos-produits/sacs/" target="_blank" style="text-decoration:none">
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer">
+          <div style="font-size:1.8rem;margin-bottom:6px">🎒</div>
+          <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">Sacs</div>
+          <div style="font-size:0.62rem;color:var(--mu);margin-top:2px">Transport & entraînement</div>
+        </div>
+      </a>
+      <a href="https://www.fightingfilms.fr/nos-produits/accessoires/" target="_blank" style="text-decoration:none">
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;text-align:center;cursor:pointer">
+          <div style="font-size:1.8rem;margin-bottom:6px">🏷️</div>
+          <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">Accessoires</div>
+          <div style="font-size:0.62rem;color:var(--mu);margin-top:2px">Cordes, tatamis...</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Produits phares -->
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px;letter-spacing:0.08em">⭐ Produits phares</div>
+
+    ${[
+      {nom:'Judogi Hajime',desc:'Kimono enfant — idéal pour débuter',prix:'27€ – 29€',url:'https://www.fightingfilms.fr/produit/kimono-enfant-hajime/',emoji:'👶'},
+      {nom:'Black Label 600g',desc:'Entraînement régulier — excellent rapport qualité/prix',prix:'90€',url:'https://fightingfilms.shop/produit/kimono-black-label-820-gr-fighting-films/',emoji:'🥋'},
+      {nom:'Superstar Original',desc:'Kimono haut de gamme — compétition et entraînement intensif',prix:'110€ – 135€',url:'https://www.fightingfilms.fr/produit/judogi-kimono-de-judo-haut-de-gamme-superstar/',emoji:'🏆'},
+      {nom:'Superstar 750 IJF',desc:'Approuvé IJF — pour les compétitions officielles',prix:'150€ – 210€',url:'https://www.fightingfilms.fr/nos-produits/kimonos/',emoji:'⚔️'},
+    ].map(p=>`
+      <a href="${p.url}" target="_blank" style="text-decoration:none;display:block;margin-bottom:8px">
+        <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer">
+          <div style="font-size:1.6rem;width:40px;text-align:center">${p.emoji}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:0.88rem;color:var(--navy)">${p.nom}</div>
+            <div style="font-size:0.68rem;color:var(--mu);margin-top:2px">${p.desc}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;color:var(--navy)">${p.prix}</div>
+            <div style="font-size:0.6rem;color:var(--mu)">Voir →</div>
+          </div>
+        </div>
+      </a>
+    `).join('')}
+
+    <!-- Code promo placeholder -->
+    <div id="boutique-promo" style="display:none;background:rgba(242,186,29,0.1);border:1.5px dashed var(--gold);border-radius:12px;padding:14px;text-align:center;margin-top:8px">
+      <div style="font-size:0.7rem;color:var(--mu);margin-bottom:4px">Code promo exclusif CMJ</div>
+      <div id="boutique-code" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy);letter-spacing:0.15em"></div>
+      <div style="font-size:0.65rem;color:var(--mu);margin-top:4px">À saisir sur fightingfilms.fr</div>
+    </div>
+
+    <a href="https://www.fightingfilms.fr/nos-produits/" target="_blank" style="text-decoration:none;display:block;margin-top:12px">
+      <button class="bP" style="width:100%">🛒 Voir tout le catalogue Fighting Films</button>
+    </a>
+    <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Partenaire officiel Chartres Métropole Judo</div>
+    `;
+  }
   else if(sec==='contact'){
     pg.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
