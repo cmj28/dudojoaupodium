@@ -1578,8 +1578,13 @@ async function doLogin(){
     document.cookie=`cmj28_p=${btoa(password)};expires=${exp.toUTCString()};path=/;SameSite=Lax`;
     try{localStorage.setItem('cmj28_e',btoa(email));localStorage.setItem('cmj28_p',btoa(password));}catch(e){}
     if(errEl){errEl.textContent='';errEl.style.color='var(--rd)';}
-    if(data?.user) await initApp(data.user);
+    if(data?.user){
+      // Attendre que Supabase enregistre la session
+      await new Promise(r=>setTimeout(r,300));
+      await initApp(data.user);
+    }
   }catch(e){
+    console.error('Login error:',e);
     if(errEl){errEl.textContent='Erreur de connexion. Réessaie.';errEl.style.color='var(--rd)';}
   }
 }
@@ -1588,19 +1593,25 @@ function getCookie(name){const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\
 
 async function tryAutoLogin(){
   try{
-    // Essayer cookie d'abord
+    // 1. Essayer la session Supabase existante (la plus fiable)
+    const{data:sessionData}=await sb.auth.getSession();
+    if(sessionData?.session?.user){
+      await initApp(sessionData.session.user);
+      return true;
+    }
+    // 2. Essayer cookie
     const ce=getCookie('cmj28_e');const cp=getCookie('cmj28_p');
     if(ce&&cp){
-      const{error}=await sb.auth.signInWithPassword({email:atob(ce),password:atob(cp)});
-      if(!error)return true;
+      const{data,error}=await sb.auth.signInWithPassword({email:atob(ce),password:atob(cp)});
+      if(!error&&data?.user){await initApp(data.user);return true;}
     }
-    // Fallback localStorage
+    // 3. Fallback localStorage
     const le=localStorage.getItem('cmj28_e');const lp=localStorage.getItem('cmj28_p');
     if(le&&lp){
-      const{error}=await sb.auth.signInWithPassword({email:atob(le),password:atob(lp)});
-      if(!error)return true;
+      const{data,error}=await sb.auth.signInWithPassword({email:atob(le),password:atob(lp)});
+      if(!error&&data?.user){await initApp(data.user);return true;}
     }
-  }catch(e){}
+  }catch(e){console.error('AutoLogin error:',e);}
   return false;
 }
 
@@ -6479,15 +6490,15 @@ function toggleRoleCheck(role){
 // Confirmation mot de passe gérée directement dans doRegister
 
 sb.auth.onAuthStateChange(async(event,session)=>{
+  console.log('Auth event:',event);
   if(event==='SIGNED_OUT'||event==='USER_DELETED'){
     CU=null;CP=null;showAuthPage();return;
   }
-  if(event==='TOKEN_REFRESHED'||event==='SIGNED_IN'){
-    if(session?.user)await initApp(session.user);
-    return;
+  if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED'||event==='INITIAL_SESSION'){
+    if(session?.user){await initApp(session.user);return;}
   }
   if(session?.user){await initApp(session.user);}
-  else{
+  else if(event==='INITIAL_SESSION'){
     const ok=await tryAutoLogin();
     if(!ok){hideLoader();showAuthPage();}
   }
