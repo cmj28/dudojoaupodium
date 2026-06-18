@@ -5424,25 +5424,32 @@ async function renderStructuresPage(){
   const pg=document.getElementById('page-structures');
   if(!pg){console.error('page-structures not found');return;}
   console.log('renderStructuresPage called');
-  pg.innerHTML=`
-  <div class="ST" style="margin-bottom:16px">🏆 Structures Fédérales</div>
 
-  <!-- ONGLETS -->
-  <div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--bd);padding-bottom:8px;overflow-x:auto">
-    <button class="ftab active" id="sf-tab-struct" onclick="switchSFTab('struct',this)">🏟️ Structures</button>
-    <button class="ftab" id="sf-tab-coaches" onclick="switchSFTab('coaches',this)">👨‍🏫 Entraîneurs</button>
-  </div>
+  // Construction DOM directe pour éviter les problèmes de template string
+  pg.innerHTML='';
 
-  <!-- STRUCTURES -->
-  <div id="sf-content-struct">
-    <div id="sf-struct-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>
-  </div>
+  const title=document.createElement('div');
+  title.className='ST';title.style.marginBottom='16px';
+  title.textContent='🏆 Structures Fédérales';
+  pg.appendChild(title);
 
-  <!-- ENTRAÎNEURS -->
-  <div id="sf-content-coaches" style="display:none">
-    <button class="bP" style="width:100%;margin-bottom:12px" onclick="openAddCoachStructureModal()">+ Ajouter un entraîneur de structure</button>
-    <div id="sf-coaches-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>
-  </div>`;
+  const tabs=document.createElement('div');
+  tabs.style.cssText='display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--bd);padding-bottom:8px';
+  tabs.innerHTML='<button class="ftab active" id="sf-tab-struct" onclick="switchSFTab('struct',this)">🏟️ Structures</button>'
+    +'<button class="ftab" id="sf-tab-coaches" onclick="switchSFTab('coaches',this)">👨‍🏫 Entraîneurs</button>';
+  pg.appendChild(tabs);
+
+  const divStruct=document.createElement('div');
+  divStruct.id='sf-content-struct';
+  divStruct.innerHTML='<div id="sf-struct-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>';
+  pg.appendChild(divStruct);
+
+  const divCoaches=document.createElement('div');
+  divCoaches.id='sf-content-coaches';
+  divCoaches.style.display='none';
+  divCoaches.innerHTML='<button class="bP" style="width:100%;margin-bottom:12px" onclick="openAddCoachStructureModal()">+ Ajouter un entraîneur de structure</button>'
+    +'<div id="sf-coaches-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>';
+  pg.appendChild(divCoaches);
 
   loadSFStructures();
 }
