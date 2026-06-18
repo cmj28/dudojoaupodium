@@ -5421,7 +5421,9 @@ async function deleteAdminProfile(id){
 // ESPACE STRUCTURES FÉDÉRALES (indépendant de l'admin)
 // ============================================================
 async function renderStructuresPage(){
-  const pg=document.getElementById('page-structures');if(!pg)return;
+  const pg=document.getElementById('page-structures');
+  if(!pg){console.error('page-structures not found');return;}
+  console.log('renderStructuresPage called');
   pg.innerHTML=`
   <div class="ST" style="margin-bottom:16px">🏆 Structures Fédérales</div>
 
@@ -5460,7 +5462,7 @@ async function loadSFStructures(){
   const el=document.getElementById('sf-struct-list');if(!el)return;
   const STRUCTS=['Pôle Espoirs Orléans','Pôle France Orléans','Pôle France Châtenay','INSEP','Autre structure'];
   const[{data:judokas},{data:coaches}]=await Promise.all([
-    sb.from('profiles').select('id,prenom,nom,cat,poids,avatar_url,structure').not('structure','is',null).order('nom'),
+    sb.from('profiles').select('id,prenom,nom,cat,poids,avatar_url,structure').not('structure','is','null').order('nom'),
     sb.from('profiles').select('id,prenom,nom,structure').eq('is_coach_structure',true).order('nom')
   ]);
   let html='';
