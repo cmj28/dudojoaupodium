@@ -1576,9 +1576,11 @@ async function doLogin(){
       return;
     }
     const exp=new Date();exp.setFullYear(exp.getFullYear()+1);
-    document.cookie=`cmj28_e=${btoa(email)};expires=${exp.toUTCString()};path=/;SameSite=Lax`;
-    document.cookie=`cmj28_p=${btoa(password)};expires=${exp.toUTCString()};path=/;SameSite=Lax`;
+    // Cookie persistant 1 an — survit aux fermetures de Chrome
+    document.cookie='cmj28_e='+btoa(email)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
+    document.cookie='cmj28_p='+btoa(password)+';expires='+exp.toUTCString()+';path=/;SameSite=Lax';
     try{localStorage.setItem('cmj28_e',btoa(email));localStorage.setItem('cmj28_p',btoa(password));}catch(e){}
+    console.log('Credentials sauvegardés — cookies:',document.cookie.includes('cmj28_e'));
     if(errEl){errEl.textContent='';errEl.style.color='var(--rd)';}
     if(data?.user){
       // Attendre que Supabase enregistre la session
@@ -1595,27 +1597,22 @@ function getCookie(name){const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\
 
 async function tryAutoLogin(){
   try{
-    // 1. Essayer la session Supabase existante + refresh si expirée
+    // 1. Refresh token Supabase si session existante
     const{data:sessionData}=await sb.auth.getSession();
-    if(sessionData?.session){
-      // Tenter un refresh du token
+    if(sessionData?.session?.user){
       const{data:refreshData,error:refreshError}=await sb.auth.refreshSession();
       if(!refreshError&&refreshData?.session?.user){
-        await initApp(refreshData.session.user);
-        return true;
+        await initApp(refreshData.session.user);return true;
       }
-      if(sessionData.session.user){
-        await initApp(sessionData.session.user);
-        return true;
-      }
+      await initApp(sessionData.session.user);return true;
     }
-    // 2. Essayer cookie
+    // 2. Cookie persistant (survit aux fermetures Chrome)
     const ce=getCookie('cmj28_e');const cp=getCookie('cmj28_p');
     if(ce&&cp){
       const{data,error}=await sb.auth.signInWithPassword({email:atob(ce),password:atob(cp)});
       if(!error&&data?.user){await initApp(data.user);return true;}
     }
-    // 3. Fallback localStorage
+    // 3. localStorage fallback
     const le=localStorage.getItem('cmj28_e');const lp=localStorage.getItem('cmj28_p');
     if(le&&lp){
       const{data,error}=await sb.auth.signInWithPassword({email:atob(le),password:atob(lp)});
