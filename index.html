@@ -5455,8 +5455,8 @@ async function renderStructuresPage(){
 }
 
 function switchSFTab(tab, btn){
-  ['struct','coaches'].forEach(t=>{
-    const el=document.getElementById('sf-content-'+t);
+  ['struct','coaches'].forEach(tabName=>{
+    const el=document.getElementById('sf-content-'+tabName);
     if(el)el.style.display=t===tab?'':'none';
   });
   document.querySelectorAll('[id^="sf-tab-"]').forEach(b=>b.classList.remove('active'));
@@ -5474,15 +5474,15 @@ async function loadSFStructures(){
   ]);
   let html='';
   let hasData=false;
-  STRUCTS.forEach(struct=>{
-    const membres=(judokas||[]).filter(j=>j.structure===struct);
-    const profs=(coaches||[]).filter(c=>c.structure===struct);
+  STRUCTS.forEach(nomStruct=>{
+    const membres=(judokas||[]).filter(j=>j.structure===nomStruct);
+    const profs=(coaches||[]).filter(c=>c.structure===nomStruct);
     if(!membres.length&&!profs.length)return;
     hasData=true;
     html+=`
     <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.12);border-radius:14px;padding:16px;margin-bottom:14px">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05rem;text-transform:uppercase;color:var(--navy);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-        <span>🏟️ ${struct}</span>
+        <span>🏟️ ${nomStruct}</span>
         <span style="font-size:0.7rem;font-weight:600;color:var(--mu);background:rgba(64,65,104,0.08);padding:3px 8px;border-radius:6px">${membres.length} judoka${membres.length>1?'s':''}</span>
       </div>
 
@@ -5614,14 +5614,14 @@ async function loadRubriquesStructures(){
   ]);
   const STRUCTS=['Pôle Espoirs Orléans','Pôle France Orléans','Pôle France Châtenay','INSEP','Autre structure'];
   let html='';
-  STRUCTS.forEach(struct=>{
-    const membres=(judokas||[]).filter(j=>j.structure===struct);
-    const profs=(coaches||[]).filter(c=>c.structure===struct);
+  STRUCTS.forEach(nomStruct=>{
+    const membres=(judokas||[]).filter(j=>j.structure===nomStruct);
+    const profs=(coaches||[]).filter(c=>c.structure===nomStruct);
     if(!membres.length&&!profs.length)return;
     html+=`
     <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:14px;padding:14px;margin-bottom:14px">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
-        <span>🏟️ ${struct}</span>
+        <span>🏟️ ${nomStruct}</span>
         <span style="font-size:0.7rem;font-weight:600;color:var(--mu)">${membres.length} judoka${membres.length>1?'s':''}</span>
       </div>
       ${profs.length?`
@@ -5657,8 +5657,8 @@ async function loadStructuresView(){
     return;
   }
   let html='';
-  STRUCTS.forEach(struct=>{
-    const membres=judokas.filter(j=>j.structure===struct);
+  STRUCTS.forEach(nomStruct=>{
+    const membres=judokas.filter(j=>j.structure===nomStruct);
     if(!membres.length)return;
     html+=`<div style="margin-bottom:16px">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--bd)">${struct} <span style="font-size:0.7rem;font-weight:600;color:var(--mu)">(${membres.length})</span></div>
