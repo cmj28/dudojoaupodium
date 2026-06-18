@@ -1266,6 +1266,8 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON,{
     storageKey:'cmj28_auth',
     storage:window.localStorage,
     autoRefreshToken:true,
+    detectSessionInUrl:true,
+    autoRefreshToken:true,
     detectSessionInUrl:false
   }
 });
@@ -1593,11 +1595,19 @@ function getCookie(name){const v=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\
 
 async function tryAutoLogin(){
   try{
-    // 1. Essayer la session Supabase existante (la plus fiable)
+    // 1. Essayer la session Supabase existante + refresh si expirée
     const{data:sessionData}=await sb.auth.getSession();
-    if(sessionData?.session?.user){
-      await initApp(sessionData.session.user);
-      return true;
+    if(sessionData?.session){
+      // Tenter un refresh du token
+      const{data:refreshData,error:refreshError}=await sb.auth.refreshSession();
+      if(!refreshError&&refreshData?.session?.user){
+        await initApp(refreshData.session.user);
+        return true;
+      }
+      if(sessionData.session.user){
+        await initApp(sessionData.session.user);
+        return true;
+      }
     }
     // 2. Essayer cookie
     const ce=getCookie('cmj28_e');const cp=getCookie('cmj28_p');
