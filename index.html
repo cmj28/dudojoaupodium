@@ -3524,7 +3524,7 @@ function showClubSection(sec){
   if(sec==='main'){
     pg.innerHTML=`
     <div style="margin-bottom:16px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Espace Club</div>
+      <img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.JPG" alt="Chartres Métropole Judo" style="max-height:70px;max-width:200px;object-fit:contain;display:block;margin-bottom:4px">
       <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Chartres Métropole Judo</div>
     </div>
     <!-- 1. ACTUALITÉS -->
@@ -4962,7 +4962,7 @@ function showSectionSection(sec){
   const pg=document.getElementById('page-section');if(!pg)return;
   if(sec==='main'){
     pg.innerHTML=`<div style="margin-bottom:12px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Section Judo</div>
+      <img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:70px;max-width:200px;object-fit:contain;display:block;margin-bottom:4px">
       <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Collège Hélène Boucher — Chartres</div>
     </div>
     <!-- 1. ACTUALITÉS -->
@@ -5808,7 +5808,7 @@ async function loadAdminCodes(){
 // ============================================================
 function renderBureauPage(){
   const pg=document.getElementById('page-bureau');if(!pg)return;
-  pg.innerHTML=`<div style="margin-bottom:16px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Espace Bureau</div><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">CMJ</div></div>
+  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.JPG" alt="CMJ" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Espace Bureau</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
     <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative" onclick="showBureauSection('preinscriptions')">
       <div style="font-size:2rem;width:48px;text-align:center">📋</div>
@@ -5903,7 +5903,7 @@ function setSaisonType(t,btn){saisonType=t;document.querySelectorAll('[id^="sais
 
 function renderProfSectionPage(){
   const pg=document.getElementById('page-prof_section');if(!pg)return;
-  pg.innerHTML=`<div style="margin-bottom:16px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Espace Prof Section</div><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">${jFN(CP)} — Collège Hélène Boucher</div></div>
+  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">${jFN(CP)} — Collège Hélène Boucher</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
     <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSectionSection('bilans')"><div style="font-size:2rem;width:48px;text-align:center">📊</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Bilans Hebdomadaires</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Créer et gérer les bilans de séances</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(255,193,7,0.4);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSectionSection('resultats')"><div style="font-size:2rem;width:48px;text-align:center">🏅</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Résultats Compétitions</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Saisir et gérer les résultats section</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
