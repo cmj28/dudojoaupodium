@@ -5435,20 +5435,26 @@ async function renderStructuresPage(){
 
   const tabs=document.createElement('div');
   tabs.style.cssText='display:flex;gap:6px;margin-bottom:16px;border-bottom:2px solid var(--bd);padding-bottom:8px';
-  tabs.innerHTML='<button class="ftab active" id="sf-tab-struct" onclick="switchSFTab('struct',this)">🏟️ Structures</button>'
-    +'<button class="ftab" id="sf-tab-coaches" onclick="switchSFTab('coaches',this)">👨‍🏫 Entraîneurs</button>';
+  const btn1=document.createElement('button');
+  btn1.className='ftab active';btn1.id='sf-tab-struct';
+  btn1.textContent='🏟️ Structures';
+  btn1.onclick=function(){switchSFTab('struct',this);};
+  const btn2=document.createElement('button');
+  btn2.className='ftab';btn2.id='sf-tab-coaches';
+  btn2.textContent='👨\u200d🏫 Entraîneurs';
+  btn2.onclick=function(){switchSFTab('coaches',this);};
+  tabs.appendChild(btn1);tabs.appendChild(btn2);
   pg.appendChild(tabs);
 
   const divStruct=document.createElement('div');
   divStruct.id='sf-content-struct';
-  divStruct.innerHTML='<div id="sf-struct-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>';
+  divStruct.innerHTML="<div id=\"sf-struct-list\"><div style=\"text-align:center;padding:20px;color:var(--mu)\">Chargement...</div></div>";
   pg.appendChild(divStruct);
 
   const divCoaches=document.createElement('div');
   divCoaches.id='sf-content-coaches';
   divCoaches.style.display='none';
-  divCoaches.innerHTML='<button class="bP" style="width:100%;margin-bottom:12px" onclick="openAddCoachStructureModal()">+ Ajouter un entraîneur de structure</button>'
-    +'<div id="sf-coaches-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>';
+  divCoaches.innerHTML="<button class=\"bP\" style=\"width:100%;margin-bottom:12px\" onclick=\"openAddCoachStructureModal()\">+ Ajouter un entraîneur de structure</button><div id=\"sf-coaches-list\"><div style=\"text-align:center;padding:20px;color:var(--mu)\">Chargement...</div></div>";
   pg.appendChild(divCoaches);
 
   loadSFStructures();
@@ -5661,7 +5667,7 @@ async function loadStructuresView(){
     const membres=judokas.filter(j=>j.structure===nomStruct);
     if(!membres.length)return;
     html+=`<div style="margin-bottom:16px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--bd)">${struct} <span style="font-size:0.7rem;font-weight:600;color:var(--mu)">(${membres.length})</span></div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);letter-spacing:0.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid var(--bd)">${nomStruct} <span style="font-size:0.7rem;font-weight:600;color:var(--mu)">(${membres.length})</span></div>
       ${membres.map(j=>`
         <div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px">
           <div style="width:36px;height:36px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
@@ -5808,7 +5814,7 @@ async function loadAdminCodes(){
 // ============================================================
 function renderBureauPage(){
   const pg=document.getElementById('page-bureau');if(!pg)return;
-  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.JPG" alt="CMJ" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Espace Bureau</div></div>`;
+  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.JPG" alt="CMJ" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Espace Bureau</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
     <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative" onclick="showBureauSection('preinscriptions')">
       <div style="font-size:2rem;width:48px;text-align:center">📋</div>
@@ -5903,7 +5909,7 @@ function setSaisonType(t,btn){saisonType=t;document.querySelectorAll('[id^="sais
 
 function renderProfSectionPage(){
   const pg=document.getElementById('page-prof_section');if(!pg)return;
-  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">${jFN(CP)} — Collège Hélène Boucher</div></div>`;
+  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:60px;max-width:180px;object-fit:contain;margin-bottom:4px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">${jFN(CP)} — Collège Hélène Boucher</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
     <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSectionSection('bilans')"><div style="font-size:2rem;width:48px;text-align:center">📊</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Bilans Hebdomadaires</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Créer et gérer les bilans de séances</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(255,193,7,0.4);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSectionSection('resultats')"><div style="font-size:2rem;width:48px;text-align:center">🏅</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Résultats Compétitions</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Saisir et gérer les résultats section</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
