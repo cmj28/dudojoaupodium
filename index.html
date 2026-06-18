@@ -5426,6 +5426,7 @@ async function renderAdminStructures(){
     <button class="bS" onclick="renderAdminPage()">← Retour</button>
   </div>
   <div style="font-size:0.72rem;color:var(--mu);margin-bottom:14px">Les judokas sont assignés à une structure depuis leur fiche profil (Admin → modifier le profil → Structure fédérale).</div>
+  <button class="bP" style="width:100%;margin-bottom:12px" onclick="openAddCoachStructureModal()">+ Ajouter un entraîneur de structure</button>
   <div id="structures-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
   loadStructuresView();
 }
