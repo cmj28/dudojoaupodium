@@ -876,7 +876,10 @@ body{font-size:14px;}
   <!-- PAGE SECTION (dynamically filled) -->
   <div class="page" id="page-section"></div>
 
-  <!-- PAGE BUREAU (dynamically filled) -->
+  <!-- PAGE COACH STRUCTURE -->
+<div id="page-coach_structure" class="page" style="display:none"></div>
+
+<!-- PAGE BUREAU (dynamically filled) -->
   <div class="page" id="page-bureau"></div>
 
   <!-- PAGE ADMIN (super admin — Kylian uniquement) -->
@@ -1652,7 +1655,20 @@ async function doResetPassword(){
 // APP INIT
 // ============================================================
 const CATS_PERF=['Minimes','Cadets(tes)','Juniors','Seniors','Vétérans'];
-function canAccessPerf(){if(!CP)return false;if(CP.is_section)return true;if(CP.is_bureau||CP.is_coach||CP.is_prof||CP.is_prof_section)return true;if(CP.is_competiteur||CP.is_judoka)return CATS_PERF.includes(CP.cat)||!CP.cat;return false;}
+function canAccessPerf(){
+  if(!CP)return false;
+  if(CP.is_admin)return true;
+  // Section : accès perf pour suivre leur progression
+  if(CP.is_section)return true;
+  // Compétiteurs élite
+  if(CP.is_competiteur)return true;
+  // Profs compétition uniquement (Kylian, Mathilde, Julian)
+  if(CP.is_coach_compet)return true;
+  // Coach structure
+  if(CP.is_coach_structure)return true;
+  // Bureau, profs simples, prof section sans flag compet : PAS d'accès perf
+  return false;
+}
 function canAccessSection(){return !!(CP.is_section||CP.is_bureau||CP.is_prof_section);}
 
 async function initApp(user){
@@ -1694,7 +1710,8 @@ function renderNavTabs(){
   if(canAccessSection())html+=`<button class="ntb${!canAccessPerf()?' active':''}" id="ntb-section" onclick="showMainPage('section',this)">🏫 Section</button>`;
   if(CP.is_prof)html+=`<button class="ntb" id="ntb-prof" onclick="showMainPage('prof',this)">👨‍🏫 Prof</button>`;
   if(CP.is_prof_section)html+=`<button class="ntb" id="ntb-profsec" onclick="showMainPage('prof_section',this)">📋 Prof Sect.</button>`;
-  if(CP.is_coach)html+=`<button class="ntb" id="ntb-coach" onclick="showMainPage('coach',this)">📊 Coach</button>`;
+  if(CP.is_coach||CP.is_coach_compet||CP.is_coach_structure)html+=`<button class="ntb" id="ntb-coach" onclick="showMainPage('coach',this)">📊 Coach</button>`;
+  if(CP.is_coach_structure)html+=`<button class="ntb" id="ntb-structure" onclick="showMainPage('coach_structure',this)">🏆 Structure</button>`;
   if(CP.is_bureau)html+=`<button class="ntb" id="ntb-bureau" onclick="showMainPage('bureau',this)">🏛️ Bureau</button>`;
   if(CP.is_admin)html+=`<button class="ntb" id="ntb-admin" onclick="showMainPage('admin',this)">⚙️ Admin</button>`;
   tabs.innerHTML=html;
@@ -1703,7 +1720,7 @@ function renderNavTabs(){
 function showMainPage(p,btn){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.ntb').forEach(x=>x.classList.remove('active'));
-  const idMap={perf:'judoka',judoka:'judoka',club:'club',prof:'prof',coach:'coach',section:'section',bureau:'bureau',prof_section:'prof_section',admin:'admin'};
+  const idMap={perf:'judoka',judoka:'judoka',club:'club',prof:'prof',coach:'coach',section:'section',bureau:'bureau',prof_section:'prof_section',admin:'admin',coach_structure:'coach_structure'};
   const pgId='page-'+(idMap[p]||p);
   const pg=document.getElementById(pgId);
   if(pg)pg.classList.add('active');
@@ -1714,6 +1731,7 @@ function showMainPage(p,btn){
   if(p==='section')renderSectionPage();
   if(p==='bureau')renderBureauPage();
   if(p==='admin')renderAdminPage();
+  if(p==='coach_structure')renderCoachStructurePage();
   if(p==='prof_section')renderProfSectionPage();
 }
 
@@ -4396,6 +4414,61 @@ async function refuserPreinscription(id){
   });
 }
 
+// ============================================================
+// COACH STRUCTURE — Accès aux profils perf des judokas de sa structure
+// ============================================================
+const STRUCTURES_LIST = ['Pôle Espoirs Orléans','Pôle France Orléans','Pôle France Châtenay','INSEP','Autre structure'];
+
+async function renderCoachStructurePage(){
+  const pg=document.getElementById('page-coach_structure');if(!pg)return;
+  pg.innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div>
+      <div class="ST" style="margin:0">🏆 Ma Structure</div>
+      <div style="font-size:0.65rem;color:var(--mu);margin-top:2px">${CP.structure||'Aucune structure assignée'}</div>
+    </div>
+  </div>
+  <div id="structure-judokas-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+  loadStructureJudokas();
+}
+
+async function loadStructureJudokas(){
+  const el=document.getElementById('structure-judokas-list');if(!el)return;
+  const{data:liens}=await sb.from('structure_liens').select('judoka_id').eq('coach_id',CU.id);
+  if(!liens||!liens.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">🥋</div><p style="font-size:0.8rem;margin-top:8px">Aucun judoka assigné à votre structure.</p></div>';
+    return;
+  }
+  const ids=liens.map(l=>l.judoka_id);
+  const{data:judokas}=await sb.from('profiles').select('*').in('id',ids).order('nom');
+  if(!judokas||!judokas.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Aucun profil trouvé.</div>';return;}
+  el.innerHTML=judokas.map(j=>`
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="viewStructureJudoka('${j.id}')">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+        ${j.avatar_url?`<img src="${j.avatar_url}" style="width:100%;height:100%;object-fit:cover">`:`<span style="color:#fff;font-weight:900;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem">${(j.prenom[0]||'').toUpperCase()}</span>`}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${j.prenom} ${j.nom}</div>
+        <div style="font-size:0.68rem;color:var(--mu)">${j.cat||''} ${j.poids?'• '+fmtPoids(j.poids):''}</div>
+      </div>
+      <div style="font-size:1rem;color:var(--bd)">›</div>
+    </div>
+  `).join('');
+}
+
+async function viewStructureJudoka(judokaId){
+  // Basculer temporairement sur le profil du judoka (lecture seule)
+  const{data:judoka}=await sb.from('profiles').select('*').eq('id',judokaId).single();
+  if(!judoka)return;
+  // Sauvegarder le coach
+  if(!MODE_ENFANT){CP_PARENT={...CP};CU_PARENT={...CU};MODE_ENFANT=true;}
+  CP=judoka;
+  // Aller sur la page perf
+  showMainPage('judoka',document.getElementById('ntb-judoka'));
+  toast('Profil de '+judoka.prenom+' '+judoka.nom);
+  renderEnfantsMenu();
+}
+
 async function loadClubPlanning(dojoFilter){
   const{data:cours}=await sb.from('cours').select('*').order('jour').order('heure_debut');
   renderClubPlanning(cours||[],dojoFilter||'tous');
@@ -4989,6 +5062,11 @@ function renderAdminPage(){
       <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Modifier tous les judokas, profs, bureau</div></div>
       <div style="font-size:1.2rem;color:var(--bd)">›</div>
     </div>
+      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="renderAdminStructures()">
+        <div style="font-size:2rem;width:48px;text-align:center">🏆</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Structures fédérales</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Entraîneurs et judokas par structure</div></div>
+        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+      </div>
     <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showAdminSection('codes')">
       <div style="font-size:2rem;width:48px;text-align:center">🔑</div>
       <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Codes d'invitation</div>
@@ -5325,6 +5403,136 @@ async function deleteAdminProfile(id){
       toast('Erreur lors de la suppression',1);
     }
   });
+}
+
+// ============================================================
+// ADMIN STRUCTURES — Assigner judokas aux entraîneurs de structure
+// ============================================================
+async function renderAdminStructures(){
+  const pg=document.getElementById('page-admin');if(!pg)return;
+  pg.innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="ST" style="margin:0">🏆 Structures fédérales</div>
+    <button class="bS" onclick="renderAdminPage()">← Retour</button>
+  </div>
+  <div style="margin-bottom:12px">
+    <button class="bP" style="width:100%" onclick="openAddCoachStructureModal()">+ Ajouter un entraîneur de structure</button>
+  </div>
+  <div id="structures-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+  loadCoachesStructure();
+}
+
+async function loadCoachesStructure(){
+  const el=document.getElementById('structures-list');if(!el)return;
+  const{data:coaches}=await sb.from('profiles').select('*').eq('is_coach_structure',true).order('nom');
+  if(!coaches||!coaches.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">🏆</div><p style="font-size:0.8rem;margin-top:8px">Aucun entraîneur de structure configuré.</p></div>';
+    return;
+  }
+  el.innerHTML=coaches.map(c=>`
+    <div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${c.prenom} ${c.nom}</div>
+          <div style="font-size:0.68rem;color:var(--mu)">${c.structure||'Structure non définie'} • ${c.email||''}</div>
+        </div>
+        <button class="bP" style="font-size:0.72rem;padding:6px 10px" onclick="openAssignJudokasModal('${c.id}','${c.prenom} ${c.nom}')">👥 Gérer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openAddCoachStructureModal(){
+  const existing=document.getElementById('m-add-coach-struct');if(existing)existing.remove();
+  const mo=document.createElement('div');mo.className='mo open';mo.id='m-add-coach-struct';
+  const structOpts=STRUCTURES_LIST.map(s=>`<option value="${s}">${s}</option>`).join('');
+  mo.innerHTML=`<div class="modal" style="max-height:90vh;overflow-y:auto">
+    <h3>➕ Entraîneur de structure</h3>
+    <div class="fg"><label>Prénom *</label><input type="text" id="cs-prenom" placeholder="Prénom"></div>
+    <div class="fg"><label>Nom *</label><input type="text" id="cs-nom" placeholder="Nom"></div>
+    <div class="fg"><label>Email *</label><input type="email" id="cs-email" placeholder="email@structure.fr"></div>
+    <div class="fg"><label>Structure *</label><select id="cs-structure"><option value="">-- Choisir --</option>${structOpts}</select></div>
+    <div id="cs-error" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="bP" style="flex:1" onclick="saveCoachStructure()">💾 Enregistrer</button>
+      <button class="bS" onclick="document.getElementById('m-add-coach-struct').remove()">Annuler</button>
+    </div>
+  </div>`;
+  document.body.appendChild(mo);
+}
+
+async function saveCoachStructure(){
+  const prenom=document.getElementById('cs-prenom')?.value.trim();
+  const nom=document.getElementById('cs-nom')?.value.trim();
+  const email=document.getElementById('cs-email')?.value.trim();
+  const structure=document.getElementById('cs-structure')?.value;
+  const err=document.getElementById('cs-error');
+  if(!prenom||!nom||!email||!structure){if(err)err.textContent='Remplis tous les champs.';return;}
+  // Créer le profil coach structure
+  const{error}=await sb.from('profiles').insert({
+    id:crypto.randomUUID(),prenom,nom,email,
+    is_coach_structure:true,is_judoka:false,
+    structure,created_at:new Date().toISOString()
+  });
+  if(error){if(err)err.textContent='Erreur : '+error.message;return;}
+  document.getElementById('m-add-coach-struct')?.remove();
+  toast('Entraîneur ajouté !');
+  loadCoachesStructure();
+}
+
+async function openAssignJudokasModal(coachId, coachNom){
+  const existing=document.getElementById('m-assign-judokas');if(existing)existing.remove();
+  const mo=document.createElement('div');mo.className='mo open';mo.id='m-assign-judokas';
+  mo.innerHTML=`<div class="modal" style="max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0">👥 Judokas — ${coachNom}</h3>
+      <button class="bS" style="padding:4px 10px" onclick="document.getElementById('m-assign-judokas').remove()">✕</button>
+    </div>
+    <div id="assign-list"><div style="text-align:center;padding:16px;color:var(--mu)">Chargement...</div></div>
+    <div style="margin-top:12px">
+      <div class="fg"><label>Ajouter un judoka (code CMJ-XXXX)</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="assign-code" placeholder="CMJ-XXXX" style="text-transform:uppercase">
+          <button class="bP" style="flex-shrink:0" onclick="assignJudokaToCoach('${coachId}')">+ Ajouter</button>
+        </div>
+      </div>
+      <div id="assign-error" style="color:var(--rd);font-size:0.75rem"></div>
+    </div>
+  </div>`;
+  document.body.appendChild(mo);
+  loadAssignedJudokas(coachId);
+}
+
+async function loadAssignedJudokas(coachId){
+  const el=document.getElementById('assign-list');if(!el)return;
+  const{data:liens}=await sb.from('structure_liens').select('judoka_id').eq('coach_id',coachId);
+  if(!liens||!liens.length){el.innerHTML='<div style="text-align:center;padding:12px;color:var(--mu);font-size:0.8rem">Aucun judoka assigné.</div>';return;}
+  const ids=liens.map(l=>l.judoka_id);
+  const{data:judokas}=await sb.from('profiles').select('id,prenom,nom,cat,poids').in('id',ids);
+  el.innerHTML=(judokas||[]).map(j=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--sf2);border-radius:8px;margin-bottom:5px;font-size:0.82rem">
+      <div><strong>${j.prenom} ${j.nom}</strong> <span style="color:var(--mu)">${j.cat||''} ${j.poids?'• '+fmtPoids(j.poids):''}</span></div>
+      <button class="bR" style="padding:2px 8px;font-size:0.65rem" onclick="removeJudokaFromCoach('${coachId}','${j.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function assignJudokaToCoach(coachId){
+  const code=document.getElementById('assign-code')?.value.trim().toUpperCase();
+  const err=document.getElementById('assign-error');
+  if(!code){if(err)err.textContent='Entre un code CMJ.';return;}
+  const{data:j}=await sb.from('profiles').select('*').eq('code_invitation',code).single();
+  if(!j){if(err)err.textContent='Code introuvable.';return;}
+  await sb.from('structure_liens').insert({coach_id:coachId,judoka_id:j.id});
+  document.getElementById('assign-code').value='';
+  if(err)err.textContent='';
+  toast('✅ '+j.prenom+' '+j.nom+' ajouté !');
+  loadAssignedJudokas(coachId);
+}
+
+async function removeJudokaFromCoach(coachId,judokaId){
+  await sb.from('structure_liens').delete().eq('coach_id',coachId).eq('judoka_id',judokaId);
+  loadAssignedJudokas(coachId);
 }
 
 async function loadAdminCodes(){
