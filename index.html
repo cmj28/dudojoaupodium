@@ -7275,23 +7275,44 @@ async function piGoStep3(){
         }
       }
     }
-    // Créer le dossier en base (structure compatible avec l'espace bureau)
-    await sb.from('preinscriptions').upsert({
-      user_id:CU.id,
-      resp_prenom:CP?.prenom||'',
-      resp_nom:CP?.nom||'',
-      email:CU.email||'',
-      tel:CP?.tel||'',
-      membres:JSON.stringify(membres),
-      nb_membres:membres.length,
-      total:piCalcTotal(),
-      statut:'en_attente',
-      created_at:new Date().toISOString(),
-      updated_at:new Date().toISOString()
-    },{onConflict:'user_id'});
+    // Insérer une ligne par membre (structure attendue par la table)
+    const respPrenom=CP?.prenom||'';
+    const respNom=CP?.nom||'';
+    const respEmail=CU.email||'';
+    const respTel=CP?.tel||'';
+    const total=piCalcTotal();
+
+    for(const m of membres){
+      const certifUrl=m.docs?.sante||null;
+      const charteUrl=m.docs?.charte||null;
+      await sb.from('preinscriptions').insert({
+        resp_prenom:respPrenom,
+        resp_nom:respNom,
+        email:respEmail,
+        tel:respTel,
+        prenom:m.prenom,
+        nom:m.nom,
+        date_naissance:m.dob||null,
+        categorie:m.cat||m.categorie||'',
+        dojo:m.pratique==='taiso'?'Taïso':'Judo',
+        competiteur:PI_CATS_COMPET.includes(m.cat),
+        tarif:String(m.tarif||m.prix||0),
+        tarif_nom:m.cat||'',
+        prix:m.tarif||m.prix||0,
+        doc_sante:certifUrl,
+        doc_charte:charteUrl,
+        doc_certif:null,
+        membres:membres,
+        nb_membres:membres.length,
+        total:total,
+        statut:'en_attente',
+        created_at:new Date().toISOString(),
+        updated_at:new Date().toISOString()
+      });
+    }
     // Notifier le bureau
     try{
-      const piForEmail={resp_prenom:CP?.prenom||'',resp_nom:CP?.nom||'',email:CU.email||'',membres,total:piCalcTotal(),tel:CP?.tel||''};
+      const piForEmail={resp_prenom:respPrenom,resp_nom:respNom,email:respEmail,membres,total,tel:respTel};
       if(typeof sendEmailNotificationBureau==='function')sendEmailNotificationBureau(piForEmail);
     }catch(e2){console.warn('Notif bureau:',e2);}
     err.textContent='';
