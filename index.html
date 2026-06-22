@@ -6478,66 +6478,56 @@ async function loadSectionCalEditList(){
 
 function renderClubPlanning(cours,dojoFilter){
   const el=document.getElementById('planning-view');if(!el)return;
-  const filtered=dojoFilter==='tous'?cours:cours.filter(c=>c.dojo===dojoFilter);
-  if(!filtered.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours pour le moment.</p></div>';return;}
-  const JOURS=[1,2,3,4,5,6]; // Lun→Sam, pas dimanche
-  const JNOMS=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const DOJOS=['Mainvilliers','Chartres - La Madeleine','Fontaine-la-Guyon','MMA Sports','Harvey Chartres'];
   const DCOLS={'Mainvilliers':'var(--gr)','Chartres - La Madeleine':'var(--navy)','Fontaine-la-Guyon':'var(--orange)','MMA Sports':'#e84393','Harvey Chartres':'var(--pu)'};
   const DSHORT={'Mainvilliers':'Mainvilliers','Chartres - La Madeleine':'La Madeleine','Fontaine-la-Guyon':'Fontaine','MMA Sports':'MMA Sports','Harvey Chartres':'Harvey'};
+  const JNOMS=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  const JOURS=[1,2,3,4,5,6];
 
-  const renderTable=(salles,titre,col)=>{
-    const salleCours=cours.filter(c=>salles.includes(c.dojo));
-    if(!salleCours.length)return '';
-    // Calcule les jours qui ont des cours
-    const joursActifs=JOURS.filter(j=>salleCours.some(c=>c.jour===j));
-    let t=`<div style="margin-bottom:20px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:${col};margin-bottom:8px;display:flex;align-items:center;gap:8px">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col}"></span>${titre}
-      </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <table style="width:100%;border-collapse:collapse;min-width:${joursActifs.length*110}px">
-        <thead><tr>
-          ${joursActifs.map(j=>`<th style="background:${col};color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;padding:7px 6px;text-align:center;letter-spacing:0.06em">${JNOMS[j]}</th>`).join('')}
-        </tr></thead>
-        <tbody><tr style="vertical-align:top">`;
+  const dojosCibles=dojoFilter==='tous'?DOJOS:[dojoFilter];
+
+  const renderDojo=(dojo)=>{
+    const col=DCOLS[dojo]||'var(--navy)';
+    const titre=DSHORT[dojo]||dojo;
+    const dojoCours=cours.filter(c=>c.dojo===dojo);
+    if(!dojoCours.length)return '';
+    const joursActifs=JOURS.filter(j=>dojoCours.some(c=>c.jour===j));
+    let t=`<div style="margin-bottom:24px;background:var(--sf);border-radius:14px;overflow:hidden;border:1.5px solid var(--bd)">
+      <div style="background:${col};padding:10px 14px;display:flex;align-items:center;gap:8px">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:#fff;letter-spacing:0.1em">${titre}</span>
+      </div>`;
     joursActifs.forEach(j=>{
-      const jourCours=salleCours.filter(c=>c.jour===j).sort((a,b)=>a.heure_debut>b.heure_debut?1:-1);
-      t+=`<td style="padding:5px;border:1px solid var(--bd);background:var(--sf2);min-width:100px">`;
-      if(!jourCours.length){t+=`<div style="color:var(--mu);font-size:0.6rem;text-align:center;padding:8px">—</div>`;}
+      const jourCours=dojoCours.filter(c=>c.jour===j).sort((a,b)=>a.heure_debut>b.heure_debut?1:-1);
+      if(!jourCours.length)return;
+      t+=`<div style="border-top:1px solid var(--bd)">
+        <div style="background:${col}22;padding:6px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;text-transform:uppercase;color:${col};letter-spacing:0.08em">${JNOMS[j]}</div>`;
       jourCours.forEach(c=>{
-        const inscrits=c.inscrits||[];
-        const inscritsArr=Array.isArray(inscrits)?inscrits:typeof inscrits==='string'?JSON.parse(inscrits||'[]'):[];
+        const inscritsArr=Array.isArray(c.inscrits)?c.inscrits:typeof c.inscrits==='string'?JSON.parse(c.inscrits||'[]'):[];
         const isInscrit=inscritsArr.includes(CU?.id);
         const canInscrit=CP&&(CP.is_licencie||CP.is_competiteur||CP.is_judoka);
-        const dc=DCOLS[c.dojo]||col;
-        t+=`<div style="background:var(--sf);border-radius:7px;padding:6px 7px;margin-bottom:5px;border-left:3px solid ${dc}">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;color:${dc}">${c.heure_debut}–${c.heure_fin}</div>
-          <div style="font-weight:600;font-size:0.75rem;margin:2px 0;line-height:1.2">${c.nom}${c.is_competition?` <span style="font-size:0.55rem;background:var(--rd);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700;vertical-align:middle">⚔️ Compétiteurs</span>`:''}</div>
-          <div style="font-size:0.6rem;color:var(--mu)">${(Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[c.categorie]).filter(Boolean).join(', ')||''}${salles.length>1&&c.dojo?' • '+DSHORT[c.dojo]:''}</div>
-          ${inscritsArr.length?`<div style="font-size:0.58rem;color:var(--mu)">👥 ${inscritsArr.length}</div>`:''}
-          ${canInscrit?`<button class="${isInscrit?'bR':'bE'}" style="width:100%;margin-top:4px;font-size:0.58rem;padding:2px 4px" onclick="toggleInscriptionCours('${c.id}')">${isInscrit?'Se désinscrire':'S\'inscrire'}</button>`:''}
+        const cats=(Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[c.categorie]).filter(Boolean);
+        const profsArr=Array.isArray(c.profs_noms)?c.profs_noms:typeof c.profs_noms==='string'?JSON.parse(c.profs_noms||'[]'):[];
+        t+=`<div style="padding:10px 14px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.92rem;color:${col}">${c.heure_debut}–${c.heure_fin}</span>
+              ${c.is_competition?`<span style="font-size:0.55rem;background:var(--rd);color:#fff;padding:1px 6px;border-radius:4px;font-weight:700">⚔️ Compétiteurs</span>`:''}
+            </div>
+            <div style="font-weight:700;font-size:0.85rem;color:var(--tx);margin-bottom:2px">${c.nom}</div>
+            <div style="font-size:0.68rem;color:var(--mu)">${cats.join(', ')}${profsArr.length?' · 👨‍🏫 '+profsArr.join(', '):c.prof?' · 👨‍🏫 '+c.prof:''}</div>
+            ${inscritsArr.length?`<div style="font-size:0.62rem;color:var(--mu);margin-top:2px">👥 ${inscritsArr.length} inscrit${inscritsArr.length>1?'s':''}</div>`:''}
+          </div>
+          ${canInscrit?`<button class="${isInscrit?'bR':'bE'}" style="font-size:0.65rem;padding:4px 10px;white-space:nowrap;flex-shrink:0" onclick="toggleInscriptionCours('${c.id}')">${isInscrit?'Se d\u00e9sinscrire':'S\u2019inscrire'}</button>`:''}
         </div>`;
       });
-      t+=`</td>`;
+      t+=`</div>`;
     });
-    t+=`</tr></tbody></table></div></div>`;
+    t+=`</div>`;
     return t;
   };
 
-  let html='';
-  if(dojoFilter==='tous'){
-    // Tableau général toutes salles
-    html+=renderTable(DOJOS,'Toutes les salles','var(--navy)');
-    // Un tableau par salle
-    DOJOS.forEach(d=>{
-      const col=DCOLS[d]||'var(--navy)';
-      html+=renderTable([d],DSHORT[d],col);
-    });
-  } else {
-    html+=renderTable([dojoFilter],DSHORT[dojoFilter]||dojoFilter,DCOLS[dojoFilter]||'var(--navy)');
-  }
-  el.innerHTML=html;
+  const html=dojosCibles.map(d=>renderDojo(d)).join('');
+  el.innerHTML=html||'<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours pour le moment.</p></div>';
 }
 
 // ============================================================
