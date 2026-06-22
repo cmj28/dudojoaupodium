@@ -1782,6 +1782,28 @@ function renderNavUser(){
   if(CP.is_section)roles.push('Section');
   if(CP.is_licencie&&roles.length===0)roles.push('Licencié');
   const avatarHTML=CP.avatar_url?`<img src="${CP.avatar_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" alt="">`:`<span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem">${initials(CP)}</span>`;
+
+  // Bouton déconnexion dans la nav
+  const navUser=document.getElementById('nav-user-info');
+  if(navUser){
+    navUser.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="text-align:right;display:none" class="nav-user-name-block">
+          <div style="font-size:0.72rem;font-weight:700;color:#fff;line-height:1.2">${CP.prenom||''} ${CP.nom||''}</div>
+          <div style="font-size:0.58rem;color:rgba(255,255,255,0.5)">${roles[0]||''}</div>
+        </div>
+        <button onclick="doLogout()" title="Se déconnecter"
+          style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:5px 10px;color:#fff;cursor:pointer;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;transition:background 0.15s"
+          onmouseover="this.style.background='rgba(255,255,255,0.2)'"
+          onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Déconnexion
+        </button>
+      </div>`;
+  }
+
   // Footer CGU sur toutes les pages
   document.querySelectorAll('.page').forEach(pg=>{
     if(!pg.querySelector('.cgu-footer')){
@@ -1792,6 +1814,12 @@ function renderNavUser(){
       pg.appendChild(ft);
     }
   });
+}
+
+async function doLogout(){
+  if(!confirm('Se déconnecter ?'))return;
+  await sb.auth.signOut({scope:'local'});
+  showAuthPage();
 }
 function openEP(){openEditProfile();}
 
@@ -4290,7 +4318,7 @@ async function loadPreinscriptions(filtre='all', btn=null){
 
   el.innerHTML=pis.map(pi=>{
     const membres=typeof pi.membres==='string'?JSON.parse(pi.membres||'[]'):(pi.membres||[]);
-    const date=new Date(pi.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+    const date=new Date(pi.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const statutColor=pi.statut==='en_attente'?'var(--orange)':pi.statut==='validee'?'var(--gr)':'var(--rd)';
     const statutLabel=pi.statut==='en_attente'?'⏳ En attente':pi.statut==='validee'?'✅ Validée':'❌ Refusée';
     return `<div style="background:var(--sf);border:1.5px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px">
@@ -4382,6 +4410,28 @@ async function sendEmailNotificationBureau(pi){
     '🔔 Nouvelle pré-inscription — '+pi.resp_prenom+' '+pi.resp_nom, html);
 }
 
+async function piSupprimerDocuments(pi){
+  // Supprimer les fichiers du storage pour chaque membre
+  try{
+    const membres=typeof pi.membres==='string'?JSON.parse(pi.membres||'[]'):(pi.membres||[]);
+    const paths=[];
+    membres.forEach(m=>{
+      // Chercher tous les fichiers dans le dossier du membre
+      if(m.docs?.sante){
+        const url=m.docs.sante;
+        const path=url.split('/documents/')[1];
+        if(path)paths.push(path);
+      }
+      if(m.docs?.charte){
+        const url=m.docs.charte;
+        const path=url.split('/documents/')[1];
+        if(path)paths.push(path);
+      }
+    });
+    if(paths.length)await sb.storage.from('documents').remove(paths);
+  }catch(e){console.warn('Suppression docs:',e);}
+}
+
 async function validerPreinscription(id){
   const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();if(!pi)return;
   
@@ -4429,6 +4479,9 @@ async function validerPreinscription(id){
     updated_at:new Date().toISOString()
   }).eq('id',id);
 
+  // Supprimer les documents du storage (RGPD)
+  await piSupprimerDocuments(pi);
+
   // Envoyer email de validation avec les codes
   const sent = await sendEmailValidationPreinscription(pi, membresAvecCodes);
   toast(sent?'✅ Validée + email envoyé avec les codes !':'✅ Validée (Brevo non configuré)');
@@ -4437,8 +4490,11 @@ async function validerPreinscription(id){
 
 async function refuserPreinscription(id){
   askConfirm('Refuser cette pré-inscription ?','❌ Refuser',async()=>{
+    const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();
     await sb.from('preinscriptions').update({statut:'refusee',updated_at:new Date().toISOString()}).eq('id',id);
-    toast('Pré-inscription refusée.');
+    // Supprimer les documents du storage (RGPD)
+    if(pi)await piSupprimerDocuments(pi);
+    toast('Pré-inscription refusée — documents supprimés.');
     loadPreinscriptions('all');
   });
 }
@@ -7224,12 +7280,12 @@ function piGoStep2(){
       </div>
       <div class="fg">
         <label>Certificat médical ou attestation QS *</label>
-        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">Fournissez l'un des deux documents</div>
+        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">Fournissez l'un des deux documents · PDF ou image · 5 MB max</div>
         <input type="file" id="pi-doc-certif-${m.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.78rem">
       </div>
       <div class="fg">
         <label>Règlement Intérieur signé *</label>
-        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">À télécharger, signer et renvoyer</div>
+        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">À télécharger, signer et renvoyer · PDF ou image · 5 MB max</div>
         <input type="file" id="pi-doc-ri-${m.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.78rem">
       </div>
     </div>`).join('');
@@ -7252,9 +7308,17 @@ async function piGoStep3(){
 
   // Upload des fichiers dans Supabase Storage + création dossier
   try{
-    for(const m of membres){
+    const MAX_FILE_SIZE=5*1024*1024; // 5 MB
+  for(const m of membres){
       const certif=document.getElementById(`pi-doc-certif-${m.id}`)?.files[0];
       const ri=document.getElementById(`pi-doc-ri-${m.id}`)?.files[0];
+      // Vérification taille
+      if(certif&&certif.size>MAX_FILE_SIZE){
+        err.textContent=`${m.prenom} — Document médical trop lourd (5 MB max). Compressez le fichier et réessayez.`;return;
+      }
+      if(ri&&ri.size>MAX_FILE_SIZE){
+        err.textContent=`${m.prenom} — Règlement Intérieur trop lourd (5 MB max). Compressez le fichier et réessayez.`;return;
+      }
       const base=`preinscriptions/${CU.id}/${m.id}`;
       if(certif){
         const ext=certif.name.split('.').pop();
