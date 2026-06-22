@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Du Dojo au Podium — CMJ</title>
+<title>Du Dojo au Podium</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap');
@@ -36,6 +36,8 @@ textarea{resize:vertical;min-height:65px;}select option{background:#fff;}
 .bR{background:rgba(217,79,79,0.08);border:1px solid rgba(217,79,79,0.25);color:var(--rd);padding:3px 8px;border-radius:6px;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;}
 .bE{background:rgba(64,65,104,0.08);border:1px solid rgba(64,65,104,0.2);color:var(--navy);padding:3px 8px;border-radius:6px;font-size:0.62rem;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;}
 .bVP{width:100%;padding:8px;border-radius:8px;border:1.5px dashed var(--bd);background:transparent;color:var(--mu);font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;margin-top:4px;}
+.pi-pratique-btn{flex:1;padding:8px;border-radius:8px;border:2px solid var(--bd);background:var(--sf2);color:var(--mu);font-family:'Barlow',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;text-align:center;transition:all 0.15s;}
+.pi-pratique-btn.active{border-color:var(--navy);background:var(--navy);color:#fff;}
 /* AUTH */
 .auth-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
 .auth-card{background:var(--sf);border-radius:20px;padding:32px 24px;width:100%;max-width:420px;box-shadow:0 4px 24px rgba(64,65,104,0.12);}
@@ -400,18 +402,80 @@ body{font-size:14px;}
 <div class="sync-indicator" id="sync-ind">✓ Sauvegardé</div>
 
 <!-- AUTH PAGE -->
+<style>
+#auth-screen-wrap{position:relative;overflow:hidden;min-height:100vh;}
+#auth-landing{position:relative;width:100%;transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);}
+#auth-forms-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:50;}
+#auth-screen-wrap.show-form #auth-landing{transform:translateY(-60px);pointer-events:none;}
+#auth-screen-wrap.show-form #auth-forms-screen{transform:translateY(0);}
+</style>
 <div id="auth-page" style="display:none">
-  <div class="auth-container">
+<div id="auth-screen-wrap">
+
+  <!-- ÉCRAN LANDING -->
+  <div id="auth-landing">
+  <!-- HERO SOMBRE -->
+  <div style="background:#1a1c2e;padding:52px 24px 40px;text-align:center">
+    <div style="width:68px;height:68px;background:var(--gold);border-radius:18px;margin:0 auto 20px;display:flex;align-items:center;justify-content:center">
+      <img src="https://cmj28.github.io/dudojoaupodium/icone-medaille-1024.png" style="width:50px;height:50px;border-radius:10px;object-fit:cover" alt="DDaP">
+    </div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;letter-spacing:0.12em;text-transform:uppercase;color:#fff;line-height:1.1;margin-bottom:10px">Du Dojo au <span style="color:var(--gold)">Podium</span></div>
+    <div style="font-size:0.72rem;color:rgba(255,255,255,0.45);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:32px">La plateforme des clubs de judo</div>
+    <div style="display:flex;flex-direction:column;gap:10px;max-width:340px;margin:0 auto">
+      <button onclick="switchAuthTab('login')" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--gold);color:#1a1c2e;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.95rem;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer">Se connecter</button>
+      <button onclick="switchAuthTab('register')" style="width:100%;padding:13px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.2);background:transparent;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Créer un compte</button>
+    </div>
+  </div>
+
+  <!-- BLOCS PRÉSENTATION -->
+  <div style="background:var(--bg);padding:24px 16px 32px">
+    <div style="font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--mu);margin-bottom:14px;text-align:center">Pourquoi DDaP ?</div>
+
+    <div style="background:var(--sf);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;border:1px solid var(--bd)">
+      <div style="width:42px;height:42px;border-radius:10px;background:rgba(64,65,104,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><polyline points="3,16 8,10 13,13 19,5" stroke="#404168" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="19" cy="5" r="2" fill="#404168"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Suivi des performances</div>
+        <div style="font-size:0.72rem;color:var(--mu);line-height:1.5">Chaque compétiteur accède à son profil, ses résultats et son évolution en temps réel.</div>
+      </div>
+    </div>
+
+    <div style="background:var(--sf);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;border:1px solid var(--bd)">
+      <div style="width:42px;height:42px;border-radius:10px;background:rgba(242,186,29,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><path d="M13 4 L7 8 L5 20 L13 18 L21 20 L19 8 Z" stroke="#9a7200" stroke-width="1.7" stroke-linejoin="round" fill="none"/><path d="M13 4 L9 10 L13 13" stroke="#9a7200" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M13 4 L17 10 L13 13" stroke="#9a7200" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M7 8 L3 12" stroke="#9a7200" stroke-width="1.7" stroke-linecap="round"/><path d="M19 8 L23 12" stroke="#9a7200" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Vie du club</div>
+        <div style="font-size:0.72rem;color:var(--mu);line-height:1.5">Actualités, plannings, calendrier des compétitions — tout en un seul endroit pour tout le club.</div>
+      </div>
+    </div>
+
+    <div style="background:var(--sf);border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;border:1px solid var(--bd)">
+      <div style="width:42px;height:42px;border-radius:10px;background:rgba(42,157,92,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="9" cy="6" r="3" stroke="#2a9d5c" stroke-width="1.8" fill="none"/><path d="M3 19c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#2a9d5c" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M17 10h4M19 8v4" stroke="#2a9d5c" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);margin-bottom:4px">Inscription facile</div>
+        <div style="font-size:0.72rem;color:var(--mu);line-height:1.5">Inscription simple, documents et paiement en ligne — validés par le bureau du club.</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:0.58rem;color:#aaa;letter-spacing:0.08em;text-transform:uppercase;padding-top:8px;border-top:1px solid var(--bd);margin-top:12px">dojopodium.fr — ouvert à tous les clubs</div>
+  </div>
+  </div><!-- END auth-landing -->
+
+  <!-- ÉCRAN FORMULAIRES (slide depuis le bas) -->
+  <div id="auth-forms-screen">
+  <div style="padding:24px 16px 40px;max-width:480px;margin:0 auto">
+    <button onclick="showLanding()" style="background:none;border:none;color:var(--mu);font-size:0.78rem;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:4px">← Retour</button>
     <div class="auth-card">
       <div class="auth-logo">
-        <img src="https://cmj28.github.io/dudojoaupodium/icone-medaille-1024.png" style="width:80px;height:80px;border-radius:50%;margin-bottom:8px;box-shadow:0 4px 16px rgba(64,65,104,0.2)"><br>
         <div class="auth-logo-text">Du Dojo au <span>Podium</span></div>
-
       </div>
-      <div class="auth-tabs">
+      <div class="auth-tabs" style="margin-bottom:20px">
         <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
         <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Créer un compte</button>
-        <button class="auth-tab" id="tab-preinscription" onclick="switchAuthTab('preinscription')" style="background:rgba(242,186,29,0.15);color:var(--gold);font-weight:800">📋 S'inscrire</button>
       </div>
 
       <!-- LOGIN -->
@@ -429,115 +493,36 @@ body{font-size:14px;}
           <div class="fg"><label>Prénom</label><input type="text" id="reg-prenom" placeholder="Prénom"></div>
           <div class="fg"><label>Nom</label><input type="text" id="reg-nom" placeholder="Nom"></div>
         </div>
-        <div class="fg"><label>Date de naissance</label><input type="date" id="reg-dob" onchange="checkDOBParental()" max=""></div>
+        <div class="fg">
+          <label>Date de naissance <span style="font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0">(optionnelle si vous inscrivez uniquement vos enfants)</span></label>
+          <input type="date" id="reg-dob" onchange="checkDOBParental()" max="">
+        </div>
         <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="ton@email.com"></div>
         <div class="fg"><label>Mot de passe</label><input type="password" id="reg-password" placeholder="Min. 6 caractères"></div>
         <div class="fg"><label>Confirmer le mot de passe</label><input type="password" id="reg-password2" placeholder="Répète ton mot de passe"></div>
-        <div class="fg"><label>Code du club</label><input type="text" id="reg-club-code" placeholder="Code fourni par ton club" autocomplete="off"></div>
 
-        <div class="fg"><label>Je suis (plusieurs choix possibles)</label>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px" id="roles-container">
+        <div class="fg">
+          <label>Code du club</label>
+          <input type="text" id="reg-club-code" placeholder="Code fourni par votre club" autocomplete="off">
+        </div>
 
-            <div class="role-check-item" id="rc-parent">
-              <label>
-                <input type="checkbox" id="chk-parent" onchange="toggleRoleCheck('parent')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-parent">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">👨‍👩‍👧 Parent de judoka(s) — Baby à Benjamins</span>
-              </label>
-              <div id="fields-parent" style="display:none;padding:6px 0 0 26px">
-                <div style="font-size:0.72rem;color:var(--mu)">Vous pourrez créer les profils de vos enfants après connexion.</div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-licencie">
-              <label>
-                <input type="checkbox" id="chk-licencie" onchange="toggleRoleCheck('licencie')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-licencie">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">👥 Licencié(e) au club CMJ</span>
-              </label>
-            </div>
-
-            <div class="role-check-item" id="rc-competiteur">
-              <label>
-                <input type="checkbox" id="chk-competiteur" onchange="toggleRoleCheck('competiteur')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-competiteur">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">🥋 Judoka compétiteur CMJ et Section</span>
-              </label>
-              <div id="fields-competiteur" style="display:none;padding:8px 0 0 26px">
-                <div style="font-size:0.72rem;color:var(--mu);margin-bottom:6px">Code compétiteur requis</div>
-                <div class="fg" style="margin-bottom:6px"><input type="text" id="reg-combat-code" placeholder="Code compétiteur" autocomplete="off"></div>
-                <div class="tc">
-                  <div class="fg"><label>Catégorie</label><select id="reg-cat"><option>Baby</option><option>Mini-Poussins</option><option>Poussins</option><option>Benjamins</option><option>Minimes</option><option>Cadets(tes)</option><option>Juniors</option><option selected>Seniors</option><option>Vétérans</option></select></div>
-                  <div class="fg"><label>Poids</label><select id="reg-poids"><option>-34kg</option><option>-38kg</option><option>-42kg</option><option>-46kg</option><option>-50kg</option><option>-55kg</option><option>-60kg</option><option>-66kg</option><option>-73kg</option><option selected>-81kg</option><option>-90kg</option><option>-100kg</option><option>+100kg</option><option>-44kg</option><option>-48kg</option><option>-52kg</option><option>-57kg</option><option>-63kg</option><option>-70kg</option><option>-78kg</option><option>+78kg</option></select></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-section">
-              <label>
-                <input type="checkbox" id="chk-section" onchange="toggleRoleCheck('section')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-section">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">🏫 Judoka Section Judo (Collège Hélène Boucher)</span>
-              </label>
-              <div id="fields-section" style="display:none;padding:8px 0 0 26px">
-                <div class="fg" style="margin-bottom:0"><input type="text" id="reg-section-code" placeholder="Code section" autocomplete="off"></div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-prof">
-              <label>
-                <input type="checkbox" id="chk-prof" onchange="toggleRoleCheck('prof')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-prof">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">👨‍🏫 Professeur CMJ</span>
-              </label>
-              <div id="fields-prof" style="display:none;padding:8px 0 0 26px">
-                <div class="fg" style="margin-bottom:0"><input type="text" id="reg-prof-code" placeholder="Code professeur CMJ" autocomplete="off"></div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-prof_section">
-              <label>
-                <input type="checkbox" id="chk-prof_section" onchange="toggleRoleCheck('prof_section')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-prof_section">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">👨‍🏫 Professeur Section Judo</span>
-              </label>
-              <div id="fields-prof_section" style="display:none;padding:8px 0 0 26px">
-                <div class="fg" style="margin-bottom:0"><input type="text" id="reg-prof-section-code" placeholder="Code prof section" autocomplete="off"></div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-coach">
-              <label>
-                <input type="checkbox" id="chk-coach" onchange="toggleRoleCheck('coach')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-coach">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">📊 Coach compétition</span>
-              </label>
-              <div id="fields-coach" style="display:none;padding:8px 0 0 26px">
-                <div class="fg" style="margin-bottom:0"><input type="text" id="reg-coach-code" placeholder="Code coach" autocomplete="off"></div>
-              </div>
-            </div>
-
-            <div class="role-check-item" id="rc-bureau">
-              <label>
-                <input type="checkbox" id="chk-bureau" onchange="toggleRoleCheck('bureau')" style="position:absolute;opacity:0;width:22px;height:22px;cursor:pointer;z-index:1">
-                <div class="role-check-box" id="box-bureau">✓</div>
-                <span style="font-size:0.88rem;font-weight:600;color:var(--tx)">🏛️ Membre du bureau</span>
-              </label>
-              <div id="fields-bureau" style="display:none;padding:8px 0 0 26px">
-                <div class="fg" style="margin-bottom:0"><input type="text" id="reg-bureau-code" placeholder="Code bureau" autocomplete="off"></div>
-              </div>
-            </div>
-
+        <!-- CODE PERSONNEL (optionnel) -->
+        <div class="fg">
+          <button type="button" id="btn-show-personal-code" onclick="togglePersonalCode()" style="background:none;border:none;color:var(--navy);font-size:0.78rem;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;margin-bottom:4px">+ J'ai un code personnel</button>
+          <div id="personal-code-field" style="display:none;margin-top:8px">
+            <label style="font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--mu);margin-bottom:4px;display:block">Code personnel</label>
+            <input type="text" id="reg-personal-code" placeholder="Ex : CMJ-XXXX ou SEC-XXXX" autocomplete="off" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <div id="personal-code-feedback" style="font-size:0.72rem;margin-top:6px;min-height:18px"></div>
           </div>
         </div>
 
         <div style="margin-bottom:12px">
           <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem;color:var(--tx);font-weight:400">
             <input type="checkbox" id="reg-cgu" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--navy)">
-            <span>J'ai lu et j'accepte les <button type="button" onclick="showCGUPage()" style="background:none;border:none;color:var(--navy);font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.82rem;padding:0">Conditions Générales d'Utilisation et la Politique de Confidentialité</button>.</span>
+            <span>J'ai lu et j'accepte les <button type="button" onclick="showCGUPage()" style="background:none;border:none;color:var(--navy);font-weight:700;text-decoration:underline;cursor:pointer;font-size:0.82rem;padding:0">Conditions Générales d'Utilisation et la Politique de Confidentialité</button></span>
           </label>
         </div>
-        <div style="margin-bottom:12px" id="reg-parental-block">
+        <div style="margin-bottom:12px;display:none" id="reg-parental-block">
           <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem;color:var(--tx);font-weight:400">
             <input type="checkbox" id="reg-parental" style="width:18px;height:18px;flex-shrink:0;margin-top:2px;accent-color:var(--navy)">
             <span>Je suis le représentant légal de cet utilisateur mineur (moins de 15 ans) et j'autorise expressément la création de son compte et le traitement de ses données personnelles.</span>
@@ -547,75 +532,140 @@ body{font-size:14px;}
         <div id="reg-error" style="color:var(--rd);font-size:0.78rem;margin-top:10px;text-align:center"></div>
       </div>
 
-      <!-- PRÉ-INSCRIPTION FAMILLE -->
-      <div id="form-preinscription" style="display:none;max-height:75vh;overflow-y:auto">
-        <div style="text-align:center;margin-bottom:12px">
-          <div style="font-size:0.7rem;color:var(--mu);line-height:1.5">Inscription individuelle ou familiale. Le bureau validera votre demande.</div>
-        </div>
-        <!-- ÉTAPES -->
-        <div style="display:flex;gap:0;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--bd)">
-          <div id="pi-step-1" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--navy);color:#fff">1. Responsable</div>
-          <div id="pi-step-2" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">2. Membres</div>
-          <div id="pi-step-3" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">3. Documents</div>
-          <div id="pi-step-4" style="flex:1;text-align:center;padding:7px 3px;font-size:0.58rem;font-weight:700;background:var(--sf2);color:var(--mu)">4. Paiement</div>
-        </div>
+    </div>
+  </div>
+  </div><!-- END auth-forms-screen -->
+</div><!-- END auth-screen-wrap -->
+</div><!-- END auth-page -->
 
-        <!-- PAGE 1 : RESPONSABLE LÉGAL -->
-        <div id="pi-page-1">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">👤 Responsable légal</div>
-          <div class="tc">
-            <div class="fg"><label>Prénom *</label><input type="text" id="pi-resp-prenom" placeholder="Prénom"></div>
-            <div class="fg"><label>Nom *</label><input type="text" id="pi-resp-nom" placeholder="Nom"></div>
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+<!-- ============================================================ -->
+<!-- MODAL PRÉ-INSCRIPTION -->
+<!-- ============================================================ -->
+<style>
+#pi-modal{position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;display:none;}
+#pi-modal.open{display:block;}
+#pi-modal-backdrop{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(26,28,46,0.6);}
+#pi-modal-sheet{position:absolute;bottom:0;left:0;width:100%;max-height:92vh;background:var(--bg);border-radius:20px 20px 0 0;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateY(100%);transition:transform 0.36s cubic-bezier(0.4,0,0.2,1);}
+#pi-modal.open #pi-modal-sheet{transform:translateY(0);}
+.pi-handle{width:36px;height:4px;background:var(--bd);border-radius:2px;margin:12px auto 0;}
+.pi-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;}
+.pi-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--navy);}
+.pi-steps{display:flex;gap:0;margin:0 16px 16px;border-radius:8px;overflow:hidden;border:1px solid var(--bd);}
+.pi-step{flex:1;text-align:center;padding:6px 2px;font-size:0.55rem;font-weight:700;background:var(--sf2);color:var(--mu);transition:all 0.2s;}
+.pi-step.active{background:var(--navy);color:#fff;}
+.pi-step.done{background:var(--gr);color:#fff;}
+.pi-body{padding:0 16px 32px;}
+.pi-membre-card{background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px;}
+.pi-membre-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.pi-tarif-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(242,186,29,0.15);color:#9a7200;}
+</style>
+
+<div id="pi-modal">
+  <div id="pi-modal-backdrop" onclick="piModalClose()"></div>
+  <div id="pi-modal-sheet">
+    <div class="pi-handle"></div>
+    <div class="pi-header">
+      <div class="pi-title">📋 Inscription au club</div>
+      <button onclick="piModalClose()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--mu);padding:4px">✕</button>
+    </div>
+    <div class="pi-steps">
+      <div class="pi-step active" id="pi-s1">1. Profils</div>
+      <div class="pi-step" id="pi-s2">2. Documents</div>
+      <div class="pi-step" id="pi-s3">3. Paiement</div>
+    </div>
+    <div class="pi-body">
+
+      <!-- ÉTAPE 1 : PROFILS -->
+      <div id="pi-page-1">
+        <div style="font-size:0.72rem;color:var(--mu);margin-bottom:14px;line-height:1.5">Ajoutez tous les membres à inscrire cette saison. Le tarif est calculé automatiquement selon l'âge et la pratique.</div>
+
+        <!-- Soi-même -->
+        <div id="pi-self-section">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.82rem;text-transform:uppercase;color:var(--navy);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+            👤 Moi-même
+            <label style="display:flex;align-items:center;gap:6px;font-family:'Barlow',sans-serif;font-size:0.72rem;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tx);cursor:pointer">
+              <input type="checkbox" id="pi-self-check" onchange="piToggleSelf()" style="width:16px;height:16px;accent-color:var(--navy)">
+              M'inscrire aussi
+            </label>
           </div>
-          <div class="fg"><label>Email *</label><input type="email" id="pi-resp-email" placeholder="votre@email.com"></div>
-          <div class="fg"><label>Téléphone *</label><input type="tel" id="pi-resp-tel" placeholder="06 XX XX XX XX"></div>
-          <div id="pi-error-1" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
-          <button class="bP" onclick="piNext(1)">Suivant →</button>
-        </div>
-
-        <!-- PAGE 2 : MEMBRES (judokas) -->
-        <div id="pi-page-2" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">🥋 Membres à inscrire</div>
-            <button class="bS" style="font-size:0.7rem;padding:5px 10px" onclick="piAddMembre()">+ Ajouter</button>
+          <div id="pi-self-fields" style="display:none" class="pi-membre-card">
+            <div class="tc">
+              <div class="fg"><label>Prénom</label><input type="text" id="pi-self-prenom"></div>
+              <div class="fg"><label>Nom</label><input type="text" id="pi-self-nom"></div>
+            </div>
+            <div class="fg"><label>Date de naissance</label><input type="date" id="pi-self-dob" onchange="piUpdateSelfTarif()"></div>
+            <div class="fg" id="pi-self-pratique-block" style="display:none">
+              <label>Pratique</label>
+              <div style="display:flex;gap:8px;margin-top:4px">
+                <button type="button" class="pi-pratique-btn active" id="pi-self-judo" onclick="piSetPratique('self','judo')">🥋 Judo</button>
+                <button type="button" class="pi-pratique-btn" id="pi-self-taiso" onclick="piSetPratique('self','taiso')">🤸 Taïso</button>
+              </div>
+            </div>
+            <div id="pi-self-tarif" style="text-align:right;margin-top:8px"></div>
           </div>
-          <div id="pi-membres-list"></div>
-          <div id="pi-total" style="background:rgba(64,65,104,0.06);border-radius:8px;padding:10px;text-align:right;font-weight:700;font-size:0.9rem;color:var(--navy);margin-bottom:10px;display:none"></div>
-          <div id="pi-error-2" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
-          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(2)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(2)">Suivant →</button></div>
         </div>
 
-        <!-- PAGE 3 : DOCUMENTS PAR MEMBRE -->
-        <div id="pi-page-3" style="display:none">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;text-transform:uppercase;color:var(--navy);margin-bottom:4px">📎 Documents</div>
-          <div style="font-size:0.68rem;color:var(--mu);margin-bottom:10px">Documents requis pour chaque membre. * = obligatoire.</div>
-          <div id="pi-docs-list"></div>
-          <div id="pi-error-3" style="color:var(--rd);font-size:0.75rem;margin-bottom:8px"></div>
-          <div style="display:flex;gap:8px"><button class="bS" onclick="piBack(3)">← Retour</button><button class="bP" style="flex:1" onclick="piNext(3)">Envoyer ma demande</button></div>
+        <!-- Enfants -->
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.82rem;text-transform:uppercase;color:var(--navy);margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center">
+          👨‍👩‍👧 Enfants
+          <button class="bS" style="font-size:0.68rem;padding:4px 10px" onclick="piAddEnfant()">+ Ajouter un enfant</button>
         </div>
+        <div id="pi-enfants-list"></div>
 
-        <!-- PAGE 4 : CONFIRMATION + PAIEMENT -->
-        <div id="pi-page-4" style="display:none">
-          <div style="text-align:center;margin-bottom:14px">
-            <div style="font-size:2.5rem;margin-bottom:8px">✅</div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;color:var(--navy)">Demande enregistrée !</div>
-            <div style="font-size:0.75rem;color:var(--mu);margin-top:6px;line-height:1.5">Il ne reste plus qu'à effectuer le paiement via HelloAsso.</div>
+        <div id="pi-total-1" style="background:rgba(64,65,104,0.06);border-radius:8px;padding:10px;margin-top:12px;display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:0.78rem;color:var(--mu)">Total estimé</span>
+            <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--navy)" id="pi-total-amount">0 €</span>
           </div>
-          <div id="pi-recap" style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--navy);line-height:1.7"></div>
-          <a id="pi-helloasso-btn" href="HELLOASSO_PLACEHOLDER" target="_blank" style="display:block;text-decoration:none">
-            <button class="bP" style="width:100%;background:linear-gradient(135deg,#e8445a,#e06b00);border:none;font-size:0.95rem">💳 Payer via HelloAsso</button>
-          </a>
-          <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Zéro commission · Paiement en 1x ou 3x sans frais</div>
-          <div style="margin-top:12px;text-align:center"><button class="bS" onclick="switchAuthTab('login')" style="font-size:0.72rem">Retour à la connexion</button></div>
         </div>
+        <div id="pi-error-1" style="color:var(--rd);font-size:0.75rem;margin:8px 0"></div>
+        <button class="bP" style="margin-top:12px;width:100%" onclick="piGoStep2()">Suivant → Documents</button>
+      </div>
+
+      <!-- ÉTAPE 2 : DOCUMENTS -->
+      <div id="pi-page-2" style="display:none">
+        <div style="font-size:0.72rem;color:var(--mu);margin-bottom:14px;line-height:1.5">Pour chaque membre, fournissez les documents obligatoires.</div>
+        <div id="pi-docs-list"></div>
+        <div id="pi-error-2" style="color:var(--rd);font-size:0.75rem;margin:8px 0"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="bS" onclick="piGoStep1()">← Retour</button>
+          <button class="bP" style="flex:1" onclick="piGoStep3()">Suivant → Paiement</button>
+        </div>
+      </div>
+
+      <!-- ÉTAPE 3 : RÉCAP + PAIEMENT -->
+      <div id="pi-page-3" style="display:none">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:2rem;margin-bottom:6px">✅</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--navy)">Dossier envoyé au bureau !</div>
+          <div style="font-size:0.75rem;color:var(--mu);margin-top:4px;line-height:1.5">Le bureau validera votre dossier sous 15 jours.<br>Il ne reste plus qu'à régler la cotisation.</div>
+        </div>
+        <div id="pi-recap" style="background:var(--sf2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:0.8rem;color:var(--navy);line-height:1.8"></div>
+        <a id="pi-helloasso-btn" href="HELLOASSO_PLACEHOLDER" target="_blank" style="display:block;text-decoration:none;margin-bottom:8px">
+          <button class="bP" style="width:100%;background:linear-gradient(135deg,#e8445a,#e06b00);border:none;font-size:0.92rem">💳 Payer via HelloAsso</button>
+        </a>
+        <div style="text-align:center;font-size:0.62rem;color:var(--mu);margin-bottom:16px">Zéro commission · Paiement sécurisé</div>
+        <button class="bS" style="width:100%" onclick="piModalClose()">Fermer et accéder au club</button>
       </div>
 
     </div>
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="app" style="display:none">
+<!-- BANNIÈRE INSCRIPTION (affichée si non inscrit) -->
+<div id="pi-banner" style="display:none;background:linear-gradient(135deg,var(--navy),#2e3158);padding:12px 16px;margin:0;cursor:pointer" onclick="piModalOpen()">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.88rem;letter-spacing:0.06em;text-transform:uppercase;color:#fff">📋 Finalisez votre inscription</div>
+      <div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px">Cotisation 2025/2026 · Documents à fournir</div>
+    </div>
+    <div style="background:var(--gold);color:#1a1c2e;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78rem;padding:6px 12px;border-radius:8px;white-space:nowrap">S'inscrire →</div>
+  </div>
+</div>
+
   <nav class="top-nav">
     <div class="nav-top-row">
       <div class="nb" style="display:flex;align-items:center;gap:7px"><img src="https://cmj28.github.io/dudojoaupodium/icone-medaille-1024.png" style="width:28px;height:28px;border-radius:50%">Du Dojo au <span>Podium</span></div>
@@ -1403,18 +1453,33 @@ function checkDOBParental(){
   else{catDisp.style.display='none';}
 }
 
+function showLanding(){
+  const wrap=document.getElementById('auth-screen-wrap');
+  if(wrap)wrap.classList.remove('show-form');
+  window.scrollTo(0,0);
+}
 function switchAuthTab(tab){
+  const wrap=document.getElementById('auth-screen-wrap');
+  if(wrap)wrap.classList.add('show-form');
   document.getElementById('tab-login').classList.toggle('active',tab==='login');
   document.getElementById('tab-register').classList.toggle('active',tab==='register');
-  const tabPi=document.getElementById('tab-preinscription');if(tabPi)tabPi.classList.toggle('active',tab==='preinscription');
   document.getElementById('form-login').style.display=tab==='login'?'':'none';
   document.getElementById('form-register').style.display=tab==='register'?'':'none';
-  const pi=document.getElementById('form-preinscription');if(pi)pi.style.display=tab==='preinscription'?'':'none';
+  const pi=document.getElementById('form-preinscription');if(pi)pi.style.display='none';
+  window.scrollTo(0,0);
 }
 // ============================================================
-// INSCRIPTION — MULTI RÔLES
+// INSCRIPTION — NOUVEAU FLUX (code club + code personnel optionnel)
 // ============================================================
 function setRegRole(r){} // legacy no-op
+
+function togglePersonalCode(){
+  const field=document.getElementById('personal-code-field');
+  const btn=document.getElementById('btn-show-personal-code');
+  const visible=field.style.display!=='none';
+  field.style.display=visible?'none':'block';
+  btn.textContent=visible?'+ J\'ai un code personnel':'\u2212 Masquer le code personnel';
+}
 
 async function doRegister(){
   const prenom=document.getElementById('reg-prenom').value.trim();
@@ -1423,99 +1488,64 @@ async function doRegister(){
   const email=document.getElementById('reg-email').value.trim();
   const password=document.getElementById('reg-password').value;
   const err=document.getElementById('reg-error');
-  if(!prenom||!nom||!email||!password){err.textContent='Remplis tous les champs.';return;}
-  if(!dob){err.textContent='La date de naissance est obligatoire.';return;}
-  if(!document.getElementById('reg-cgu')?.checked){err.textContent='Vous devez accepter les CGU pour continuer.';return;}
-  const age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
-  if(age<15&&!document.getElementById('reg-parental')?.checked){err.textContent='L\'autorisation du représentant légal est obligatoire pour les moins de 15 ans.';return;}
-  if(password.length<6){err.textContent='Mot de passe trop court (6 min).';return;}
+
+  if(!prenom||!nom||!email||!password){err.textContent='Remplis tous les champs obligatoires.';return;}
+  if(password.length<6){err.textContent='Mot de passe trop court (6 caractères minimum).';return;}
   const password2=document.getElementById('reg-password2')?.value;
   if(password2&&password!==password2){err.textContent='Les mots de passe ne correspondent pas.';return;}
+  if(!document.getElementById('reg-cgu')?.checked){err.textContent='Vous devez accepter les CGU pour continuer.';return;}
 
-  // Code club obligatoire
+  let age=null;
+  if(dob){
+    age=Math.floor((new Date()-new Date(dob))/(365.25*24*3600*1000));
+    if(age<15&&!document.getElementById('reg-parental')?.checked){
+      err.textContent="L'autorisation du représentant légal est obligatoire pour les moins de 15 ans.";return;
+    }
+  }
+
   const clubCode=document.getElementById('reg-club-code').value.trim();
-  if(clubCode!==CLUB_CODE){err.textContent='Code club incorrect.';return;}
+  if(!clubCode){err.textContent='Le code club est obligatoire.';return;}
+  if(clubCode!==CLUB_CODE){err.textContent='Code club incorrect. Contactez votre club.';return;}
 
-  const roles=['parent','licencie','competiteur','section','prof','prof_section','coach','bureau'];
-  const checked=roles.filter(r=>document.getElementById('chk-'+r)?.checked);
-  if(!checked.length){err.textContent='Sélectionne au moins un rôle.';return;}
+  const personalCode=document.getElementById('reg-personal-code')?.value.trim().toUpperCase()||'';
 
-  // Vérification codes rôles
-  if(checked.includes('prof')&&document.getElementById('reg-prof-code')?.value.trim()!==PROF_CODE){err.textContent='Code professeur incorrect.';return;}
-  if(checked.includes('prof_section')&&document.getElementById('reg-prof-section-code')?.value.trim()!==PROF_SECTION_CODE){err.textContent='Code prof section incorrect.';return;}
-  if(checked.includes('coach')&&document.getElementById('reg-coach-code')?.value.trim()!==COACH_CODE){err.textContent='Code coach incorrect.';return;}
-  if(checked.includes('bureau')&&document.getElementById('reg-bureau-code')?.value.trim()!==BUREAU_CODE){err.textContent='Code bureau incorrect.';return;}
+  let profilExistant=null;
+  let profilSectionExistant=null;
 
-  // Codes personnels CMJ-XXXX et SEC-XXXX
-  const combatCodeInput=document.getElementById('reg-combat-code')?.value.trim().toUpperCase()||'';
-  const sectionCodeInput=document.getElementById('reg-section-code')?.value.trim().toUpperCase()||'';
-
-  let profilExistant=null; // profil dans profiles (CMJ)
-  let profilSectionExistant=null; // profil dans profils_section (SEC)
-
-  // Vérifie code compétiteur
-  if(checked.includes('competiteur')){
-    if(combatCodeInput.startsWith('CMJ-')){
-      const{data:p}=await sb.from('profiles').select('*').eq('code_invitation',combatCodeInput).single();
-      if(!p){err.textContent='Code compétiteur introuvable. Vérifie le code fourni par ton club.';return;}
-      profilExistant=p;
-    } else if(combatCodeInput&&combatCodeInput!==COMBAT_CODE){
-      err.textContent='Code compétiteur incorrect.';return;
-    }
-  }
-
-  // Vérifie code section
-  if(checked.includes('section')){
-    if(sectionCodeInput.startsWith('CMJ-')){
-      // Code personnel section (ex: CMJ-RBEAUMONT) → chercher dans profils_section
-      const{data:pSec}=await sb.from('profils_section').select('*').eq('code_invitation',sectionCodeInput).single();
-      if(pSec){
-        profilSectionExistant=pSec;
+  if(personalCode){
+    if(personalCode.startsWith('CMJ-')){
+      const{data:p}=await sb.from('profiles').select('*').eq('code_invitation',personalCode).single();
+      if(p){
+        profilExistant=p;
+        const fb=document.getElementById('personal-code-feedback');
+        if(fb)fb.innerHTML=`<span style="color:var(--gr)">✓ Profil trouvé : ${p.prenom} ${p.nom}</span>`;
       } else {
-        // Pas trouvé dans profils_section → chercher dans profiles (judoka club avec section)
-        const{data:pProf}=await sb.from('profiles').select('*').eq('code_invitation',sectionCodeInput).single();
-        if(!pProf){err.textContent='Code section introuvable. Vérifie le code fourni par ton prof.';return;}
-        profilExistant=pProf;
+        const{data:pSec}=await sb.from('profils_section').select('*').eq('code_invitation',personalCode).single();
+        if(pSec){profilSectionExistant=pSec;}
+        else{err.textContent='Code personnel introuvable. Vérifiez le code fourni par votre club.';return;}
       }
-    } else if(sectionCodeInput===SECTION_CODE){
-      // Code global section — OK, pas de profil pré-créé à lier
-    } else if(sectionCodeInput){
-      err.textContent='Code section incorrect.';return;
+    } else if(personalCode.startsWith('SEC-')){
+      const{data:pSec}=await sb.from('profils_section').select('*').eq('code_invitation',personalCode).single();
+      if(pSec){profilSectionExistant=pSec;}
+      else{err.textContent='Code section introuvable. Vérifiez le code fourni par votre professeur.';return;}
+    } else {
+      err.textContent='Format de code personnel invalide (doit commencer par CMJ- ou SEC-).';return;
     }
   }
 
-  err.textContent='Création du compte...';
+  err.textContent='Création du compte en cours...';
   const{data,error}=await sb.auth.signUp({email,password});
   if(error){err.textContent=error.message;return;}
 
-  const isBureau=checked.includes('bureau');
-  const isComp=checked.includes('competiteur');
-
+  const newId=data.user.id;
   let profileData;
+
   if(profilExistant){
-    // Mise à jour du profil existant avec le nouvel id auth
-    // On UPDATE plutôt que DELETE+INSERT pour préserver les données liées
-    const updateData={
-      email,
-      date_naissance:dob,
-      autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
-      is_licencie:true,
-      is_competiteur:true,
-      is_judoka:true,
-      is_section:checked.includes('section')||profilExistant.is_section,
-      is_prof:checked.includes('prof')||isBureau||profilExistant.is_prof,
-      is_prof_section:checked.includes('prof_section')||isBureau||profilExistant.is_prof_section,
-      is_coach:checked.includes('coach')||isBureau||profilExistant.is_coach,
-      is_bureau:isBureau||profilExistant.is_bureau,
-      is_parent:checked.includes('parent'),
-    };
-    // Mettre à jour l'ancien profil avec le nouvel auth id
-    // On doit d'abord mettre à jour les FK dans les tables liées
     const oldId=profilExistant.id;
-    const newId=data.user.id;
-    // Créer le nouveau profil avec le bon id auth
-    profileData={...profilExistant,...updateData,id:newId};
-    // Mettre à jour les références dans les tables liées
+    profileData={...profilExistant,id:newId,email,
+      date_naissance:dob||profilExistant.date_naissance,
+      autorisation_parentale:age&&age<15?document.getElementById('reg-parental')?.checked:null,
+    };
     await Promise.all([
       sb.from('notes_profs').update({judoka_id:newId}).eq('judoka_id',oldId),
       sb.from('notes_profs').update({prof_id:newId}).eq('prof_id',oldId),
@@ -1523,46 +1553,40 @@ async function doRegister(){
       sb.from('attaques').update({user_id:newId}).eq('user_id',oldId),
       sb.from('training').update({user_id:newId}).eq('user_id',oldId),
     ]);
-    // Supprimer l'ancien profil et insérer le nouveau
     await sb.from('profiles').delete().eq('id',oldId);
   } else {
-    const catAuto=getCatFFJudo(dob);
-    const cat=catAuto||(isComp?document.getElementById('reg-cat')?.value||'':'');
-    const poids=isComp?document.getElementById('reg-poids')?.value||'':'';
+    const catAuto=dob?getCatFFJudo(dob):'';
     profileData={
-      id:data.user.id,prenom,nom,email,
-      date_naissance:dob,
-      autorisation_parentale:age<15?document.getElementById('reg-parental')?.checked:null,
-      is_licencie:checked.includes('licencie')||isComp||isBureau,
-      is_competiteur:isComp,is_judoka:isComp,
-      is_section:checked.includes('section'),
-      is_prof:checked.includes('prof')||isBureau,
-      is_prof_section:checked.includes('prof_section')||isBureau,
-      is_coach:checked.includes('coach')||isBureau,
-      is_bureau:isBureau,
-      is_parent:checked.includes('parent'),
-      cat,poids,
+      id:newId,prenom,nom,email,
+      date_naissance:dob||null,
+      autorisation_parentale:age&&age<15?document.getElementById('reg-parental')?.checked:null,
+      is_licencie:true,is_competiteur:false,is_judoka:false,
+      is_section:!!profilSectionExistant,
+      is_prof:false,is_prof_section:false,is_coach:false,is_bureau:false,is_parent:false,
+      cat:catAuto||'',
       created_at:new Date().toISOString()
     };
   }
+
   await sb.from('profiles').upsert(profileData);
 
-  // Lier le profil section si code SEC fourni
   if(profilSectionExistant){
-    await sb.from('profils_section').update({linked_profile_id:data.user.id}).eq('id',profilSectionExistant.id);
+    await sb.from('profils_section').update({linked_profile_id:newId}).eq('id',profilSectionExistant.id);
   }
 
   err.textContent='';
   document.getElementById('form-register').innerHTML=`
-    <div style="text-align:center;padding:24px 12px">
-      <div style="font-size:3rem;margin-bottom:12px">🎉</div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--navy);margin-bottom:8px">Compte créé avec succès !</div>
-      <div style="font-size:0.85rem;color:var(--mu);margin-bottom:20px;line-height:1.5">
-        Bienvenue ${profilExistant?profilExistant.prenom:prenom} !<br>
-        ${profilExistant?'Ton profil a bien été lié à ton compte. ':''}
-        Tu peux maintenant te connecter.
+    <div style="text-align:center;padding:32px 16px">
+      <div style="width:64px;height:64px;background:rgba(42,157,92,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:2rem">✓</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy);margin-bottom:10px;letter-spacing:0.05em">Compte créé avec succès !</div>
+      <div style="font-size:0.85rem;color:var(--tx);margin-bottom:8px;font-weight:600">Bienvenue ${profilExistant?profilExistant.prenom:prenom} 👋</div>
+      <div style="font-size:0.82rem;color:var(--mu);margin-bottom:24px;line-height:1.6;background:var(--sf2);border-radius:10px;padding:12px">
+        ${profilExistant?'<div style="margin-bottom:6px">✓ Ton profil a bien été lié à ton compte.</div>':''}
+        Ton compte <strong>Du Dojo au Podium</strong> est prêt.<br>
+        Connecte-toi pour finaliser ton inscription au club.
       </div>
-      <button class="bP" onclick="switchAuthTab('login')">Se connecter →</button>
+      <button class="bP" onclick="switchAuthTab('login')" style="margin-bottom:10px">Se connecter sur DDaP →</button>
+      <div style="font-size:0.65rem;color:var(--mu)">dojopodium.fr</div>
     </div>`;
 }
 
@@ -1696,7 +1720,7 @@ async function initApp(user){
       await sb.from('profiles').update({cat:catCalc}).eq('id',user.id);
     }
   }
-  hideLoader();showApp();renderNavUser();renderNavTabs();
+  hideLoader();showApp();renderNavUser();renderNavTabs();setTimeout(piCheckInscription,500);
   // Charger le menu enfants si parent
   if(CP.is_parent)renderEnfantsMenu();
   if(canAccessPerf())loadJudokaView();
@@ -4797,7 +4821,9 @@ function showAuthPage(){
   document.getElementById('loader').style.display='none';
   document.getElementById('auth-page').style.display='';
   document.getElementById('app').style.display='none';
-  // Toujours afficher le formulaire de connexion
+  // Revenir au landing, cacher les formulaires
+  const wrap=document.getElementById('auth-screen-wrap');
+  if(wrap)wrap.classList.remove('show-form');
   const formLogin=document.getElementById('form-login');
   const formRegister=document.getElementById('form-register');
   const tabLogin=document.getElementById('tab-login');
@@ -4806,9 +4832,9 @@ function showAuthPage(){
   if(formRegister)formRegister.style.display='none';
   if(tabLogin)tabLogin.classList.add('active');
   if(tabRegister)tabRegister.classList.remove('active');
-  // Reset erreur
   const errEl=document.getElementById('login-error');
   if(errEl)errEl.textContent='';
+  window.scrollTo(0,0);
 }
 function showApp(){document.getElementById('auth-page').style.display='none';document.getElementById('app').style.display='';}
 function hideLoader(){document.getElementById('loader').style.display='none';}
@@ -6988,6 +7014,280 @@ sb.auth.onAuthStateChange(async(event,session)=>{
 
 wkStart=getMon(new Date());
 setTimeout(()=>{const l=document.getElementById('loader');if(l&&l.style.display!=='none'){hideLoader();showAuthPage();}},8000);
+
+// ============================================================
+// PRÉ-INSCRIPTION — MODAL
+// ============================================================
+const PI_TARIFS={
+  'Baby':180,'Mini-Poussins':180,'Poussins':180,'Benjamins':180,
+  'Minimes':200,'Cadets(tes)':200,'Juniors':200,'Seniors':200,'Vétérans':200,
+  'taiso':150
+};
+const PI_CATS_TAISO=['Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Vétérans'];
+const PI_CATS_COMPET=['Cadets(tes)','Juniors'];
+
+let piEnfants=[]; // [{prenom,nom,dob,cat,pratique,tarif}]
+let piSelf={actif:false,prenom:'',nom:'',dob:'',cat:'',pratique:'judo',tarif:0};
+let piDocs={}; // {memberId: {certif:File|null,qs:File|null,ri:File|null}}
+
+function piGetTarif(cat,pratique){
+  if(!cat)return 0;
+  if(pratique==='taiso'&&PI_CATS_TAISO.includes(cat))return 150;
+  return PI_TARIFS[cat]||0;
+}
+
+function piCalcTotal(){
+  let total=0;
+  if(piSelf.actif&&piSelf.cat)total+=piGetTarif(piSelf.cat,piSelf.pratique);
+  piEnfants.forEach(e=>{if(e.cat)total+=piGetTarif(e.cat,e.pratique);});
+  return total;
+}
+
+function piUpdateTotal(){
+  const total=piCalcTotal();
+  const el=document.getElementById('pi-total-1');
+  const amt=document.getElementById('pi-total-amount');
+  const hasMembers=piSelf.actif||piEnfants.length>0;
+  if(el)el.style.display=hasMembers?'block':'none';
+  if(amt)amt.textContent=total+' €';
+}
+
+function piSetStep(n){
+  [1,2,3].forEach(i=>{
+    const s=document.getElementById('pi-s'+i);
+    const p=document.getElementById('pi-page-'+i);
+    if(s)s.className='pi-step'+(i===n?' active':i<n?' done':'');
+    if(p)p.style.display=i===n?'block':'none';
+  });
+}
+
+function piModalOpen(){
+  const modal=document.getElementById('pi-modal');
+  if(modal)modal.classList.add('open');
+  document.body.style.overflow='hidden';
+  // Pré-remplir avec les infos du compte
+  if(CP){
+    const p=document.getElementById('pi-self-prenom');
+    const n=document.getElementById('pi-self-nom');
+    const d=document.getElementById('pi-self-dob');
+    if(p&&CP.prenom)p.value=CP.prenom;
+    if(n&&CP.nom)n.value=CP.nom;
+    if(d&&CP.date_naissance)d.value=CP.date_naissance;
+    if(CP.date_naissance)piUpdateSelfTarif();
+  }
+  piSetStep(1);
+}
+
+function piModalClose(){
+  const modal=document.getElementById('pi-modal');
+  if(modal)modal.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function piToggleSelf(){
+  const chk=document.getElementById('pi-self-check');
+  const fields=document.getElementById('pi-self-fields');
+  piSelf.actif=chk?.checked||false;
+  if(fields)fields.style.display=piSelf.actif?'block':'none';
+  piUpdateTotal();
+}
+
+function piUpdateSelfTarif(){
+  const dob=document.getElementById('pi-self-dob')?.value;
+  if(!dob)return;
+  const cat=getCatFFJudo(dob);
+  piSelf.cat=cat||'';
+  piSelf.dob=dob;
+  const tarifEl=document.getElementById('pi-self-tarif');
+  const praBlock=document.getElementById('pi-self-pratique-block');
+  const taisoBtn=document.getElementById('pi-self-taiso');
+  const canTaiso=PI_CATS_TAISO.includes(cat);
+  const isCompet=PI_CATS_COMPET.includes(cat);
+  if(praBlock)praBlock.style.display=canTaiso&&!isCompet?'block':'none';
+  if(!canTaiso||isCompet)piSelf.pratique='judo';
+  if(taisoBtn)taisoBtn.style.display=canTaiso&&!isCompet?'inline-flex':'none';
+  const tarif=piGetTarif(cat,piSelf.pratique);
+  piSelf.tarif=tarif;
+  if(tarifEl)tarifEl.innerHTML=cat?`<span class="pi-tarif-badge">${cat} · ${tarif} €${isCompet?' · Compétiteur':''}</span>`:'';
+  piUpdateTotal();
+}
+
+function piSetPratique(who,pratique){
+  if(who==='self'){
+    piSelf.pratique=pratique;
+    document.getElementById('pi-self-judo')?.classList.toggle('active',pratique==='judo');
+    document.getElementById('pi-self-taiso')?.classList.toggle('active',pratique==='taiso');
+    piUpdateSelfTarif();
+  } else {
+    const idx=parseInt(who);
+    piEnfants[idx].pratique=pratique;
+    document.getElementById(`pi-e${idx}-judo`)?.classList.toggle('active',pratique==='judo');
+    document.getElementById(`pi-e${idx}-taiso`)?.classList.toggle('active',pratique==='taiso');
+    piUpdateEnfantTarif(idx);
+  }
+}
+
+function piAddEnfant(){
+  const idx=piEnfants.length;
+  piEnfants.push({prenom:'',nom:'',dob:'',cat:'',pratique:'judo',tarif:0});
+  const list=document.getElementById('pi-enfants-list');
+  const div=document.createElement('div');
+  div.className='pi-membre-card';
+  div.id='pi-enfant-'+idx;
+  div.innerHTML=`
+    <div class="pi-membre-head">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.82rem;color:var(--navy)">Enfant ${idx+1}</span>
+      <button class="bR" onclick="piRemoveEnfant(${idx})">Supprimer</button>
+    </div>
+    <div class="tc">
+      <div class="fg"><label>Prénom</label><input type="text" id="pi-e${idx}-prenom" onchange="piEnfants[${idx}].prenom=this.value" placeholder="Prénom"></div>
+      <div class="fg"><label>Nom</label><input type="text" id="pi-e${idx}-nom" onchange="piEnfants[${idx}].nom=this.value" placeholder="Nom"></div>
+    </div>
+    <div class="fg"><label>Date de naissance</label><input type="date" id="pi-e${idx}-dob" onchange="piUpdateEnfantTarif(${idx})"></div>
+    <div class="fg" id="pi-e${idx}-pratique-block" style="display:none">
+      <label>Pratique</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="button" class="pi-pratique-btn active" id="pi-e${idx}-judo" onclick="piSetPratique(${idx},'judo')">🥋 Judo</button>
+        <button type="button" class="pi-pratique-btn" id="pi-e${idx}-taiso" onclick="piSetPratique(${idx},'taiso')">🤸 Taïso</button>
+      </div>
+    </div>
+    <div id="pi-e${idx}-tarif" style="text-align:right;margin-top:8px"></div>`;
+  list.appendChild(div);
+  piUpdateTotal();
+}
+
+function piRemoveEnfant(idx){
+  piEnfants.splice(idx,1);
+  // Reconstruire la liste
+  const list=document.getElementById('pi-enfants-list');
+  list.innerHTML='';
+  const tmp=[...piEnfants];
+  piEnfants=[];
+  tmp.forEach(()=>piAddEnfant());
+  piUpdateTotal();
+}
+
+function piUpdateEnfantTarif(idx){
+  const dob=document.getElementById(`pi-e${idx}-dob`)?.value;
+  if(!dob)return;
+  const cat=getCatFFJudo(dob);
+  piEnfants[idx].cat=cat||'';
+  piEnfants[idx].dob=dob;
+  const tarifEl=document.getElementById(`pi-e${idx}-tarif`);
+  const praBlock=document.getElementById(`pi-e${idx}-pratique-block`);
+  const taisoBtn=document.getElementById(`pi-e${idx}-taiso`);
+  const canTaiso=PI_CATS_TAISO.includes(cat);
+  const isCompet=PI_CATS_COMPET.includes(cat);
+  if(praBlock)praBlock.style.display=canTaiso&&!isCompet?'block':'none';
+  if(!canTaiso||isCompet)piEnfants[idx].pratique='judo';
+  if(taisoBtn)taisoBtn.style.display=canTaiso&&!isCompet?'inline-flex':'none';
+  const tarif=piGetTarif(cat,piEnfants[idx].pratique);
+  piEnfants[idx].tarif=tarif;
+  if(tarifEl)tarifEl.innerHTML=cat?`<span class="pi-tarif-badge">${cat} · ${tarif} €${isCompet?' · Compétiteur':''}</span>`:'';
+  piUpdateTotal();
+}
+
+function piGoStep2(){
+  // Validation étape 1
+  const err=document.getElementById('pi-error-1');
+  const membres=[];
+  if(piSelf.actif){
+    const prenom=document.getElementById('pi-self-prenom')?.value.trim();
+    const nom=document.getElementById('pi-self-nom')?.value.trim();
+    const dob=document.getElementById('pi-self-dob')?.value;
+    if(!prenom||!nom||!dob){err.textContent='Complétez vos informations.';return;}
+    membres.push({id:'self',prenom,nom,dob,cat:piSelf.cat,pratique:piSelf.pratique,tarif:piSelf.tarif});
+  }
+  piEnfants.forEach((e,i)=>{
+    const prenom=document.getElementById(`pi-e${i}-prenom`)?.value.trim();
+    const nom=document.getElementById(`pi-e${i}-nom`)?.value.trim();
+    const dob=document.getElementById(`pi-e${i}-dob`)?.value;
+    if(prenom&&nom&&dob)membres.push({id:'e'+i,prenom,nom,dob,cat:e.cat,pratique:e.pratique,tarif:e.tarif});
+  });
+  if(!membres.length&&!piSelf.actif){err.textContent='Ajoutez au moins un membre à inscrire.';return;}
+  if(!membres.length){err.textContent='Complétez les informations de tous les membres.';return;}
+  err.textContent='';
+  window._piMembres=membres;
+  // Construire les blocs documents
+  const docsList=document.getElementById('pi-docs-list');
+  docsList.innerHTML=membres.map(m=>`
+    <div class="pi-membre-card" style="margin-bottom:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:var(--navy);margin-bottom:10px">
+        ${m.prenom} ${m.nom} <span class="pi-tarif-badge" style="margin-left:6px">${m.cat} · ${m.tarif} €</span>
+      </div>
+      <div class="fg">
+        <label>Certificat médical ou attestation QS *</label>
+        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">Fournissez l'un des deux documents</div>
+        <input type="file" id="pi-doc-certif-${m.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.78rem">
+      </div>
+      <div class="fg">
+        <label>Règlement Intérieur signé *</label>
+        <div style="font-size:0.65rem;color:var(--mu);margin-bottom:6px">À télécharger, signer et renvoyer</div>
+        <input type="file" id="pi-doc-ri-${m.id}" accept=".pdf,.jpg,.jpeg,.png" style="font-size:0.78rem">
+      </div>
+    </div>`).join('');
+  piSetStep(2);
+}
+
+function piGoStep1(){piSetStep(1);}
+
+async function piGoStep3(){
+  const err=document.getElementById('pi-error-2');
+  const membres=window._piMembres||[];
+  // Vérifier documents
+  for(const m of membres){
+    const certif=document.getElementById(`pi-doc-certif-${m.id}`)?.files[0];
+    const ri=document.getElementById(`pi-doc-ri-${m.id}`)?.files[0];
+    if(!certif){err.textContent=`Document médical manquant pour ${m.prenom}.`;return;}
+    if(!ri){err.textContent=`Règlement Intérieur manquant pour ${m.prenom}.`;return;}
+  }
+  err.textContent='Envoi en cours...';
+
+  // Upload des fichiers dans Supabase Storage + création dossier
+  try{
+    for(const m of membres){
+      const certif=document.getElementById(`pi-doc-certif-${m.id}`)?.files[0];
+      const ri=document.getElementById(`pi-doc-ri-${m.id}`)?.files[0];
+      const base=`preinscriptions/${CU.id}/${m.id}`;
+      if(certif)await sb.storage.from('documents').upload(`${base}/certif_${Date.now()}`,certif,{upsert:true});
+      if(ri)await sb.storage.from('documents').upload(`${base}/ri_${Date.now()}`,ri,{upsert:true});
+    }
+    // Créer le dossier en base
+    await sb.from('preinscriptions').upsert({
+      user_id:CU.id,
+      statut:'en_attente',
+      membres:JSON.stringify(membres),
+      total:piCalcTotal(),
+      created_at:new Date().toISOString()
+    },{onConflict:'user_id'});
+    err.textContent='';
+    // Récap
+    const recap=document.getElementById('pi-recap');
+    if(recap)recap.innerHTML=membres.map(m=>`
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bd)">
+        <span>${m.prenom} ${m.nom} — ${m.cat} (${m.pratique==='taiso'?'Taïso':'Judo'})</span>
+        <strong>${m.tarif} €</strong>
+      </div>`).join('')+`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:0.9rem">
+        <strong>Total</strong><strong>${piCalcTotal()} €</strong>
+      </div>`;
+    piSetStep(3);
+  } catch(e){
+    err.textContent="Erreur lors de l'envoi : "+e.message;
+  }
+}
+
+async function piCheckInscription(){
+  if(!CU)return;
+  // Vérifier si une pré-inscription existe et est validée
+  const{data}=await sb.from('preinscriptions').select('statut').eq('user_id',CU.id).single();
+  const banner=document.getElementById('pi-banner');
+  if(!data||data.statut==='en_attente'||data.statut==='refusee'){
+    if(banner)banner.style.display='block';
+  } else {
+    if(banner)banner.style.display='none';
+  }
+}
 </script>
 </body>
 </html>
