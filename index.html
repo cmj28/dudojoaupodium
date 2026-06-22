@@ -4599,12 +4599,22 @@ function showProfSection(sec){
     pg.innerHTML=`<div style="margin-bottom:16px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--navy)">Espace Professeur</div><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">${jFN(CP)}</div></div>
     <div style="display:grid;grid-template-columns:1fr;gap:12px">
       <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('appel')"><div style="font-size:2rem;width:48px;text-align:center">📋</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Faire l'appel</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Présences par cours et par séance</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
-      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.4);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('planning')"><div style="font-size:2rem;width:48px;text-align:center">📅</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Gérer le planning</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter et modifier les cours</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
+      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.4);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('mon-planning')"><div style="font-size:2rem;width:48px;text-align:center">🗓️</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Mon planning</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Mes cours de la semaine par dojo</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
+      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('planning')"><div style="font-size:2rem;width:48px;text-align:center">📅</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Gérer le planning</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter et modifier les cours</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('calendrier')"><div style="font-size:2rem;width:48px;text-align:center">🏆</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions, stages & événements</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter compétitions, stages, événements</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('annonces')"><div style="font-size:2rem;width:48px;text-align:center">📢</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Envoyer une annonce</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Communication vers les licenciés</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('licencies')"><div style="font-size:2rem;width:48px;text-align:center">👥</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Mes licenciés</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Liste et inscriptions aux cours</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('profil')"><div style="font-size:2rem;width:48px;text-align:center">👤</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Mon profil prof</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Photo, diplômes, dojos</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     </div>`;
+  }
+  else if(sec==='mon-planning'){
+    const jours=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">🗓️ Mon planning</div>
+      <button class="bS" onclick="showProfSection('main')">← Retour</button>
+    </div>
+    <div id="mon-planning-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+    loadMonPlanning();
   }
   else if(sec==='appel'){
     pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📋 Faire l'appel</div><button class="bS" onclick="showProfSection('main')">← Retour</button></div>
@@ -5166,6 +5176,13 @@ function renderAdminPage(){
       <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Visualiser les codes CMJ- et SEC-</div></div>
       <div style="font-size:1.2rem;color:var(--bd)">›</div>
     </div>
+
+    <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showAdminSection('planning')">
+      <div style="font-size:2rem;width:48px;text-align:center">📅</div>
+      <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Import planning 2026/2027</div>
+      <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Insérer tous les créneaux des 5 dojos</div></div>
+      <div style="font-size:1.2rem;color:var(--bd)">›</div>
+    </div>
   </div>`;
 }
 
@@ -5188,6 +5205,129 @@ function showAdminSection(sec){
     <div id="admin-codes-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
     loadAdminCodes();
   }
+  else if(sec==='planning'){
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ST" style="margin:0">📅 Import planning 2026/2027</div>
+      <button class="bS" onclick="renderAdminPage()">← Retour</button>
+    </div>
+    <div style="background:var(--sf);border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.82rem;color:var(--tx);line-height:1.6;margin-bottom:12px">
+        Cela va insérer <strong>31 créneaux</strong> pour les 5 dojos CMJ :<br>
+        Mainvilliers · La Madeleine · Fontaine-la-Guyon · MMA Sports · Harvey Chartres
+      </div>
+      <div style="font-size:0.72rem;color:var(--rd);margin-bottom:14px">⚠️ Ne pas importer plusieurs fois — vérifiez que la table cours est vide avant de lancer.</div>
+      <button class="bP" id="btn-import-planning" onclick="importPlanning2627()">📅 Importer le planning</button>
+      <div id="import-planning-msg" style="margin-top:10px;font-size:0.78rem;text-align:center"></div>
+    </div>`;
+  }
+}
+
+// ============================================================
+// ADMIN — IMPORT PLANNING 2026/2027
+// ============================================================
+const PLANNING_2627 = [
+  // MAINVILLIERS — Jours: 1=Lundi,2=Mardi,3=Mercredi,4=Jeudi,5=Vendredi
+  {nom:'Mini-Poussins',jour:1,heure_debut:'17:30',heure_fin:'18:30',dojo:'Mainvilliers',categorie:'Mini-Poussins',categories:['Mini-Poussins'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Poussins / Benjamins',jour:1,heure_debut:'18:30',heure_fin:'19:30',dojo:'Mainvilliers',categorie:'Poussins',categories:['Poussins','Benjamins'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Taïso',jour:1,heure_debut:'19:30',heure_fin:'20:30',dojo:'Mainvilliers',categorie:'Taïso',categories:['Taïso'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Éveils',jour:2,heure_debut:'17:30',heure_fin:'18:30',dojo:'Mainvilliers',categorie:'Éveils',categories:['Éveils'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Adultes',jour:2,heure_debut:'19:30',heure_fin:'21:00',dojo:'Mainvilliers',categorie:'Adultes',categories:['Adultes'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Éveils',jour:3,heure_debut:'15:00',heure_fin:'16:00',dojo:'Mainvilliers',categorie:'Éveils',categories:['Éveils'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Mini-Poussins',jour:3,heure_debut:'16:00',heure_fin:'17:00',dojo:'Mainvilliers',categorie:'Mini-Poussins',categories:['Mini-Poussins'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Poussins / Benjamins',jour:3,heure_debut:'17:00',heure_fin:'18:30',dojo:'Mainvilliers',categorie:'Poussins',categories:['Poussins','Benjamins'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Taïso',jour:3,heure_debut:'19:00',heure_fin:'20:00',dojo:'Mainvilliers',categorie:'Taïso',categories:['Taïso'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Adultes',jour:4,heure_debut:'19:30',heure_fin:'21:00',dojo:'Mainvilliers',categorie:'Adultes',categories:['Adultes'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Mini-Poussins / Poussins / Benjamins',jour:5,heure_debut:'17:30',heure_fin:'18:30',dojo:'Mainvilliers',categorie:'Mini-Poussins',categories:['Mini-Poussins','Poussins','Benjamins'],prof:'Mathilde',profs_noms:['Mathilde'],is_competition:false},
+  {nom:'Open Mat',jour:5,heure_debut:'18:30',heure_fin:'19:30',dojo:'Mainvilliers',categorie:'Compétiteurs',categories:['Compétiteurs'],prof:'Kylian / Mathilde / Julian',profs_noms:['Kylian','Mathilde','Julian'],is_competition:false},
+  {nom:'Cours Compétition',jour:5,heure_debut:'19:30',heure_fin:'21:30',dojo:'Mainvilliers',categorie:'Compétiteurs',categories:['Compétiteurs'],prof:'Kylian / Mathilde',profs_noms:['Kylian','Mathilde'],is_competition:true},
+  // LA MADELEINE
+  {nom:'Mini-Poussins',jour:1,heure_debut:'17:00',heure_fin:'18:00',dojo:'Chartres - La Madeleine',categorie:'Mini-Poussins',categories:['Mini-Poussins'],prof:'Sébastien',profs_noms:['Sébastien'],is_competition:false},
+  {nom:'Poussins',jour:1,heure_debut:'18:00',heure_fin:'19:00',dojo:'Chartres - La Madeleine',categorie:'Poussins',categories:['Poussins'],prof:'Sébastien',profs_noms:['Sébastien'],is_competition:false},
+  {nom:'Benjamins',jour:1,heure_debut:'19:00',heure_fin:'20:00',dojo:'Chartres - La Madeleine',categorie:'Benjamins',categories:['Benjamins'],prof:'Sébastien',profs_noms:['Sébastien'],is_competition:false},
+  {nom:'Éveils',jour:3,heure_debut:'15:30',heure_fin:'16:30',dojo:'Chartres - La Madeleine',categorie:'Éveils',categories:['Éveils'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Mini-Poussins / Poussins',jour:3,heure_debut:'16:30',heure_fin:'17:30',dojo:'Chartres - La Madeleine',categorie:'Mini-Poussins',categories:['Mini-Poussins','Poussins'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  {nom:'Poussins / Benjamins',jour:5,heure_debut:'17:00',heure_fin:'18:30',dojo:'Chartres - La Madeleine',categorie:'Poussins',categories:['Poussins','Benjamins'],prof:'Grégory',profs_noms:['Grégory'],is_competition:false},
+  // FONTAINE-LA-GUYON
+  {nom:'Taïso',jour:1,heure_debut:'18:00',heure_fin:'19:00',dojo:'Fontaine-la-Guyon',categorie:'Taïso',categories:['Taïso'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Poussins / Benjamins',jour:3,heure_debut:'09:45',heure_fin:'10:45',dojo:'Fontaine-la-Guyon',categorie:'Poussins',categories:['Poussins','Benjamins'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Mini-Poussins',jour:3,heure_debut:'10:45',heure_fin:'11:30',dojo:'Fontaine-la-Guyon',categorie:'Mini-Poussins',categories:['Mini-Poussins'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Éveils',jour:3,heure_debut:'11:30',heure_fin:'12:15',dojo:'Fontaine-la-Guyon',categorie:'Éveils',categories:['Éveils'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Éveils',jour:5,heure_debut:'17:15',heure_fin:'18:00',dojo:'Fontaine-la-Guyon',categorie:'Éveils',categories:['Éveils'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Mini-Poussins',jour:5,heure_debut:'18:00',heure_fin:'18:45',dojo:'Fontaine-la-Guyon',categorie:'Mini-Poussins',categories:['Mini-Poussins'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  {nom:'Poussins / Benjamins',jour:5,heure_debut:'18:45',heure_fin:'19:45',dojo:'Fontaine-la-Guyon',categorie:'Poussins',categories:['Poussins','Benjamins'],prof:'Jean-Jacques',profs_noms:['Jean-Jacques'],is_competition:false},
+  // MMA SPORTS
+  {nom:'Enfants',jour:3,heure_debut:'17:30',heure_fin:'19:00',dojo:'MMA Sports',categorie:'Enfants',categories:['Enfants'],prof:'Sébastien',profs_noms:['Sébastien'],is_competition:false},
+  {nom:'Adultes',jour:3,heure_debut:'19:00',heure_fin:'20:30',dojo:'MMA Sports',categorie:'Adultes',categories:['Adultes'],prof:'Sébastien',profs_noms:['Sébastien'],is_competition:false},
+  // HARVEY CHARTRES
+  {nom:'Taïso',jour:2,heure_debut:'10:00',heure_fin:'11:00',dojo:'Harvey Chartres',categorie:'Taïso',categories:['Taïso'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Éveils (1)',jour:3,heure_debut:'10:00',heure_fin:'11:00',dojo:'Harvey Chartres',categorie:'Éveils',categories:['Éveils'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+  {nom:'Éveils (2)',jour:3,heure_debut:'11:00',heure_fin:'12:00',dojo:'Harvey Chartres',categorie:'Éveils',categories:['Éveils'],prof:'Julian',profs_noms:['Julian'],is_competition:false},
+];
+
+async function loadMonPlanning(){
+  const el=document.getElementById('mon-planning-list');if(!el)return;
+  const prenomProf=CP.prenom||'';
+  // Chercher tous les cours où le prénom du prof apparaît dans profs_noms ou prof
+  const{data:cours}=await sb.from('cours').select('*').order('jour').order('heure_debut');
+  if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Aucun cours trouvé.</div>';return;}
+  // Filtrer les cours du prof
+  const mesCours=cours.filter(c=>{
+    const noms=Array.isArray(c.profs_noms)?c.profs_noms:(c.profs_noms?[c.profs_noms]:[]);
+    const prof=c.prof||'';
+    return noms.some(n=>n.toLowerCase().includes(prenomProf.toLowerCase()))||prof.toLowerCase().includes(prenomProf.toLowerCase());
+  });
+  if(!mesCours.length){el.innerHTML="<div style=\"text-align:center;padding:20px;color:var(--mu)\">Aucun cours assign\u00e9 pour l'instant.</div>";return;}
+  const jours=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  // Grouper par jour
+  const parJour={};
+  mesCours.forEach(c=>{
+    const j=c.jour;
+    if(!parJour[j])parJour[j]=[];
+    parJour[j].push(c);
+  });
+  const joursTries=Object.keys(parJour).sort((a,b)=>{
+    const ord=[1,2,3,4,5,6,0];
+    return ord.indexOf(parseInt(a))-ord.indexOf(parseInt(b));
+  });
+  el.innerHTML=joursTries.map(j=>{
+    const cs=parJour[j];
+    return `<div style="margin-bottom:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.88rem;text-transform:uppercase;color:var(--navy);letter-spacing:0.08em;margin-bottom:6px;padding:4px 0;border-bottom:2px solid var(--bd)">${jours[parseInt(j)]}</div>
+      ${cs.map(c=>`<div style="background:var(--sf);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--bd)">
+        <div>
+          <div style="font-weight:700;font-size:0.85rem;color:var(--navy)">${c.nom}</div>
+          <div style="font-size:0.68rem;color:var(--mu);margin-top:2px">${c.dojo||''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;color:var(--navy)">${c.heure_debut}–${c.heure_fin}</div>
+          <div style="font-size:0.65rem;color:var(--mu)">${c.categorie||''}</div>
+        </div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+async function importPlanning2627(){
+  const btn=document.getElementById('btn-import-planning');
+  if(btn)btn.textContent='Import en cours...';
+  let ok=0,err=0;
+  for(const c of PLANNING_2627){
+    const{error}=await sb.from('cours').insert({
+      id:crypto.randomUUID(),
+      nom:c.nom,jour:c.jour,
+      heure_debut:c.heure_debut,heure_fin:c.heure_fin,
+      dojo:c.dojo,categorie:c.categorie,
+      categories:c.categories,
+      prof:c.prof,profs_noms:c.profs_noms,
+      is_competition:c.is_competition,
+      created_at:new Date().toISOString()
+    });
+    if(error){err++;console.warn('Erreur cours:',c.nom,error);}
+    else ok++;
+  }
+  const msg=document.getElementById('import-planning-msg');
+  if(msg)msg.innerHTML=`<span style="color:${err?'var(--rd)':'var(--gr)'}">${ok} cours importés${err?' · '+err+' erreurs':' ✓'}</span>`;
+  if(btn)btn.textContent='Importer le planning';
 }
 
 let _adminAllProfiles=[];
@@ -7372,41 +7512,25 @@ async function piGoStep3(){
         }
       }
     }
-    // Insérer une ligne par membre (structure attendue par la table)
+    // Insérer une seule ligne par famille
     const respPrenom=CP?.prenom||'';
     const respNom=CP?.nom||'';
     const respEmail=CU.email||'';
     const respTel=CP?.tel||'';
     const total=piCalcTotal();
 
-    for(const m of membres){
-      const certifUrl=m.docs?.sante||null;
-      const charteUrl=m.docs?.charte||null;
-      await sb.from('preinscriptions').insert({
-        resp_prenom:respPrenom,
-        resp_nom:respNom,
-        email:respEmail,
-        tel:respTel,
-        prenom:m.prenom,
-        nom:m.nom,
-        date_naissance:m.dob||null,
-        categorie:m.cat||m.categorie||'',
-        dojo:m.pratique==='taiso'?'Taïso':'Judo',
-        competiteur:PI_CATS_COMPET.includes(m.cat),
-        tarif:String(m.tarif||m.prix||0),
-        tarif_nom:m.cat||'',
-        prix:m.tarif||m.prix||0,
-        doc_sante:certifUrl,
-        doc_charte:charteUrl,
-        doc_certif:null,
-        membres:membres,
-        nb_membres:membres.length,
-        total:total,
-        statut:'en_attente',
-        created_at:new Date().toISOString(),
-        updated_at:new Date().toISOString()
-      });
-    }
+    await sb.from('preinscriptions').insert({
+      resp_prenom:respPrenom,
+      resp_nom:respNom,
+      email:respEmail,
+      tel:respTel,
+      membres:membres,
+      nb_membres:membres.length,
+      total:total,
+      statut:'en_attente',
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
+    });
     // Notifier le bureau
     try{
       const piForEmail={resp_prenom:respPrenom,resp_nom:respNom,email:respEmail,membres,total,tel:respTel};
