@@ -4600,7 +4600,7 @@ function showProfSection(sec){
     <div style="display:grid;grid-template-columns:1fr;gap:12px">
       <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('appel')"><div style="font-size:2rem;width:48px;text-align:center">📋</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Faire l'appel</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Présences par cours et par séance</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.4);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('mon-planning')"><div style="font-size:2rem;width:48px;text-align:center">🗓️</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Mon planning</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Mes cours de la semaine par dojo</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
-      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('planning')"><div style="font-size:2rem;width:48px;text-align:center">📅</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Gérer le planning</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter et modifier les cours</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
+
       <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('calendrier')"><div style="font-size:2rem;width:48px;text-align:center">🏆</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions, stages & événements</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter compétitions, stages, événements</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('annonces')"><div style="font-size:2rem;width:48px;text-align:center">📢</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Envoyer une annonce</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Communication vers les licenciés</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
       <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showProfSection('licencies')"><div style="font-size:2rem;width:48px;text-align:center">👥</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Mes licenciés</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Liste et inscriptions aux cours</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
@@ -5183,6 +5183,13 @@ function renderAdminPage(){
       <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Insérer tous les créneaux des 5 dojos</div></div>
       <div style="font-size:1.2rem;color:var(--bd)">›</div>
     </div>
+
+    <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showAdminSection('cours')">
+      <div style="font-size:2rem;width:48px;text-align:center">✏️</div>
+      <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Gérer les cours</div>
+      <div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Ajouter, modifier, supprimer des créneaux</div></div>
+      <div style="font-size:1.2rem;color:var(--bd)">›</div>
+    </div>
   </div>`;
 }
 
@@ -5219,6 +5226,15 @@ function showAdminSection(sec){
       <button class="bP" id="btn-import-planning" onclick="importPlanning2627()">📅 Importer le planning</button>
       <div id="import-planning-msg" style="margin-top:10px;font-size:0.78rem;text-align:center"></div>
     </div>`;
+  }
+  else if(sec==='cours'){
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ST" style="margin:0">✏️ Gérer les cours</div>
+      <button class="bS" onclick="renderAdminPage()">← Retour</button>
+    </div>
+    <button class="bP" style="width:100%;margin-bottom:14px" onclick="adminOpenCours()">+ Ajouter un créneau</button>
+    <div id="admin-cours-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;
+    adminLoadCours();
   }
 }
 
@@ -5305,6 +5321,123 @@ async function loadMonPlanning(){
       </div>`).join('')}
     </div>`;
   }).join('');
+}
+
+// ============================================================
+// ADMIN — GESTION DES COURS
+// ============================================================
+const DOJOS_CMJ=['Mainvilliers','Chartres - La Madeleine','Fontaine-la-Guyon','MMA Sports','Harvey Chartres'];
+const JOURS_NOMS={1:'Lundi',2:'Mardi',3:'Mercredi',4:'Jeudi',5:'Vendredi',6:'Samedi'};
+const CATS_CMJ=['Éveils','Baby','Mini-Poussins','Poussins','Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Vétérans','Seniors / Vétérans','Adultes','Taïso','Compétiteurs','Enfants','Open Mat'];
+
+async function adminLoadCours(){
+  const el=document.getElementById('admin-cours-list');if(!el)return;
+  const{data:cours}=await sb.from('cours').select('*').order('dojo').order('jour').order('heure_debut');
+  if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--mu)">Aucun cours.</div>';return;}
+  // Grouper par dojo
+  const parDojo={};
+  cours.forEach(c=>{if(!parDojo[c.dojo])parDojo[c.dojo]=[];parDojo[c.dojo].push(c);});
+  el.innerHTML=Object.entries(parDojo).map(([dojo,cs])=>`
+    <div style="margin-bottom:16px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.88rem;text-transform:uppercase;color:var(--navy);padding:6px 0;border-bottom:2px solid var(--bd);margin-bottom:8px">${dojo}</div>
+      ${cs.map(c=>`<div style="background:var(--sf);border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--bd)">
+        <div>
+          <div style="font-weight:700;font-size:0.82rem;color:var(--navy)">${JOURS_NOMS[c.jour]||c.jour} · ${c.heure_debut}–${c.heure_fin}</div>
+          <div style="font-size:0.75rem;color:var(--tx);margin-top:2px">${c.nom}</div>
+          <div style="font-size:0.65rem;color:var(--mu)">${c.categorie||''}${c.prof?' · '+c.prof:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="bS" style="font-size:0.65rem;padding:4px 8px" onclick="adminOpenCours('${c.id}')">✏️</button>
+          <button class="bR" style="font-size:0.65rem;padding:4px 8px" onclick="adminDeleteCours('${c.id}')">🗑️</button>
+        </div>
+      </div>`).join('')}
+    </div>`).join('');
+}
+
+async function adminDeleteCours(id){
+  askConfirm('Supprimer ce créneau ?','🗑️ Supprimer',async()=>{
+    await sb.from('cours').delete().eq('id',id);
+    toast('Créneau supprimé.');
+    adminLoadCours();
+  });
+}
+
+let _adminCoursId=null;
+async function adminOpenCours(id=null){
+  _adminCoursId=id;
+  let c={nom:'',jour:1,heure_debut:'',heure_fin:'',dojo:'Mainvilliers',categorie:'',prof:'',is_competition:false};
+  if(id){
+    const{data}=await sb.from('cours').select('*').eq('id',id).single();
+    if(data)c=data;
+  }
+  const profsArr=Array.isArray(c.profs_noms)?c.profs_noms:typeof c.profs_noms==='string'?JSON.parse(c.profs_noms||'[]'):[];
+  const catsArr=Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[];
+  const pg=document.getElementById('page-admin');if(!pg)return;
+  pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div class="ST" style="margin:0">${id?'✏️ Modifier':'+ Ajouter'} un créneau</div>
+    <button class="bS" onclick="showAdminSection('cours')">← Retour</button>
+  </div>
+  <div class="card">
+    <div class="fg"><label>Nom du cours</label><input type="text" id="ac-nom" value="${c.nom||''}" placeholder="Ex: Mini-Poussins, Taïso..."></div>
+    <div class="tc">
+      <div class="fg"><label>Jour</label><select id="ac-jour">
+        ${[1,2,3,4,5,6].map(j=>`<option value="${j}"${c.jour==j?' selected':''}>${JOURS_NOMS[j]||j}</option>`).join('')}
+      </select></div>
+      <div class="fg"><label>Dojo</label><select id="ac-dojo">
+        ${DOJOS_CMJ.map(d=>`<option${c.dojo===d?' selected':''}>${d}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="tc">
+      <div class="fg"><label>Heure début</label><input type="time" id="ac-debut" value="${c.heure_debut||''}"></div>
+      <div class="fg"><label>Heure fin</label><input type="time" id="ac-fin" value="${c.heure_fin||''}"></div>
+    </div>
+    <div class="fg"><label>Catégorie principale</label><select id="ac-cat">
+      ${CATS_CMJ.map(cat=>`<option${c.categorie===cat?' selected':''}>${cat}</option>`).join('')}
+    </select></div>
+    <div class="fg"><label>Prof(s) <span style="font-weight:400;font-size:0.7rem;color:var(--mu)">(séparés par des virgules)</span></label>
+      <input type="text" id="ac-prof" value="${profsArr.length?profsArr.join(', '):(c.prof||'')}" placeholder="Ex: Kylian, Mathilde"></div>
+    <div style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.82rem;text-transform:none;letter-spacing:0;font-weight:400">
+        <input type="checkbox" id="ac-compet" style="width:18px;height:18px;accent-color:var(--navy)"${c.is_competition?' checked':''}>
+        Cours compétiteurs
+      </label>
+    </div>
+    <button class="bP" onclick="adminSaveCours()">${id?'Enregistrer les modifications':'Ajouter le créneau'}</button>
+    <div id="ac-error" style="color:var(--rd);font-size:0.78rem;margin-top:8px;text-align:center"></div>
+  </div>`;
+}
+
+async function adminSaveCours(){
+  const err=document.getElementById('ac-error');
+  const nom=document.getElementById('ac-nom').value.trim();
+  const jour=parseInt(document.getElementById('ac-jour').value);
+  const dojo=document.getElementById('ac-dojo').value;
+  const debut=document.getElementById('ac-debut').value;
+  const fin=document.getElementById('ac-fin').value;
+  const cat=document.getElementById('ac-cat').value;
+  const profVal=document.getElementById('ac-prof').value.trim();
+  const isCompet=document.getElementById('ac-compet').checked;
+  if(!nom||!debut||!fin){err.textContent='Nom, heure début et heure fin sont obligatoires.';return;}
+  const profsArr=profVal?profVal.split(',').map(p=>p.trim()).filter(Boolean):[];
+  const data={
+    nom,jour,dojo,
+    heure_debut:debut,heure_fin:fin,
+    categorie:cat,
+    categories:JSON.stringify([cat]),
+    prof:profsArr[0]||'',
+    profs_noms:JSON.stringify(profsArr),
+    profs_ids:JSON.stringify([]),
+    inscrits:JSON.stringify([]),
+    is_competition:isCompet
+  };
+  if(_adminCoursId){
+    await sb.from('cours').update(data).eq('id',_adminCoursId);
+    toast('Créneau mis à jour !');
+  } else {
+    await sb.from('cours').insert(data);
+    toast('Créneau ajouté !');
+  }
+  showAdminSection('cours');
 }
 
 async function importPlanning2627(){
