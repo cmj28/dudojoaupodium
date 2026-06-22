@@ -5310,6 +5310,26 @@ async function loadMonPlanning(){
 async function importPlanning2627(){
   const btn=document.getElementById('btn-import-planning');
   if(btn)btn.textContent='Import en cours...';
+  const msg=document.getElementById('import-planning-msg');
+  // Test d'abord avec un seul cours
+  const testCours=PLANNING_2627[0];
+  const{error:testErr}=await sb.from('cours').insert({
+    nom:testCours.nom,jour:testCours.jour,
+    heure_debut:testCours.heure_debut,heure_fin:testCours.heure_fin,
+    dojo:testCours.dojo,categorie:testCours.categorie,
+    categories:testCours.categories,
+    prof:testCours.prof,
+    profs_noms:testCours.profs_noms,
+    profs_ids:[],inscrits:[],
+    is_competition:testCours.is_competition
+  });
+  if(testErr){
+    if(msg)msg.innerHTML=`<span style="color:var(--rd)">Erreur test : ${JSON.stringify(testErr)}</span>`;
+    if(btn)btn.textContent='Importer le planning';
+    return;
+  }
+  // Supprimer le test
+  await sb.from('cours').delete().eq('nom',testCours.nom).eq('jour',testCours.jour).eq('dojo',testCours.dojo);
   let ok=0,err=0;
   for(const c of PLANNING_2627){
     const{error}=await sb.from('cours').insert({
