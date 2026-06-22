@@ -7197,13 +7197,19 @@ function piGoStep2(){
     const nom=document.getElementById('pi-self-nom')?.value.trim();
     const dob=document.getElementById('pi-self-dob')?.value;
     if(!prenom||!nom||!dob){err.textContent='Complétez vos informations.';return;}
-    membres.push({id:'self',prenom,nom,dob,cat:piSelf.cat,pratique:piSelf.pratique,tarif:piSelf.tarif});
+    membres.push({id:'self',prenom,nom,dob,
+      cat:piSelf.cat,pratique:piSelf.pratique,tarif:piSelf.tarif,
+      categorie:piSelf.cat,dojo:piSelf.pratique==='taiso'?'Taïso':'Judo',prix:piSelf.tarif,
+      docs:{charte:null,sante:null,certif:null}});
   }
   piEnfants.forEach((e,i)=>{
     const prenom=document.getElementById(`pi-e${i}-prenom`)?.value.trim();
     const nom=document.getElementById(`pi-e${i}-nom`)?.value.trim();
     const dob=document.getElementById(`pi-e${i}-dob`)?.value;
-    if(prenom&&nom&&dob)membres.push({id:'e'+i,prenom,nom,dob,cat:e.cat,pratique:e.pratique,tarif:e.tarif});
+    if(prenom&&nom&&dob)membres.push({id:'e'+i,prenom,nom,dob,
+      cat:e.cat,pratique:e.pratique,tarif:e.tarif,
+      categorie:e.cat,dojo:e.pratique==='taiso'?'Taïso':'Judo',prix:e.tarif,
+      docs:{charte:null,sante:null,certif:null}});
   });
   if(!membres.length&&!piSelf.actif){err.textContent='Ajoutez au moins un membre à inscrire.';return;}
   if(!membres.length){err.textContent='Complétez les informations de tous les membres.';return;}
@@ -7250,8 +7256,24 @@ async function piGoStep3(){
       const certif=document.getElementById(`pi-doc-certif-${m.id}`)?.files[0];
       const ri=document.getElementById(`pi-doc-ri-${m.id}`)?.files[0];
       const base=`preinscriptions/${CU.id}/${m.id}`;
-      if(certif)await sb.storage.from('documents').upload(`${base}/certif_${Date.now()}`,certif,{upsert:true});
-      if(ri)await sb.storage.from('documents').upload(`${base}/ri_${Date.now()}`,ri,{upsert:true});
+      if(certif){
+        const ext=certif.name.split('.').pop();
+        const path=`${base}/sante_${Date.now()}.${ext}`;
+        const{data:ud}=await sb.storage.from('documents').upload(path,certif,{upsert:true});
+        if(ud){
+          const{data:{publicUrl}}=sb.storage.from('documents').getPublicUrl(path);
+          m.docs={...m.docs,sante:publicUrl,certif:publicUrl};
+        }
+      }
+      if(ri){
+        const ext=ri.name.split('.').pop();
+        const path=`${base}/charte_${Date.now()}.${ext}`;
+        const{data:ud}=await sb.storage.from('documents').upload(path,ri,{upsert:true});
+        if(ud){
+          const{data:{publicUrl}}=sb.storage.from('documents').getPublicUrl(path);
+          m.docs={...m.docs,charte:publicUrl};
+        }
+      }
     }
     // Créer le dossier en base (structure compatible avec l'espace bureau)
     await sb.from('preinscriptions').upsert({
