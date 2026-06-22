@@ -6478,10 +6478,10 @@ function renderClubPlanning(cours,dojoFilter){
     h+=`<div style='font-weight:900;font-size:0.78rem;color:${col}'>${c.heure_debut}-${c.heure_fin}</div>`;
     h+=`<div style='font-weight:700;font-size:0.73rem;color:var(--tx);line-height:1.2;margin:2px 0'>${c.nom}${c.is_competition?' <span style="font-size:0.5rem;background:var(--rd);color:#fff;padding:1px 4px;border-radius:3px">Compet.</span>':''}</div>`;
     h+=`<div style='font-size:0.58rem;color:var(--mu)'>${cats.join(', ')}</div>`;
-    if(profsArr.length||c.prof)h+=`<div style='font-size:0.55rem;color:var(--mu)'>${profsArr.length?profsArr.join(', '):c.prof}</div>`;
+    if(profsArr.length||c.prof)h+=`<div style='font-size:0.62rem;color:var(--navy);font-weight:600;margin-top:2px'>${profsArr.length?profsArr.join(', '):c.prof}</div>`;
     if(inscritsArr.length)h+=`<div style='font-size:0.52rem;color:var(--mu)'>${inscritsArr.length} inscrit(s)</div>`;
-    if(canInscrit)h+=`<button class='${isInscrit?'bR':'bE'}' style='width:100%;margin-top:3px;font-size:0.52rem;padding:2px 3px' onclick='toggleInscriptionCours("${c.id}")'>${isInscrit?'Se désinscrire':'S’inscrire'}</button>`;
     h+=`</div>`;
+    return h;
     return h;
   };
 
