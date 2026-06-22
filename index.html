@@ -5313,7 +5313,6 @@ async function importPlanning2627(){
   let ok=0,err=0;
   for(const c of PLANNING_2627){
     const{error}=await sb.from('cours').insert({
-      id:crypto.randomUUID(),
       nom:c.nom,jour:c.jour,
       heure_debut:c.heure_debut,heure_fin:c.heure_fin,
       dojo:c.dojo,categorie:c.categorie,
@@ -5322,10 +5321,9 @@ async function importPlanning2627(){
       profs_noms:JSON.stringify(c.profs_noms),
       profs_ids:JSON.stringify([]),
       inscrits:JSON.stringify([]),
-      is_competition:c.is_competition,
-      created_at:new Date().toISOString()
+      is_competition:c.is_competition
     });
-    if(error){err++;console.warn('Erreur cours:',c.nom,error);}
+    if(error){err++;console.error('Erreur cours:',c.nom,JSON.stringify(error));}
     else ok++;
   }
   const msg=document.getElementById('import-planning-msg');
