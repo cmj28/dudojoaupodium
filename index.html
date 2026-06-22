@@ -5346,7 +5346,6 @@ async function importPlanning2627(){
     if(error){err++;console.error('Erreur cours:',c.nom,JSON.stringify(error));}
     else ok++;
   }
-  const msg=document.getElementById('import-planning-msg');
   if(msg)msg.innerHTML=`<span style="color:${err?'var(--rd)':'var(--gr)'}">${ok} cours importés${err?' · '+err+' erreurs':' ✓'}</span>`;
   if(btn)btn.textContent='Importer le planning';
 }
