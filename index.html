@@ -6507,14 +6507,15 @@ function renderClubPlanning(cours,dojoFilter){
       if(!jourCours.length){t+=`<div style="color:var(--mu);font-size:0.6rem;text-align:center;padding:8px">—</div>`;}
       jourCours.forEach(c=>{
         const inscrits=c.inscrits||[];
-        const isInscrit=inscrits.includes(CU?.id);
+        const inscritsArr=Array.isArray(inscrits)?inscrits:typeof inscrits==='string'?JSON.parse(inscrits||'[]'):[];
+        const isInscrit=inscritsArr.includes(CU?.id);
         const canInscrit=CP&&(CP.is_licencie||CP.is_competiteur||CP.is_judoka);
         const dc=DCOLS[c.dojo]||col;
         t+=`<div style="background:var(--sf);border-radius:7px;padding:6px 7px;margin-bottom:5px;border-left:3px solid ${dc}">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.78rem;color:${dc}">${c.heure_debut}–${c.heure_fin}</div>
           <div style="font-weight:600;font-size:0.75rem;margin:2px 0;line-height:1.2">${c.nom}${c.is_competition?` <span style="font-size:0.55rem;background:var(--rd);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700;vertical-align:middle">⚔️ Compétiteurs</span>`:''}</div>
-          <div style="font-size:0.6rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''}${salles.length>1&&c.dojo?' • '+DSHORT[c.dojo]:''}</div>
-          ${inscrits.length?`<div style="font-size:0.58rem;color:var(--mu)">👥 ${inscrits.length}</div>`:''}
+          <div style="font-size:0.6rem;color:var(--mu)">${(Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[c.categorie]).filter(Boolean).join(', ')||''}${salles.length>1&&c.dojo?' • '+DSHORT[c.dojo]:''}</div>
+          ${inscritsArr.length?`<div style="font-size:0.58rem;color:var(--mu)">👥 ${inscritsArr.length}</div>`:''}
           ${canInscrit?`<button class="${isInscrit?'bR':'bE'}" style="width:100%;margin-top:4px;font-size:0.58rem;padding:2px 4px" onclick="toggleInscriptionCours('${c.id}')">${isInscrit?'Se désinscrire':'S\'inscrire'}</button>`:''}
         </div>`;
       });
@@ -6544,7 +6545,7 @@ function renderClubPlanning(cours,dojoFilter){
 // ============================================================
 async function editCours(id){
   const{data:c}=await sb.from('cours').select('*').eq('id',id).single();if(!c)return;
-  coursCats=[...(c.categories||[c.categorie].filter(Boolean))];
+  coursCats=[...(Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[c.categorie].filter(Boolean))];
   coursProfs=(c.profs_ids||[]).map((pid,i)=>{return {id:pid,nom:(c.profs_noms||[])[i]||''};}); 
   const existing=document.getElementById('m-edit-cours');if(existing)existing.remove();
   const m=document.createElement('div');m.className='mo open';m.id='m-edit-cours';
@@ -6628,7 +6629,7 @@ async function loadProfCours(){
   if(!cours||!cours.length){el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📅</div><p style="font-size:0.8rem;margin-top:8px">Aucun cours. Ajoute-en un !</p></div>';return;}
   el.innerHTML=cours.map(c=>{const col=DCOLS[c.dojo]||'var(--navy)';return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px;border-left:4px solid ${col}">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}${c.is_competition?` <span style="font-size:0.58rem;background:var(--rd);color:#fff;padding:1px 6px;border-radius:4px;font-weight:700">⚔️ Compétiteurs</span>`:''}</div><div style="font-size:0.65rem;color:var(--mu)">${(c.categories||[c.categorie]).filter(Boolean).join(', ')||''} • ${c.dojo||''}${c.profs_noms?.length?' • 👨‍🏫 '+c.profs_noms.join(', '):c.prof?' • 👨‍🏫 '+c.prof:''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
+      <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:${col}">${dayNames[c.jour]} ${c.heure_debut}–${c.heure_fin}</div><div style="font-weight:600;font-size:0.85rem">${c.nom}${c.is_competition?` <span style="font-size:0.58rem;background:var(--rd);color:#fff;padding:1px 6px;border-radius:4px;font-weight:700">⚔️ Compétiteurs</span>`:''}</div><div style="font-size:0.65rem;color:var(--mu)">${(Array.isArray(c.categories)?c.categories:typeof c.categories==='string'?JSON.parse(c.categories||'[]'):[c.categorie]).filter(Boolean).join(', ')||''} • ${c.dojo||''}${(Array.isArray(c.profs_noms)?c.profs_noms:typeof c.profs_noms==='string'?JSON.parse(c.profs_noms||'[]'):[]).length?' • 👨‍🏫 '+(Array.isArray(c.profs_noms)?c.profs_noms:typeof c.profs_noms==='string'?JSON.parse(c.profs_noms||'[]'):[]).join(', '):c.prof?' • 👨‍🏫 '+c.prof:''}${c.inscrits?.length?' • 👥'+c.inscrits.length:''}</div></div>
       <div style="display:flex;gap:4px"><button class="bE" onclick="editCours('${c.id}')">✏️</button><button class="bR" onclick="deleteCours('${c.id}')">🗑️</button></div>
     </div>
   </div>`;}).join('');
@@ -6656,7 +6657,7 @@ async function loadLicencies(){
     if(!byCat[cat]||!byCat[cat].length)return;
     html+=`<div style="margin-bottom:18px"><div class="ST">${cat} (${byCat[cat].length})</div>`;
     byCat[cat].forEach(l=>{
-      const mesCours=(cours||[]).filter(c=>(c.inscrits||[]).includes(l.id));
+      const mesCours=(cours||[]).filter(c=>{const ins=Array.isArray(c.inscrits)?c.inscrits:typeof c.inscrits==='string'?JSON.parse(c.inscrits||'[]'):[];return ins.includes(l.id);});
       html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:11px;margin-bottom:6px">
         <div style="font-weight:700;font-size:0.88rem;color:var(--navy)">${jFN(l)}${l.poids?' <span style="font-size:0.68rem;color:var(--mu)">• '+fmtPoids(l.poids)+'</span>':''}</div>
         <div style="margin-top:4px">${mesCours.length?mesCours.map(c=>`<span style="font-size:0.62rem;padding:2px 8px;border-radius:8px;background:rgba(64,65,104,0.08);color:var(--navy);margin-right:4px;display:inline-block;margin-bottom:2px">📅 ${c.nom} — ${c.dojo||''} (${['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][c.jour]} ${c.heure_debut})</span>`).join(''):'<span style="font-size:0.68rem;color:var(--mu);font-style:italic">Aucun cours inscrit</span>'}</div>
@@ -7154,7 +7155,7 @@ async function openEnfantPage(id){
   <div class="ST">Inscription aux cours</div>
   ${(cours||[]).map(c=>{
     const col=DCOLS[c.dojo]||'var(--navy)';
-    const isInscrit=(c.inscrits||[]).includes(id);
+    const isInscrit=(Array.isArray(c.inscrits)?c.inscrits:typeof c.inscrits==='string'?JSON.parse(c.inscrits||'[]'):[]).includes(id);
     return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:9px;padding:10px 12px;margin-bottom:6px;border-left:4px solid ${col};display:flex;justify-content:space-between;align-items:center">
       <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.88rem;color:${col}">${DN[c.jour]} ${c.heure_debut}–${c.heure_fin}</div>
       <div style="font-size:0.82rem;font-weight:600">${c.nom}</div>
