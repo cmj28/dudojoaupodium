@@ -656,13 +656,13 @@ body{font-size:14px;}
 </div>
 
 <!-- BANNIÈRE INSCRIPTION (affichée si non inscrit) -->
-<div id="pi-banner" style="display:none;background:linear-gradient(135deg,var(--navy),#2e3158);padding:12px 16px;margin:0;cursor:pointer" onclick="piModalOpen()">
-  <div style="display:flex;align-items:center;justify-content:space-between">
+<div id="pi-banner" style="display:none;background:var(--gold);padding:16px 16px;margin:0;cursor:pointer;box-shadow:0 2px 8px rgba(242,186,29,0.4)" onclick="piModalOpen()">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
     <div>
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.88rem;letter-spacing:0.06em;text-transform:uppercase;color:#fff">📋 Finalisez votre inscription</div>
-      <div style="font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px">Cotisation 2025/2026 · Documents à fournir</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:0.08em;text-transform:uppercase;color:#1a1c2e">📋 Finalisez votre inscription</div>
+      <div style="font-size:0.72rem;color:rgba(26,28,46,0.65);margin-top:3px;font-weight:600">Cotisation 2025/2026 · Documents à fournir</div>
     </div>
-    <div style="background:var(--gold);color:#1a1c2e;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.78rem;padding:6px 12px;border-radius:8px;white-space:nowrap">S'inscrire →</div>
+    <div style="background:#1a1c2e;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.82rem;padding:8px 14px;border-radius:8px;white-space:nowrap;flex-shrink:0">S'inscrire →</div>
   </div>
 </div>
 
@@ -7021,9 +7021,10 @@ setTimeout(()=>{const l=document.getElementById('loader');if(l&&l.style.display!
 const PI_TARIFS={
   'Baby':180,'Mini-Poussins':180,'Poussins':180,'Benjamins':180,
   'Minimes':200,'Cadets(tes)':200,'Juniors':200,'Seniors':200,'Vétérans':200,
+  'Seniors / Vétérans':200,
   'taiso':150
 };
-const PI_CATS_TAISO=['Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Vétérans'];
+const PI_CATS_TAISO=['Benjamins','Minimes','Cadets(tes)','Juniors','Seniors','Vétérans','Seniors / Vétérans'];
 const PI_CATS_COMPET=['Cadets(tes)','Juniors'];
 
 let piEnfants=[]; // [{prenom,nom,dob,cat,pratique,tarif}]
@@ -7252,14 +7253,25 @@ async function piGoStep3(){
       if(certif)await sb.storage.from('documents').upload(`${base}/certif_${Date.now()}`,certif,{upsert:true});
       if(ri)await sb.storage.from('documents').upload(`${base}/ri_${Date.now()}`,ri,{upsert:true});
     }
-    // Créer le dossier en base
+    // Créer le dossier en base (structure compatible avec l'espace bureau)
     await sb.from('preinscriptions').upsert({
       user_id:CU.id,
-      statut:'en_attente',
+      resp_prenom:CP?.prenom||'',
+      resp_nom:CP?.nom||'',
+      email:CU.email||'',
+      tel:CP?.tel||'',
       membres:JSON.stringify(membres),
+      nb_membres:membres.length,
       total:piCalcTotal(),
-      created_at:new Date().toISOString()
+      statut:'en_attente',
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString()
     },{onConflict:'user_id'});
+    // Notifier le bureau
+    try{
+      const piForEmail={resp_prenom:CP?.prenom||'',resp_nom:CP?.nom||'',email:CU.email||'',membres,total:piCalcTotal(),tel:CP?.tel||''};
+      if(typeof sendEmailNotificationBureau==='function')sendEmailNotificationBureau(piForEmail);
+    }catch(e2){console.warn('Notif bureau:',e2);}
     err.textContent='';
     // Récap
     const recap=document.getElementById('pi-recap');
