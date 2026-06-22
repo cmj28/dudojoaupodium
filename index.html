@@ -597,6 +597,17 @@ body{font-size:14px;}
               <div class="fg"><label>Nom</label><input type="text" id="pi-self-nom"></div>
             </div>
             <div class="fg"><label>Date de naissance</label><input type="date" id="pi-self-dob" onchange="piUpdateSelfTarif()"></div>
+            <div class="fg">
+              <label>Dojo</label>
+              <select id="pi-self-dojo" style="width:100%">
+                <option value="">-- Choisir un dojo --</option>
+                <option>Mainvilliers</option>
+                <option>Chartres - La Madeleine</option>
+                <option>Harvey Chartres</option>
+                <option>MMA Sports</option>
+                <option>Fontaine-la-Guyon</option>
+              </select>
+            </div>
             <div class="fg" id="pi-self-pratique-block" style="display:none">
               <label>Pratique</label>
               <div style="display:flex;gap:8px;margin-top:4px">
@@ -4434,41 +4445,43 @@ async function piSupprimerDocuments(pi){
 
 async function validerPreinscription(id){
   const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();if(!pi)return;
-  
+
   // Générer les codes pour chaque membre et créer leurs profils
   const membres = typeof pi.membres === 'string' ? JSON.parse(pi.membres) : (pi.membres || []);
   const membresAvecCodes = [];
+
+  // Le responsable = le compte qui a créé la pré-inscription (resp_prenom/resp_nom)
+  // On cherche son profil existant via l'email
   let parentProfileId = null;
+  const{data:respProfile}=await sb.from('profiles').select('id').eq('email',pi.email).single();
+  if(respProfile)parentProfileId=respProfile.id;
 
   for(let i=0; i<membres.length; i++){
     const m=membres[i];
     const code = genCode(m.prenom, m.nom);
     const profileId = crypto.randomUUID();
-    const isCompetiteur = m.competiteur||false;
-    // Le premier membre non-compétiteur devient le compte parent si plusieurs membres
-    const isParent = membres.length > 1 && i === 0 && !isCompetiteur;
+    const isCompetiteur = PI_CATS_COMPET.includes(m.cat||m.categorie)||m.competiteur||false;
     await sb.from('profiles').insert({
       id: profileId,
       prenom: m.prenom, nom: m.nom,
-      cat: m.categorie, poids: '',
-      dojo: m.dojo,
+      cat: m.cat||m.categorie||'', poids: '',
+      dojo: m.dojo||'',
       is_licencie: true,
       is_competiteur: isCompetiteur,
       is_judoka: true,
-      is_parent: isParent,
+      is_parent: false,
       code_invitation: code,
       created_at: new Date().toISOString()
     });
-    if(isParent) parentProfileId = profileId;
-    membresAvecCodes.push({...m, code, profileId, isParent});
+    membresAvecCodes.push({...m, code, profileId});
   }
 
-  // Lier les enfants au parent si famille multiple
-  if(parentProfileId && membresAvecCodes.length > 1){
-    for(let i=1; i<membresAvecCodes.length; i++){
+  // Lier tous les membres inscrits au responsable (compte parent)
+  if(parentProfileId){
+    for(const m of membresAvecCodes){
       await sb.from('famille_liens').insert({
         parent_id: parentProfileId,
-        enfant_id: membresAvecCodes[i].profileId
+        enfant_id: m.profileId
       });
     }
   }
@@ -4489,8 +4502,9 @@ async function validerPreinscription(id){
 }
 
 async function refuserPreinscription(id){
+  // Charger le dossier AVANT la confirmation pour avoir les docs
+  const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();
   askConfirm('Refuser cette pré-inscription ?','❌ Refuser',async()=>{
-    const{data:pi}=await sb.from('preinscriptions').select('*').eq('id',id).single();
     await sb.from('preinscriptions').update({statut:'refusee',updated_at:new Date().toISOString()}).eq('id',id);
     // Supprimer les documents du storage (RGPD)
     if(pi)await piSupprimerDocuments(pi);
@@ -7201,6 +7215,17 @@ function piAddEnfant(){
       <div class="fg"><label>Nom</label><input type="text" id="pi-e${idx}-nom" onchange="piEnfants[${idx}].nom=this.value" placeholder="Nom"></div>
     </div>
     <div class="fg"><label>Date de naissance</label><input type="date" id="pi-e${idx}-dob" onchange="piUpdateEnfantTarif(${idx})"></div>
+    <div class="fg">
+      <label>Dojo</label>
+      <select id="pi-e${idx}-dojo" style="width:100%">
+        <option value="">-- Choisir un dojo --</option>
+        <option>Mainvilliers</option>
+        <option>Chartres - La Madeleine</option>
+        <option>Harvey Chartres</option>
+        <option>MMA Sports</option>
+        <option>Fontaine-la-Guyon</option>
+      </select>
+    </div>
     <div class="fg" id="pi-e${idx}-pratique-block" style="display:none">
       <label>Pratique</label>
       <div style="display:flex;gap:8px;margin-top:4px">
@@ -7252,20 +7277,28 @@ function piGoStep2(){
     const prenom=document.getElementById('pi-self-prenom')?.value.trim();
     const nom=document.getElementById('pi-self-nom')?.value.trim();
     const dob=document.getElementById('pi-self-dob')?.value;
+    const dojo=document.getElementById('pi-self-dojo')?.value||'';
     if(!prenom||!nom||!dob){err.textContent='Complétez vos informations.';return;}
-    membres.push({id:'self',prenom,nom,dob,
+    if(!dojo){err.textContent='Choisissez un dojo pour '+prenom+'.';return;}
+    membres.push({id:'self',prenom,nom,dob,dojo,
       cat:piSelf.cat,pratique:piSelf.pratique,tarif:piSelf.tarif,
-      categorie:piSelf.cat,dojo:piSelf.pratique==='taiso'?'Taïso':'Judo',prix:piSelf.tarif,
+      categorie:piSelf.cat,prix:piSelf.tarif,
+      est_responsable:false,
       docs:{charte:null,sante:null,certif:null}});
   }
   piEnfants.forEach((e,i)=>{
     const prenom=document.getElementById(`pi-e${i}-prenom`)?.value.trim();
     const nom=document.getElementById(`pi-e${i}-nom`)?.value.trim();
     const dob=document.getElementById(`pi-e${i}-dob`)?.value;
-    if(prenom&&nom&&dob)membres.push({id:'e'+i,prenom,nom,dob,
-      cat:e.cat,pratique:e.pratique,tarif:e.tarif,
-      categorie:e.cat,dojo:e.pratique==='taiso'?'Taïso':'Judo',prix:e.tarif,
-      docs:{charte:null,sante:null,certif:null}});
+    const dojo=document.getElementById(`pi-e${i}-dojo`)?.value||'';
+    if(prenom&&nom&&dob){
+      if(!dojo){err.textContent='Choisissez un dojo pour '+prenom+'.';return;}
+      membres.push({id:'e'+i,prenom,nom,dob,dojo,
+        cat:e.cat,pratique:e.pratique,tarif:e.tarif,
+        categorie:e.cat,prix:e.tarif,
+        est_responsable:false,
+        docs:{charte:null,sante:null,certif:null}});
+    }
   });
   if(!membres.length&&!piSelf.actif){err.textContent='Ajoutez au moins un membre à inscrire.';return;}
   if(!membres.length){err.textContent='Complétez les informations de tous les membres.';return;}
