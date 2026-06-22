@@ -5317,8 +5317,11 @@ async function importPlanning2627(){
       nom:c.nom,jour:c.jour,
       heure_debut:c.heure_debut,heure_fin:c.heure_fin,
       dojo:c.dojo,categorie:c.categorie,
-      categories:c.categories,
-      prof:c.prof,profs_noms:c.profs_noms,
+      categories:JSON.stringify(c.categories),
+      prof:c.prof,
+      profs_noms:JSON.stringify(c.profs_noms),
+      profs_ids:JSON.stringify([]),
+      inscrits:JSON.stringify([]),
       is_competition:c.is_competition,
       created_at:new Date().toISOString()
     });
