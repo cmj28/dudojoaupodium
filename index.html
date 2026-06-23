@@ -2400,6 +2400,49 @@ function openActuModal(context,id,titre,texte,type){
   document.getElementById('mactu-title').textContent=id?'✏️ Modifier':'📰 Nouvelle actualité';
   document.getElementById('m-actu').classList.add('open');
 }
+
+function openPartenaireModal(id=null,nom='',desc='',url='',logoUrl=''){
+  // Créer modal partenaire dynamique
+  let mo=document.getElementById('m-partenaire');
+  if(!mo){
+    mo=document.createElement('div');mo.className='mo';mo.id='m-partenaire';
+    mo.innerHTML=`<div class="modal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy)">🤝 Partenaire</div><button class="bS" onclick="cm('m-partenaire')">✕</button></div>
+      <input type="hidden" id="mp-id">
+      <div class="fg"><label>Nom du partenaire *</label><input type="text" id="mp-nom" placeholder="Ex: Electron Services"></div>
+      <div class="fg"><label>Description</label><textarea id="mp-desc" style="min-height:70px" placeholder="Courte présentation..."></textarea></div>
+      <div class="fg"><label>Site web</label><input type="text" id="mp-url" placeholder="https://..."></div>
+      <div class="fg"><label>URL du logo</label><input type="text" id="mp-logo" placeholder="https://... (lien vers l'image du logo)"></div>
+      <button class="bP" style="width:100%;margin-top:4px" onclick="savePartenaire()">Enregistrer</button>
+      <div id="mp-error" style="color:var(--rd);font-size:0.75rem;margin-top:8px;text-align:center"></div>
+    </div>`;
+    document.getElementById('app').appendChild(mo);
+  }
+  document.getElementById('mp-id').value=id||'';
+  document.getElementById('mp-nom').value=nom;
+  document.getElementById('mp-desc').value=desc;
+  document.getElementById('mp-url').value=url;
+  document.getElementById('mp-logo').value=logoUrl;
+  mo.classList.add('open');
+}
+
+async function savePartenaire(){
+  const id=document.getElementById('mp-id').value;
+  const nom=document.getElementById('mp-nom').value.trim();
+  const description=document.getElementById('mp-desc').value.trim();
+  const url=document.getElementById('mp-url').value.trim();
+  const logo_url=document.getElementById('mp-logo').value.trim();
+  const err=document.getElementById('mp-error');
+  if(!nom){err.textContent='Le nom est obligatoire.';return;}
+  if(id){
+    await sb.from('partenaires').update({nom,description,url,logo_url,updated_at:new Date().toISOString()}).eq('id',id);
+  } else {
+    await sb.from('partenaires').insert({nom,description,url,logo_url,created_at:new Date().toISOString()});
+  }
+  cm('m-partenaire');
+  toast('Partenaire enregistré !');
+  if(document.getElementById('partenaires-view'))loadPartenaires();
+  loadClubActualites();
+}
 async function saveActu(){
   const context=document.getElementById('mactu-context').value;
   const id=document.getElementById('mactu-id').value;
@@ -2425,19 +2468,40 @@ async function saveActu(){
     if(document.getElementById('mes-annonces-list'))loadMesAnnonces();
   }
 }
+// ============================================================
+// PARTENAIRES
+// ============================================================
+async function loadPartenaires(){
+  const el=document.getElementById('partenaires-view');if(!el)return;
+  const{data:partenaires}=await sb.from('partenaires').select('*').order('created_at',{ascending:false});
+  if(!partenaires||!partenaires.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:2rem">🤝</div><p style="font-size:0.82rem;margin-top:8px">Aucun partenaire pour le moment.</p></div>';
+    return;
+  }
+  el.innerHTML=partenaires.map(p=>`
+    <div style="background:var(--sf);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:14px">
+      ${p.logo_url?`<img src="${p.logo_url}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;flex-shrink:0" alt="${p.nom}">`
+        :`<div style="width:64px;height:64px;border-radius:8px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">🤝</div>`}
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.9rem;color:var(--navy)">${p.nom||''}</div>
+        ${p.description?`<div style="font-size:0.75rem;color:var(--mu);margin-top:3px;line-height:1.4">${p.description}</div>`:''}
+        ${p.url?`<a href="${p.url}" target="_blank" style="font-size:0.68rem;color:var(--navy);text-decoration:underline;margin-top:4px;display:block">${p.url}</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
 async function loadClubActualites(readOnly=false){
   const el=document.getElementById('club-actu-view');if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:16px;color:var(--mu);font-size:0.78rem">Chargement...</div>';
   try{
-    const{data,error}=await sb.from('annonces').select('*').order('created_at',{ascending:false});
-    if(error){
-      console.error('annonces error:',error);
-      // Si erreur RLS, essayer de charger uniquement les annonces du user
-      const{data:myData}=await sb.from('annonces').select('*').eq('prof_id',CU.id).order('created_at',{ascending:false});
-      renderActualites(el,myData||[],'club',readOnly);
-      return;
+    // Charger sans filtre RLS — si erreur, charger les annonces publiques seulement
+    let{data,error}=await sb.from('annonces').select('*').order('created_at',{ascending:false});
+    if(error||!data){
+      // Fallback : annonces visibles par tous
+      const res=await sb.from('annonces').select('*').order('created_at',{ascending:false}).limit(50);
+      data=res.data||[];
     }
-    renderActualites(el,data||[],'club',readOnly);
+    renderActualites(el,data,'club',readOnly);
   }catch(e){
     console.error(e);
     el.innerHTML='<div style="text-align:center;padding:24px;color:var(--mu)"><div style="font-size:1.8rem">📰</div><p style="font-size:0.8rem;margin-top:8px">Aucune publication pour le moment.</p></div>';
@@ -2475,10 +2539,11 @@ function renderActualites(el,items,context,readOnly=false){
   </div>`;
   };
   let html='';
-  if(canManage)html+=`<div style="display:flex;gap:8px;margin-bottom:14px">
-    <button class="bP" style="flex:1;font-size:0.78rem" onclick="openActuModal('${context}',null,null,null,'actu')">📰 + Actualité</button>
-    <button class="bP" style="flex:1;font-size:0.78rem;background:var(--gold);color:#000" onclick="openActuModal('${context}',null,null,null,'resultat')">🏅 + Résultat</button>
-    <button class="bP" style="flex:1;font-size:0.78rem;background:var(--sf);color:var(--navy);border:1.5px solid var(--bd)" onclick="openActuModal('${context}',null,null,null,'annonce')">📢 + Annonce</button>
+  if(canManage)html+=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px" onclick="openActuModal('${context}',null,null,null,'actu')">📰 + Actualité</button>
+    <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:var(--gold);color:#000" onclick="openActuModal('${context}',null,null,null,'resultat')">🏅 + Résultat</button>
+    <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:var(--sf);color:var(--navy);border:1.5px solid var(--bd)" onclick="openActuModal('${context}',null,null,null,'annonce')">📢 + Annonce</button>
+    ${context==='club'?`<button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:rgba(242,186,29,0.15);color:#9a7200;border:1.5px solid rgba(242,186,29,0.4)" onclick="openPartenaireModal()">🤝 + Partenaire</button>`:''}
   </div>`;
   if(resultats.length){html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px">🏅 Résultats<span style="flex:1;height:1px;background:rgba(242,186,29,0.3)"></span></div>`;html+=resultats.map(a=>itemHTML(a,'annonces')).join('');}
   if(autres.length){html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--gr);margin-bottom:8px;margin-top:${resultats.length?12:0}px;display:flex;align-items:center;gap:8px">📰 Actualités<span style="flex:1;height:1px;background:rgba(42,157,92,0.2)"></span></div>`;html+=autres.map(a=>itemHTML(a,'annonces')).join('');}
@@ -3596,13 +3661,18 @@ function showClubSection(sec){
       <div id="club-actu-view"><div style="text-align:center;padding:16px;color:var(--mu)">Chargement...</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr;gap:12px">
-      <!-- 2. NEWSLETTER -->
-      <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.2);border-radius:16px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('newsletter')">
-        <div style="font-size:2rem;width:48px;text-align:center">📬</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Newsletter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">La news du mois</div></div>
+      <!-- 3. PLANNING -->
+      <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('planning')">
+        <div style="font-size:2rem;width:48px;text-align:center">📅</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Planning des cours</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Tous les créneaux par dojo</div></div>
         <div style="font-size:1.2rem;color:var(--bd)">›</div>
       </div>
-      <!-- 3. PLANNING -->
+      <!-- PARTENAIRES -->
+      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('partenaires')">
+        <div style="font-size:2rem;width:48px;text-align:center">🤝</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Partenaires</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Nos partenaires et sponsors</div></div>
+        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+      </div>
       <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('planning')">
         <div style="font-size:2rem;width:48px;text-align:center">📅</div>
         <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Planning des cours</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Tous les créneaux par dojo</div></div>
@@ -3663,7 +3733,7 @@ if(CP.is_parent)loadEnfantsCards();
   else if(sec==='equipe'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">👨‍🏫 L'équipe pédagogique</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="equipe-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadEquipe();}
   else if(sec==='annonces'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📢 Annonces</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="annonces-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadAnnonces();}
   else if(sec==='calendrier'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📅 Calendrier compétitions, stages & événements</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="club-cal-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadCalendrier('club');}
-  else if(sec==='newsletter'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📬 Newsletter</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="newsletter-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('newsletter','newsletter-view');}
+  else if(sec==='partenaires'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">🤝 Partenaires</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="partenaires-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadPartenaires();}
   else if(sec==='charte'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">📋 Charte du Club</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="charte-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadDocument('charte','charte-view');}
   else if(sec==='organigramme'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">🏛️ Organigramme</div><button class="bS" onclick="showClubSection('main')">← Retour</button></div><div id="organigramme-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadOrganigramme();}
   else if(sec==='boutique'){
@@ -5068,7 +5138,7 @@ function showSectionSection(sec){
   const pg=document.getElementById('page-section');if(!pg)return;
   if(sec==='main'){
     pg.innerHTML=`<div style="margin-bottom:12px">
-      <img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:120px;max-width:280px;object-fit:contain;display:block;margin:0 auto 8px">
+      <img src="https://cmj28.github.io/dudojoaupodium/Logo%20Section%20Judo%20Helene%20Boucher.svg" alt="Section Judo" style="max-height:180px;max-width:360px;object-fit:contain;display:block;margin:0 auto 8px">
       <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Collège Hélène Boucher — Chartres</div>
     </div>
     <!-- 1. ACTUALITÉS -->
