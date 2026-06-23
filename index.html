@@ -3661,63 +3661,65 @@ function showClubSection(sec){
       <div id="club-actu-view"><div style="text-align:center;padding:16px;color:var(--mu)">Chargement...</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr;gap:12px">
-      <!-- 3. PLANNING -->
-      <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('planning')">
-        <div style="font-size:2rem;width:48px;text-align:center">📅</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Planning des cours</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Tous les créneaux par dojo</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+
+      <!-- GRILLE 1 : Planning | Calendrier -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('planning')">
+          <div style="font-size:1.8rem">📅</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Planning des cours</div>
+        </div>
+        <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('calendrier')">
+          <div style="font-size:1.8rem">🏆</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions</div>
+        </div>
       </div>
-      <!-- PARTENAIRES -->
-      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('partenaires')">
-        <div style="font-size:2rem;width:48px;text-align:center">🤝</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Partenaires</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Nos partenaires et sponsors</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+
+      <!-- GRILLE 2 : Équipe péda | Bureau/Organigramme -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('equipe')">
+          <div style="font-size:1.8rem">👨‍🏫</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Équipe péda</div>
+        </div>
+        <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.2);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('organigramme')">
+          <div style="font-size:1.8rem">🏛️</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Bureau & Organigramme</div>
+        </div>
       </div>
-      <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('planning')">
-        <div style="font-size:2rem;width:48px;text-align:center">📅</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Planning des cours</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Tous les créneaux par dojo</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+
+      <!-- GRILLE 3 : Boutique | Fighting Films -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:var(--sf);border:2px solid rgba(255,107,0,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('boutique')">
+          <div style="font-size:1.8rem">⛩️</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Boutique</div>
+        </div>
+        <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="window.open('https://www.fightingfilms.com','_blank')">
+          <div style="font-size:1.8rem">🎬</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Fighting Films</div>
+        </div>
       </div>
-      <!-- 4. CALENDRIER -->
-      <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('calendrier')">
-        <div style="font-size:2rem;width:48px;text-align:center">🏆</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions, stages & événements</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Toutes les compétitions par catégorie</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
+
+      <!-- LIGNE 4 : RI Club | Nous soutenir | Nous contacter -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('charte')">
+          <div style="font-size:1.5rem">📋</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">RI Club</div>
+        </div>
+        <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('soutenir')">
+          <div style="font-size:1.5rem">❤️</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">Nous soutenir</div>
+        </div>
+        <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('contact')">
+          <div style="font-size:1.5rem">💬</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div>
+        </div>
       </div>
-      <!-- 5. ÉQUIPE -->
-      <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('equipe')">
-        <div style="font-size:2rem;width:48px;text-align:center">👨‍🏫</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">L'équipe pédagogique</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Nos professeurs et coachs</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
-      </div>
-      <!-- 6. ORGANIGRAMME -->
-      <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('organigramme')">
-        <div style="font-size:2rem;width:48px;text-align:center">🏛️</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Organigramme</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Les membres de l'association</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
-      </div>
-      <!-- 7. CHARTE -->
-      <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:16px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('charte')">
-        <div style="font-size:2rem;width:48px;text-align:center">📋</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Charte du Club</div><div style="font-size:0.72rem;color:var(--mu);margin-top:2px">Les valeurs et engagements CMJ</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
-      </div>
-      <!-- 8. CONTACT -->
-      <div style="background:var(--sf);border:2px solid rgba(255,107,0,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('boutique')">
-        <div style="font-size:2rem;width:48px;text-align:center">⛩️</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Boutique</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Kimonos & équipements Fighting Films</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
-      </div>
-      <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('contact')">
-        <div style="font-size:2rem;width:48px;text-align:center">💬</div>
-        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Signaler un problème, une suggestion</div></div>
-        <div style="font-size:1.2rem;color:var(--bd)">›</div>
-      </div>
-      <!-- 9. PARTENAIRES -->
-      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:14px">
+
+      <!-- BLOC PARTENAIRES EN BAS -->
+      <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:14px;margin-top:4px">
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy);margin-bottom:10px">🤝 Nos partenaires</div>
         <div id="club-partenaires-view"><div style="text-align:center;padding:12px;color:var(--mu)">Chargement...</div></div>
       </div>
+
     </div>${CP.is_parent?`<div style="margin-top:20px">
   <div class="ST" style="margin-bottom:10px">👨‍👩‍👧‍👦 Mes enfants</div>
   <div id="enfants-cards"></div>
@@ -3826,6 +3828,21 @@ if(CP.is_parent)loadEnfantsCards();
     </a>
     <div style="text-align:center;margin-top:8px;font-size:0.62rem;color:var(--mu)">Partenaire officiel Chartres Métropole Judo</div>
     `;
+  }
+  else if(sec==='soutenir'){
+    pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy)">❤️ Nous soutenir</div>
+      <button class="bS" onclick="showClubSection('main')">← Retour</button>
+    </div>
+    <div class="card" style="text-align:center;padding:24px 16px">
+      <div style="font-size:2.5rem;margin-bottom:12px">❤️</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.2rem;color:var(--navy);margin-bottom:10px">Soutenez le Chartres Métropole Judo</div>
+      <div style="font-size:0.82rem;color:var(--mu);line-height:1.6;margin-bottom:20px">Votre soutien nous permet de continuer à développer le judo sur le bassin chartrain et d'accompagner nos judokas vers les sommets.</div>
+      <a href="https://www.helloasso.com" target="_blank" style="text-decoration:none">
+        <button class="bP" style="width:100%">💛 Faire un don via HelloAsso</button>
+      </a>
+      <div style="font-size:0.65rem;color:var(--mu);margin-top:8px">Zéro commission · Paiement sécurisé</div>
+    </div>`;
   }
   else if(sec==='contact'){
     pg.innerHTML=`
