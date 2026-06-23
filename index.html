@@ -3670,47 +3670,42 @@ function showClubSection(sec){
         </div>
         <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('calendrier')">
           <div style="font-size:1.8rem">🏆</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Calendrier</div>
         </div>
       </div>
 
-      <!-- GRILLE 2 : Équipe péda | Bureau/Organigramme -->
+      <!-- GRILLE 2 : Équipe pédagogique | Organigramme du Bureau -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('equipe')">
           <div style="font-size:1.8rem">👨‍🏫</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Équipe péda</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Équipe pédagogique</div>
         </div>
         <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.2);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('organigramme')">
           <div style="font-size:1.8rem">🏛️</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Bureau & Organigramme</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Organigramme du Bureau</div>
         </div>
       </div>
 
-      <!-- GRILLE 3 : Boutique | Fighting Films -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--sf);border:2px solid rgba(255,107,0,0.25);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="showClubSection('boutique')">
-          <div style="font-size:1.8rem">⛩️</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Boutique</div>
-        </div>
-        <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:14px;padding:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px" onclick="window.open('https://www.fightingfilms.com','_blank')">
-          <div style="font-size:1.8rem">🎬</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--navy)">Fighting Films</div>
-        </div>
+      <!-- BOUTIQUE (une seule case) -->
+      <div style="background:var(--sf);border:2px solid rgba(255,107,0,0.25);border-radius:14px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showClubSection('boutique')">
+        <div style="font-size:2rem;width:48px;text-align:center">⛩️</div>
+        <div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Boutique</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Kimonos & équipements Fighting Films</div></div>
+        <div style="font-size:1.2rem;color:var(--bd)">›</div>
       </div>
 
-      <!-- LIGNE 4 : RI Club | Nous soutenir | Nous contacter -->
+      <!-- LIGNE : Règlement Intérieur | Nous soutenir | Nous contacter -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('charte')">
           <div style="font-size:1.5rem">📋</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">RI Club</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.65rem;text-transform:uppercase;color:var(--navy)">Règlement Intérieur</div>
         </div>
         <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('soutenir')">
           <div style="font-size:1.5rem">❤️</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">Nous soutenir</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.65rem;text-transform:uppercase;color:var(--navy)">Nous soutenir</div>
         </div>
         <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.2);border-radius:14px;padding:12px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px" onclick="showClubSection('contact')">
           <div style="font-size:1.5rem">💬</div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.72rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.65rem;text-transform:uppercase;color:var(--navy)">Nous contacter</div>
         </div>
       </div>
 
