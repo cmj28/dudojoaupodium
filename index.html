@@ -1359,6 +1359,9 @@ body{font-size:14px;}
 // SUPABASE INIT
 // ============================================================
 const SUPABASE_URL='https://nahjoehjgaokucscpedf.supabase.co';
+const CHARTE_ELITE_URL=`${SUPABASE_URL.replace('https://','https://')}/storage/v1/object/public/documents/charte-elite.pdf`;
+function isEliteCat(cat){return['Cadets(tes)','Juniors','Seniors'].includes(cat);}
+function isMineur(ddn){if(!ddn)return false;const d=new Date(ddn);const age=Math.floor((Date.now()-d)/(365.25*24*3600*1000));return age<18;}
 const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5haGpvZWhqZ2Fva3Vjc2NwZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0ODQ3ODUsImV4cCI6MjA5NDA2MDc4NX0.bOv1XE3Pd1rPgA3a87c_CvED4mUU2PlA1kSOUVTe9HY';
 const CLUB_CODE='FamilyCMJ';
 const COACH_CODE='COACHCMJ';
@@ -4201,24 +4204,79 @@ function piUpdateTotal(){
 
 function piRenderDocs(){
   const el=document.getElementById('pi-docs-list');if(!el)return;
-  el.innerHTML=piMembres.map((m,i)=>`
-    <div style="margin-bottom:14px">
-      <div style="font-weight:700;font-size:0.82rem;color:var(--navy);margin-bottom:8px">📋 ${m.prenom||'Membre '+(i+1)} ${m.nom}</div>
-      ${['charte','sante','certif'].map(type=>{
-        const labels={charte:'Charte signée *',sante:'Attestation santé *',certif:'Certificat médical'};
-        const icons={charte:'📋',sante:'❤️',certif:'🩺'};
-        return `<div class="pi-doc-zone ${m.docs[type]?'uploaded':''}" id="pi-doc-${i}-${type}">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div>${icons[type]}</div>
-            <div style="flex:1"><div style="font-size:0.75rem;font-weight:600">${labels[type]}</div></div>
-            <button class="bS" style="font-size:0.65rem;padding:3px 8px;flex-shrink:0" onclick="document.getElementById('pi-file-${i}-${type}').click()">${m.docs[type]?'✅':'📎'}</button>
-          </div>
-          <input type="file" id="pi-file-${i}-${type}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDocMembre(this,${i},'${type}')">
-          <div id="pi-docst-${i}-${type}" style="font-size:0.65rem;margin-top:3px;color:var(--mu)">${m.docs[type]?'✅ Document uploadé':''}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  `).join('<hr style="border:none;border-top:1px solid var(--bd);margin:4px 0 14px">');
+  el.innerHTML=piMembres.map((m,i)=>{
+    const elite=isEliteCat(m.categorie);
+    const mineur=isMineur(m.ddn);
+    // Bloc charte
+    let charteHtml='';
+    if(elite){
+      // Charte élite : téléchargement + cases à cocher
+      const chkJudoka=m.docs.charte_judoka||false;
+      const chkRL=m.docs.charte_rl||false;
+      charteHtml=`<div class="pi-doc-zone${chkJudoka&&(!mineur||chkRL)?' uploaded':''}" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div>🏆</div>
+          <div style="flex:1"><div style="font-size:0.75rem;font-weight:700;color:var(--navy)">Charte Groupe Élite *</div><div style="font-size:0.62rem;color:var(--mu)">Réservée aux Cadets(tes), Juniors et Seniors</div></div>
+          <a href="${CHARTE_ELITE_URL}" target="_blank" style="text-decoration:none">
+            <button class="bS" type="button" style="font-size:0.65rem;padding:3px 9px;flex-shrink:0">📄 Télécharger</button>
+          </a>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;padding:8px 10px;background:var(--sf);border:1.5px solid ${chkJudoka?'var(--gr)':'var(--bd)'};border-radius:8px;margin-bottom:6px">
+          <input type="checkbox" ${chkJudoka?'checked':''} onchange="piSetCharteChk(${i},'judoka',this.checked)" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;accent-color:var(--navy)">
+          <span style="font-size:0.75rem;line-height:1.4">${mineur?'Le judoka a lu et accepte':'J\'ai lu et j\'accepte'} la Charte de l'Athlète Groupe Élite CMJ pour la saison 2026/2027 *</span>
+        </label>
+        ${mineur?`<label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer;padding:8px 10px;background:var(--sf);border:1.5px solid ${chkRL?'var(--gr)':'var(--bd)'};border-radius:8px">
+          <input type="checkbox" ${chkRL?'checked':''} onchange="piSetCharteChk(${i},'rl',this.checked)" style="width:16px;height:16px;flex-shrink:0;margin-top:1px;accent-color:var(--navy)">
+          <span style="font-size:0.75rem;line-height:1.4">En tant que représentant légal, j'ai lu et j'accepte la Charte de l'Athlète Groupe Élite CMJ *</span>
+        </label>`:''}
+      </div>`;
+    } else {
+      // Charte classique : upload fichier
+      charteHtml=`<div class="pi-doc-zone ${m.docs.charte?'uploaded':''}" id="pi-doc-${i}-charte">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div>📋</div>
+          <div style="flex:1"><div style="font-size:0.75rem;font-weight:600">Charte signée *</div></div>
+          <button class="bS" type="button" style="font-size:0.65rem;padding:3px 8px;flex-shrink:0" onclick="document.getElementById('pi-file-${i}-charte').click()">${m.docs.charte?'✅':'📎'}</button>
+        </div>
+        <input type="file" id="pi-file-${i}-charte" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDocMembre(this,${i},'charte')">
+        <div id="pi-docst-${i}-charte" style="font-size:0.65rem;margin-top:3px;color:var(--mu)">${m.docs.charte?'✅ Document uploadé':''}</div>
+      </div>`;
+    }
+    // Blocs sante et certif (inchangés)
+    const autresHtml=['sante','certif'].map(type=>{
+      const labels={sante:'Attestation santé *',certif:'Certificat médical'};
+      const icons={sante:'❤️',certif:'🩺'};
+      return `<div class="pi-doc-zone ${m.docs[type]?'uploaded':''}" id="pi-doc-${i}-${type}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div>${icons[type]}</div>
+          <div style="flex:1"><div style="font-size:0.75rem;font-weight:600">${labels[type]}</div></div>
+          <button class="bS" type="button" style="font-size:0.65rem;padding:3px 8px;flex-shrink:0" onclick="document.getElementById('pi-file-${i}-${type}').click()">${m.docs[type]?'✅':'📎'}</button>
+        </div>
+        <input type="file" id="pi-file-${i}-${type}" accept=".pdf,.jpg,.jpeg,.png" style="display:none" onchange="piHandleDocMembre(this,${i},'${type}')">
+        <div id="pi-docst-${i}-${type}" style="font-size:0.65rem;margin-top:3px;color:var(--mu)">${m.docs[type]?'✅ Document uploadé':''}</div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:0.82rem;color:var(--navy);margin-bottom:8px">📋 ${m.prenom||'Membre '+(i+1)} ${m.nom}${elite?' <span style="font-size:0.65rem;background:rgba(64,65,104,0.1);color:var(--navy);padding:2px 7px;border-radius:5px;font-weight:700">🏆 Groupe Élite</span>':''}</div>
+      ${charteHtml}${autresHtml}
+    </div>`;
+  }).join('<hr style="border:none;border-top:1px solid var(--bd);margin:4px 0 14px">');
+}
+
+function piSetCharteChk(idx,who,val){
+  if(!piMembres[idx].docs.charte_judoka)piMembres[idx].docs.charte_judoka=false;
+  if(!piMembres[idx].docs.charte_rl)piMembres[idx].docs.charte_rl=false;
+  if(who==='judoka')piMembres[idx].docs.charte_judoka=val;
+  if(who==='rl')piMembres[idx].docs.charte_rl=val;
+  // Mettre à jour docs.charte pour la compatibilité avec le reste du code
+  const m=piMembres[idx];
+  const mineur=isMineur(m.ddn);
+  if(m.docs.charte_judoka&&(!mineur||m.docs.charte_rl)){
+    m.docs.charte='signed:'+new Date().toISOString();
+  } else {
+    m.docs.charte=null;
+  }
+  piRenderDocs();
 }
 
 async function piHandleDocMembre(input,idx,type){
@@ -4264,9 +4322,20 @@ function piNext(step){
     piSetStep(3);
     piRenderDocs();
   } else if(step===3){
+    const now=new Date().toISOString();
     for(let i=0;i<piMembres.length;i++){
-      if(!piMembres[i].docs.charte){if(err)err.textContent='Charte obligatoire pour '+piMembres[i].prenom+'.';return;}
-      if(!piMembres[i].docs.sante){if(err)err.textContent='Attestation santé obligatoire pour '+piMembres[i].prenom+'.';return;}
+      const m=piMembres[i];
+      const elite=isEliteCat(m.categorie);
+      const mineur=isMineur(m.ddn);
+      if(elite){
+        if(!m.docs.charte_judoka){if(err)err.textContent='Le judoka '+m.prenom+' doit accepter la Charte Groupe Élite.';return;}
+        if(mineur&&!m.docs.charte_rl){if(err)err.textContent='Le représentant légal de '+m.prenom+' doit aussi accepter la Charte Groupe Élite.';return;}
+        // Stocker la signature horodatée
+        m.docs.charte='elite_signed:'+now+(mineur?':rl_signed':'');
+      } else {
+        if(!m.docs.charte){if(err)err.textContent='Charte obligatoire pour '+m.prenom+'.';return;}
+      }
+      if(!m.docs.sante){if(err)err.textContent='Attestation santé obligatoire pour '+m.prenom+'.';return;}
     }
     piSendPreinscription();
   }
@@ -4603,7 +4672,7 @@ async function loadPreinscriptions(filtre='all', btn=null){
       <!-- Documents -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         ${membres.map((m,i)=>[
-          m.docs?.charte?`<a href="${m.docs.charte}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">📋 Charte M${i+1}</span></a>`:`<span style="font-size:0.62rem;background:rgba(217,79,79,0.1);color:var(--rd);padding:2px 7px;border-radius:5px">📋 Charte M${i+1} manquante</span>`,
+          m.docs?.charte?(m.docs.charte.startsWith('elite_signed:')?`<span title="Charte Élite signée en ligne le ${new Date(m.docs.charte.split(':')[1]+':'+m.docs.charte.split(':')[2]+':'+m.docs.charte.split(':')[3]).toLocaleString('fr-FR')}" style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:help">🏆 Charte Élite M${i+1} ✅</span>`:`<a href="${m.docs.charte}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">📋 Charte M${i+1}</span></a>`):`<span style="font-size:0.62rem;background:rgba(217,79,79,0.1);color:var(--rd);padding:2px 7px;border-radius:5px">📋 Charte M${i+1} manquante</span>`,
           m.docs?.sante?`<a href="${m.docs.sante}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">❤️ Santé M${i+1}</span></a>`:`<span style="font-size:0.62rem;background:rgba(217,79,79,0.1);color:var(--rd);padding:2px 7px;border-radius:5px">❤️ Santé M${i+1} manquante</span>`,
           m.docs?.certif?`<a href="${m.docs.certif}" target="_blank"><span style="font-size:0.62rem;background:rgba(42,157,92,0.1);color:var(--gr);padding:2px 7px;border-radius:5px;cursor:pointer">🩺 Certif M${i+1}</span></a>`:''
         ].join('')).join('')}
@@ -4629,7 +4698,7 @@ async function sendEmailNotificationBureau(pi){
       <td style="padding:7px 10px">${m.dojo}</td>
       <td style="padding:7px 10px;font-weight:700">${m.prix}€</td>
       <td style="padding:7px 10px;font-size:0.8rem">
-        ${m.docs?.charte?'✅ Charte':'❌ Charte'} 
+        ${m.docs?.charte?(m.docs.charte.startsWith('elite_signed:')?'🏆 Charte Élite ✅':'✅ Charte'):'❌ Charte'} 
         ${m.docs?.sante?'✅ Santé':'❌ Santé'}
         ${m.docs?.certif?'✅ Certif':''}
       </td>
@@ -6493,6 +6562,7 @@ function renderBureauPage(){
     <div style="background:var(--sf);border:2px solid rgba(42,157,92,0.2);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('newsletter')"><div style="font-size:2rem;width:48px;text-align:center">📬</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Newsletter</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Uploader la newsletter du mois</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(155,89,182,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('calendrier')"><div style="font-size:2rem;width:48px;text-align:center">🏆</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Calendrier compétitions, stages & événements</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Gérer le calendrier du club</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('charte')"><div style="font-size:2rem;width:48px;text-align:center">📋</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Charte du Club</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Uploader la charte du club</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
+    <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.25);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('charte-elite')"><div style="font-size:2rem;width:48px;text-align:center">🏆</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Charte Groupe Élite</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">PDF signable en ligne — Cadets, Juniors, Seniors</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(242,186,29,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('partenaires')"><div style="font-size:2rem;width:48px;text-align:center">🤝</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Partenaires</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Gérer les fiches partenaires</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
     <div style="background:var(--sf);border:2px solid rgba(64,65,104,0.15);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px" onclick="showBureauSection('fiche')"><div style="font-size:2rem;width:48px;text-align:center">👤</div><div style="flex:1"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;color:var(--navy)">Ma fiche bureau</div><div style="font-size:0.72rem;color:var(--mu);margin-top:3px">Poste, contact, photo</div></div><div style="font-size:1.2rem;color:var(--bd)">›</div></div>
   </div>`;
@@ -6518,6 +6588,7 @@ function showBureauSection(sec){
   if(sec==='actualites'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📰 Actualités & Annonces</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="club-actu-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadClubActualites();}
   else if(sec==='newsletter'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📬 Newsletter</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-doc-view"></div>`;loadDocumentAdmin('newsletter','bureau-doc-view');}
   else if(sec==='charte'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📋 Charte du Club</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-doc-view"></div>`;loadDocumentAdmin('charte','bureau-doc-view');}
+  else if(sec==='charte-elite'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">🏆 Charte Groupe Élite</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-charte-elite-view"><div style="background:var(--sf2);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px;font-size:0.82rem;color:var(--mu);line-height:1.5">Ce PDF est proposé en téléchargement aux judokas <strong>Cadets(tes), Juniors et Seniors</strong> lors de la pré-inscription. Ils le lisent puis cochent leur acceptation directement dans l'appli — la signature est horodatée.</div><div id="bureau-ce-status" style="text-align:center;padding:12px;color:var(--mu);font-size:0.8rem">Vérification...</div><div style="margin-top:14px"><label style="font-weight:700;font-size:0.82rem;display:block;margin-bottom:6px">📎 Remplacer la Charte Groupe Élite (PDF)</label><input type="file" id="ce-upload-input" accept=".pdf" style="font-size:0.8rem"><div id="ce-upload-status" style="font-size:0.75rem;color:var(--mu);margin-top:6px"></div><button class="bP" style="margin-top:10px;font-size:0.8rem" onclick="uploadCharteElite()">⬆️ Uploader</button></div></div>`;checkCharteEliteStatus();}
   else if(sec==='partenaires'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">🤝 Partenaires</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="bureau-partenaires-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadPartenaires('bureau-partenaires-view');}
   else if(sec==='annonces'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📢 Publier une annonce</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div class="card"><div class="fg"><label>Titre</label><input type="text" id="bureau-ann-titre" placeholder="Ex: Assemblée Générale..."></div><div class="fg"><label>Message</label><textarea id="bureau-ann-texte" style="min-height:100px"></textarea></div><div class="fg"><label>Destinataires</label><select id="bureau-ann-dest"><option value="tous">Tous les licenciés</option><option value="Baby">Baby</option><option value="Mini-Poussins">Mini-Poussins</option><option value="Poussins">Poussins</option><option value="Benjamins">Benjamins</option><option value="Minimes">Minimes</option><option value="Cadets">Cadets</option><option value="Adultes">Adultes</option><option value="Taïso">Taïso</option></select></div><button class="bP" onclick="sendBureauAnnonce()">📨 Publier</button></div><div class="ST">Annonces publiées</div><div id="bureau-ann-list"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadBureauAnnonces();}
   else if(sec==='calendrier'){pg.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div class="ST" style="margin:0">📅 Calendrier compétitions, stages & événements</div><button class="bS" onclick="renderBureauPage()">← Retour</button></div><div id="club-cal-view"><div style="text-align:center;padding:20px;color:var(--mu)">Chargement...</div></div>`;loadCalendrier('club');}
@@ -7986,6 +8057,41 @@ async function piCheckInscription(){
   } else {
     if(banner)banner.style.display='none';
   }
+}
+
+async function checkCharteEliteStatus(){
+  const el=document.getElementById('bureau-ce-status');if(!el)return;
+  try{
+    const{data}=await sb.storage.from('documents').list('',{search:'charte-elite.pdf'});
+    const exists=data&&data.some(f=>f.name==='charte-elite.pdf');
+    if(exists){
+      const{data:u}=sb.storage.from('documents').getPublicUrl('charte-elite.pdf');
+      el.innerHTML=`<div style="display:flex;align-items:center;gap:10px;background:rgba(42,157,92,0.08);border:1px solid rgba(42,157,92,0.25);border-radius:10px;padding:10px 14px">
+        <span style="font-size:1.4rem">✅</span>
+        <div style="text-align:left"><div style="font-size:0.78rem;font-weight:700;color:var(--gr)">Charte Groupe Élite en ligne</div>
+        <a href="${u.publicUrl}" target="_blank" style="font-size:0.68rem;color:var(--navy);text-decoration:underline">📄 Voir le PDF actuel</a></div>
+      </div>`;
+    } else {
+      el.innerHTML=`<div style="background:rgba(217,79,79,0.08);border:1px solid rgba(217,79,79,0.25);border-radius:10px;padding:10px 14px;font-size:0.78rem;color:var(--rd);font-weight:700">⚠️ Aucune charte élite uploadée — les judokas ne pourront pas la télécharger.</div>`;
+    }
+  }catch(e){el.innerHTML='<div style="color:var(--rd);font-size:0.78rem">Erreur : '+e.message+'</div>';}
+}
+
+async function uploadCharteElite(){
+  const input=document.getElementById('ce-upload-input');
+  const status=document.getElementById('ce-upload-status');
+  if(!input?.files[0]){if(status)status.textContent='❌ Sélectionne un fichier PDF.';return;}
+  const file=input.files[0];
+  if(file.type!=='application/pdf'){if(status)status.textContent='❌ Fichier PDF uniquement.';return;}
+  if(file.size>10*1024*1024){if(status)status.textContent='❌ Max 10 MB.';return;}
+  if(status)status.textContent='⏳ Upload en cours...';
+  try{
+    // upsert: remplace si existant
+    const{error}=await sb.storage.from('documents').upload('charte-elite.pdf',file,{upsert:true,contentType:'application/pdf'});
+    if(error)throw error;
+    if(status)status.textContent='✅ Charte Groupe Élite mise en ligne !';
+    setTimeout(checkCharteEliteStatus,600);
+  }catch(e){if(status)status.textContent='❌ '+e.message;}
 }
 </script>
 </body>
