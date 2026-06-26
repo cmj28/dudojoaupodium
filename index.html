@@ -1327,9 +1327,22 @@ body{font-size:14px;}
     <div class="fg"><label>Titre</label><input type="text" id="mactu-titre" placeholder="Ex: Podium au Championnat Régional..."></div>
     <div class="fg"><label>Contenu</label><textarea id="mactu-texte" style="min-height:80px" placeholder="Détails..."></textarea></div>
     <div class="fg"><label>Type</label>
-      <div style="display:flex;gap:6px;margin-top:4px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
         <button type="button" class="ftab active" id="actu-type-actu" onclick="setActuType('actu')">📰 Actualité</button>
         <button type="button" class="ftab" id="actu-type-resultat" onclick="setActuType('resultat')">🏅 Résultat</button>
+        <button type="button" class="ftab" id="actu-type-partenaire" onclick="setActuType('partenaire')">🤝 Partenaire</button>
+      </div>
+    </div>
+    <!-- Champ logo partenaire (affiché uniquement si type=partenaire) -->
+    <div class="fg" id="mactu-logo-block" style="display:none">
+      <label>Logo du partenaire</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <div id="mactu-logo-preview" style="width:56px;height:56px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;overflow:hidden;flex-shrink:0">🤝</div>
+        <div style="flex:1">
+          <button type="button" class="bS" style="width:100%;margin-bottom:6px" onclick="document.getElementById('mactu-logo-input').click()">📷 Choisir un logo</button>
+          <input type="file" id="mactu-logo-input" accept="image/*" style="display:none" onchange="previewActuLogo(this)">
+          <input type="text" id="mactu-logo-url" placeholder="ou coller une URL d'image" oninput="updateActuLogoPreview(this.value)" style="font-size:0.75rem">
+        </div>
       </div>
     </div>
     <input type="hidden" id="mactu-type-val" value="actu">
@@ -2426,8 +2439,29 @@ function deleteNoteProf(noteId){
 let actuType='actu';
 function setActuType(t){
   actuType=t;
-  ['actu','resultat'].forEach(x=>document.getElementById('actu-type-'+x)?.classList.toggle('active',x===t));
+  ['actu','resultat','partenaire'].forEach(x=>{
+    const btn=document.getElementById('actu-type-'+x);
+    if(btn)btn.classList.toggle('active',x===t);
+  });
   document.getElementById('mactu-type-val').value=t;
+  // Afficher le bloc logo uniquement pour partenaire
+  const logoBlock=document.getElementById('mactu-logo-block');
+  if(logoBlock)logoBlock.style.display=t==='partenaire'?'block':'none';
+}
+
+function previewActuLogo(input){
+  const file=input.files[0];if(!file)return;
+  const prev=document.getElementById('mactu-logo-preview');
+  const reader=new FileReader();
+  reader.onload=e=>{prev.innerHTML=`<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain">`;prev._file=file;};
+  reader.readAsDataURL(file);
+}
+
+function updateActuLogoPreview(url){
+  const prev=document.getElementById('mactu-logo-preview');
+  if(!prev)return;
+  if(url){prev.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:contain">`;prev._file=null;}
+  else{prev.innerHTML='🤝';prev._file=null;}
 }
 function editActuFromKey(key){
   const d=window._actuData&&window._actuData[key];
@@ -2465,17 +2499,29 @@ async function saveActu(){
   const type=document.getElementById('mactu-type-val').value;
   if(!titre){toast('Donne un titre !',1);return;}
   const table=context==='section'?'annonces_section':'annonces';
+
+  // Gérer le logo partenaire
+  let logo_url='';
+  if(type==='partenaire'){
+    const prev=document.getElementById('mactu-logo-preview');
+    const urlInput=document.getElementById('mactu-logo-url')?.value.trim();
+    if(prev?._file){
+      const uploaded=await uploadPhoto(prev._file,'partenaire_actu_'+(id||Date.now()));
+      if(uploaded)logo_url=uploaded;
+    } else if(urlInput){
+      logo_url=urlInput;
+    }
+  }
+
   if(id){
-    await sb.from(table).update({titre,texte,type_actu:type}).eq('id',id);
+    await sb.from(table).update({titre,texte,type_actu:type,logo_url:logo_url||null}).eq('id',id);
   } else {
-    await sb.from(table).insert({id:crypto.randomUUID(),titre,texte,type_actu:type,auteur:jFN(CP),prof_id:CU.id,created_at:new Date().toISOString()});
+    await sb.from(table).insert({id:crypto.randomUUID(),titre,texte,type_actu:type,auteur:jFN(CP),prof_id:CU.id,logo_url:logo_url||null,created_at:new Date().toISOString()});
     // Envoyer notifications à tous les licenciés
-    if(!id){
-      const emoji=type==='resultat'?'🏅':type==='annonce'?'📢':'📰';
-      const{data:users}=await sb.from('profiles').select('id').eq('is_licencie',true);
-      for(const u of users||[]){
-        if(u.id!==CU.id)await sendNotification(u.id,`${emoji} ${titre}`,texte||'',type);
-      }
+    const emoji=type==='resultat'?'🏅':type==='partenaire'?'🤝':'📰';
+    const{data:users}=await sb.from('profiles').select('id').eq('is_licencie',true);
+    for(const u of users||[]){
+      if(u.id!==CU.id)await sendNotification(u.id,`${emoji} ${titre}`,texte||'',type);
     }
   }
   cm('m-actu');toast(id?'Publication modifiée !':'Publié !');
@@ -2610,7 +2656,13 @@ function renderActualites(el,items,context,readOnly=false){
     const reactionsHTML=`<div style="display:flex;align-items:center;gap:4px;margin-top:8px;flex-wrap:wrap">
       ${EMOJIS.map(e=>`<button onclick="toggleReaction('${a.id}','${table}','${e}')" style="background:${myReaction===e?'rgba(242,186,29,0.2)':'var(--sf2)'};border:1px solid ${myReaction===e?'var(--gold)':'var(--bd)'};border-radius:20px;padding:2px 8px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all 0.15s">${e}${reactionCounts[e]?`<span style="font-size:0.65rem;color:var(--mu);font-weight:600">${reactionCounts[e]}</span>`:''}</button>`).join('')}
     </div>`;
-    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)'}">
+    const isPartenaire=a.type_actu==='partenaire';
+    const borderColor=isPartenaire?'var(--gold)':a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)';
+    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${borderColor}">
+    ${isPartenaire&&a.logo_url?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--bd)">
+      <img src="${a.logo_url}" style="height:48px;max-width:100px;object-fit:contain;border-radius:6px" alt="">
+      <div style="font-size:0.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:0.08em;font-weight:700">🤝 Présentation de notre partenaire</div>
+    </div>`:''}
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div style="flex:1">
         <div style="font-size:0.62rem;color:var(--mu);margin-bottom:2px">${new Date(a.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})} · ${a.auteur||'Club'}</div>
@@ -2630,7 +2682,7 @@ function renderActualites(el,items,context,readOnly=false){
     <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px" onclick="openActuModal('${context}',null,null,null,'actu')">📰 + Actualité</button>
     <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:var(--gold);color:#000" onclick="openActuModal('${context}',null,null,null,'resultat')">🏅 + Résultat</button>
     <button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:var(--sf);color:var(--navy);border:1.5px solid var(--bd)" onclick="openActuModal('${context}',null,null,null,'annonce')">📢 + Annonce</button>
-    ${context==='club'?`<button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:rgba(242,186,29,0.15);color:#9a7200;border:1.5px solid rgba(242,186,29,0.4)" onclick="openPartenaireModal()">🤝 + Partenaire</button>`:''}
+    ${context==='club'?`<button class="bP" style="flex:1;font-size:0.78rem;min-width:100px;background:rgba(242,186,29,0.15);color:#9a7200;border:1.5px solid rgba(242,186,29,0.4)" onclick="openActuModal('${context}',null,null,null,'partenaire')">🤝 + Partenaire</button>`:''}
   </div>`;
   if(resultats.length){html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px">🏅 Résultats<span style="flex:1;height:1px;background:rgba(242,186,29,0.3)"></span></div>`;html+=resultats.map(a=>itemHTML(a,'annonces')).join('');}
   if(autres.length){html+=`<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.85rem;text-transform:uppercase;color:var(--gr);margin-bottom:8px;margin-top:${resultats.length?12:0}px;display:flex;align-items:center;gap:8px">📰 Actualités<span style="flex:1;height:1px;background:rgba(42,157,92,0.2)"></span></div>`;html+=autres.map(a=>itemHTML(a,'annonces')).join('');}
