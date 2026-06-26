@@ -2657,11 +2657,11 @@ function renderActualites(el,items,context,readOnly=false){
       ${EMOJIS.map(e=>`<button onclick="toggleReaction('${a.id}','${table}','${e}')" style="background:${myReaction===e?'rgba(242,186,29,0.2)':'var(--sf2)'};border:1px solid ${myReaction===e?'var(--gold)':'var(--bd)'};border-radius:20px;padding:2px 8px;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all 0.15s">${e}${reactionCounts[e]?`<span style="font-size:0.65rem;color:var(--mu);font-weight:600">${reactionCounts[e]}</span>`:''}</button>`).join('')}
     </div>`;
     const isPartenaire=a.type_actu==='partenaire';
-    const borderColor=isPartenaire?'var(--gold)':a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)';
+    const borderColor=a.type_actu==='resultat'?'var(--gold)':a.type_actu==='annonce'?col:'var(--gr)';
     return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px;border-left:4px solid ${borderColor}">
     ${isPartenaire&&a.logo_url?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--bd)">
       <img src="${a.logo_url}" style="height:48px;max-width:100px;object-fit:contain;border-radius:6px" alt="">
-      <div style="font-size:0.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:0.08em;font-weight:700">🤝 Présentation de notre partenaire</div>
+      <div style="font-size:0.65rem;color:var(--mu);text-transform:uppercase;letter-spacing:0.08em;font-weight:700">🤝 Partenaire</div>
     </div>`:''}
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div style="flex:1">
@@ -3791,7 +3791,7 @@ function showClubSection(sec){
   if(sec==='main'){
     pg.innerHTML=`
     <div style="margin-bottom:16px">
-      <img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.PNG" alt="Chartres Métropole Judo" style="max-height:180px;max-width:320px;object-fit:contain;display:block;margin:0 auto 8px">
+      <img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.png" alt="Chartres Métropole Judo" style="max-height:180px;max-width:320px;object-fit:contain;display:block;margin:0 auto 8px">
       <div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Chartres Métropole Judo</div>
       <!-- COMPTEURS ANIMÉS -->
       <div id="club-counters" style="display:flex;justify-content:center;gap:20px;margin-top:14px;margin-bottom:4px">
@@ -6481,7 +6481,7 @@ async function loadAdminCodes(){
 // ============================================================
 function renderBureauPage(){
   const pg=document.getElementById('page-bureau');if(!pg)return;
-  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.PNG" alt="CMJ" style="max-height:100px;max-width:260px;object-fit:contain;display:block;margin:0 auto 8px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Espace Bureau</div></div>
+  pg.innerHTML=`<div style="margin-bottom:16px;text-align:center"><img src="https://cmj28.github.io/dudojoaupodium/logo-cmj.png" alt="CMJ" style="max-height:100px;max-width:260px;object-fit:contain;display:block;margin:0 auto 8px"><br><div style="font-size:0.65rem;color:var(--mu);letter-spacing:0.1em;text-transform:uppercase">Espace Bureau</div></div>
   <div style="display:grid;grid-template-columns:1fr;gap:12px">
     <div style="background:var(--sf);border:2px solid rgba(217,79,79,0.3);border-radius:16px;padding:20px 16px;cursor:pointer;display:flex;align-items:center;gap:14px;position:relative" onclick="showBureauSection('preinscriptions')">
       <div style="font-size:2rem;width:48px;text-align:center">📋</div>
