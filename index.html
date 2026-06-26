@@ -2444,47 +2444,18 @@ function openActuModal(context,id,titre,texte,type){
   document.getElementById('m-actu').classList.add('open');
 }
 
-function openPartenaireModal(id=null,nom='',desc='',url='',logoUrl=''){
-  // Créer modal partenaire dynamique
-  let mo=document.getElementById('m-partenaire');
-  if(!mo){
-    mo=document.createElement('div');mo.className='mo';mo.id='m-partenaire';
-    mo.innerHTML=`<div class="modal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;text-transform:uppercase;color:var(--navy)">🤝 Partenaire</div><button class="bS" onclick="cm('m-partenaire')">✕</button></div>
-      <input type="hidden" id="mp-id">
-      <div class="fg"><label>Nom du partenaire *</label><input type="text" id="mp-nom" placeholder="Ex: Electron Services"></div>
-      <div class="fg"><label>Description</label><textarea id="mp-desc" style="min-height:70px" placeholder="Courte présentation..."></textarea></div>
-      <div class="fg"><label>Site web</label><input type="text" id="mp-url" placeholder="https://..."></div>
-      <div class="fg"><label>URL du logo</label><input type="text" id="mp-logo" placeholder="https://... (lien vers l'image du logo)"></div>
-      <button class="bP" style="width:100%;margin-top:4px" onclick="savePartenaire()">Enregistrer</button>
-      <div id="mp-error" style="color:var(--rd);font-size:0.75rem;margin-top:8px;text-align:center"></div>
-    </div>`;
-    document.getElementById('app').appendChild(mo);
-  }
-  document.getElementById('mp-id').value=id||'';
-  document.getElementById('mp-nom').value=nom;
-  document.getElementById('mp-desc').value=desc;
-  document.getElementById('mp-url').value=url;
-  document.getElementById('mp-logo').value=logoUrl;
-  mo.classList.add('open');
-}
-
-async function savePartenaire(){
-  const id=document.getElementById('mp-id').value;
-  const nom=document.getElementById('mp-nom').value.trim();
-  const description=document.getElementById('mp-desc').value.trim();
-  const url=document.getElementById('mp-url').value.trim();
-  const logo_url=document.getElementById('mp-logo').value.trim();
-  const err=document.getElementById('mp-error');
-  if(!nom){err.textContent='Le nom est obligatoire.';return;}
-  if(id){
-    await sb.from('partenaires').update({nom,description,url,logo_url,updated_at:new Date().toISOString()}).eq('id',id);
-  } else {
-    await sb.from('partenaires').insert({nom,description,url,logo_url,created_at:new Date().toISOString()});
-  }
-  cm('m-partenaire');
-  toast('Partenaire enregistré !');
-  if(document.getElementById('partenaires-view'))loadPartenaires();
-  loadClubActualites();
+function openPartenaireModal(id=null,nom='',bio='',logo='',type='majeur',email='',tel=''){
+  document.getElementById('mpart-id').value=id||'';
+  document.getElementById('mpart-nom').value=nom||'';
+  document.getElementById('mpart-bio').value=bio||'';
+  document.getElementById('mpart-email').value=email||'';
+  document.getElementById('mpart-tel').value=tel||'';
+  document.getElementById('mpart-logo-url').value=logo||'';
+  setPartType(type||'majeur');
+  const prev=document.getElementById('mpart-logo-preview');
+  if(prev){prev._file=null;prev.innerHTML=logo?`<img src="${logo}" style="width:100%;height:100%;object-fit:contain">`:'🤝';}
+  document.getElementById('mpart-title').textContent=id?'✏️ Modifier partenaire':'🤝 Nouveau partenaire';
+  document.getElementById('m-partenaire').classList.add('open');
 }
 async function saveActu(){
   const context=document.getElementById('mactu-context').value;
